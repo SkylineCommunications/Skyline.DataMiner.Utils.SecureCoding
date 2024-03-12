@@ -24,11 +24,8 @@
         private const string AssemblyName = "SecureCodingAnalyzers"; // Adjust to your assembly name
         private const string SecureIOTypeName = "Skyline.DataMiner.Utils.Security.IO.SecureIO";
 
-        public sealed override ImmutableArray<string> FixableDiagnosticIds
-        {
-            get { return ImmutableArray.Create(PathCombineAnalyzer.DiagnosticId); }
-        }
-
+        public override string DiagnosticId => PathCombineAnalyzer.DiagnosticId;
+        
         public sealed override FixAllProvider GetFixAllProvider()
         {
             return WellKnownFixAllProviders.BatchFixer;

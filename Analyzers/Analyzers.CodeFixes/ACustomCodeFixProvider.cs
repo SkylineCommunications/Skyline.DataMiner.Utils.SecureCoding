@@ -11,7 +11,7 @@ namespace Skyline.DataMiner.Utils.SecureCoding.CodeFixProviders
     {
         public abstract string Title { get; }
 
-        public abstract ImmutableArray<string> FixableDiagnosticIds { get; }
+        public abstract string DiagnosticId { get; }
 
         public abstract FixAllProvider GetFixAllProvider();
 

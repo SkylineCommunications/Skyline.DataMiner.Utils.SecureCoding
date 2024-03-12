@@ -23,7 +23,7 @@
 
         public sealed override ImmutableArray<string> FixableDiagnosticIds
         {
-            get { return ImmutableArray.Create(PathCombineAnalyzer.DiagnosticId); }
+            get { return ImmutableArray.CreateRange(codeFixes.Select(codeFix => codeFix.DiagnosticId)); }
         }
 
         public sealed override FixAllProvider GetFixAllProvider()
