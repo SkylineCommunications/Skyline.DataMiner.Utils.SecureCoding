@@ -2,7 +2,7 @@
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Diagnostics;
 using Skyline.DataMiner.Utils.SecureCoding.Analyzers.SecureIO;
-using Skyline.DataMiner.Utils.SecureCoding.Analyzers.SecureSerialization.json;
+using Skyline.DataMiner.Utils.SecureCoding.Analyzers.SecureSerialization.Json;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;

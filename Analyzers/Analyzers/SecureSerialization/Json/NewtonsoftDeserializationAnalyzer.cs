@@ -25,27 +25,11 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.SecureSerialization.Jso
                 return;
             }
 
-            if (!(node.Expression is MemberAccessExpressionSyntax deserializeObjectAccess))
+            if (!IsJsonConvertDeserialization(node, context))
             {
                 return;
             }
 
-            if (!deserializeObjectAccess.Name.Identifier.Text.StartsWith("DeserializeObject"))
-            {
-                return;
-            }
-
-            INamedTypeSymbol jsonConvertSymbol = context.SemanticModel.GetSymbolInfo(deserializeObjectAccess.Expression).Symbol as INamedTypeSymbol;
-            if (jsonConvertSymbol == null || jsonConvertSymbol.Name != "JsonConvert")
-            {
-                return;
-            }
-
-            string namespaceFullname = GetNamespaceFullname(jsonConvertSymbol.ContainingNamespace);
-            if(namespaceFullname == null || namespaceFullname != "Newtonsoft.Json" ) 
-            {
-                return;
-            }
 
             context.ReportDiagnostic(
                 Diagnostic.Create(
@@ -53,6 +37,33 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.SecureSerialization.Jso
                     node.GetLocation()
                 )
             );
+        }
+
+        private bool IsJsonConvertDeserialization(InvocationExpressionSyntax node, SyntaxNodeAnalysisContext context)
+        {
+            if (!(node.Expression is MemberAccessExpressionSyntax deserializeObjectAccess))
+            {
+                return false;
+            }
+
+            if (!deserializeObjectAccess.Name.Identifier.Text.StartsWith("DeserializeObject"))
+            {
+                return false;
+            }
+
+            INamedTypeSymbol jsonConvertSymbol = context.SemanticModel.GetSymbolInfo(deserializeObjectAccess.Expression).Symbol as INamedTypeSymbol;
+            if (jsonConvertSymbol == null || jsonConvertSymbol.Name != "JsonConvert")
+            {
+                return false;
+            }
+
+            string namespaceFullname = GetNamespaceFullname(jsonConvertSymbol.ContainingNamespace);
+            if (namespaceFullname == null || namespaceFullname != "Newtonsoft.Json")
+            {
+                return false;
+            }
+
+            return true;
         }
     }
 }
