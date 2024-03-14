@@ -94,7 +94,6 @@
             }
 
             if (path.IndexOfAny(Path.GetInvalidPathChars()) != -1
-                || path.IndexOfAny(Path.GetInvalidFileNameChars()) != -1
                 || path.IndexOf('\0') != -1
                 || path.IndexOf("..") != -1
                 || path.Count(c => c == '%') > 1)
