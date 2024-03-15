@@ -8,7 +8,7 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <PackageId>Skyline.DataMiner.Utils.SecureCoding.Analyzers</PackageId>
+    <PackageId>Analyzers</PackageId>
     <PackageVersion>1.0.0.0</PackageVersion>
     <Authors>FlavioJA</Authors>
     <PackageLicenseUrl>http://LICENSE_URL_HERE_OR_DELETE_THIS_LINE</PackageLicenseUrl>
