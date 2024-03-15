@@ -7,7 +7,7 @@
     public static class SecurePath
     {
         /// <summary>
-        /// Constructs a secure path by combining a base path and a filename, performing various validations to ensure the resulting path is secure.
+        /// Constructs a secure path by combining a base path and a filename, performing various validations to ensure the resulting path is secure. Note that is only secure as long as the base path cannot be manipulated.
         /// </summary>
         /// <param name="basePath">The base path to combine with the filename.</param>
         /// <param name="filename">The filename to append to the base path.</param>
@@ -32,6 +32,11 @@
                 throw new ArgumentException($"'{nameof(filename)}' cannot be null or whitespace.", nameof(filename));
             }
 
+            if (!basePath.IsPathValid())
+            {
+                throw new InvalidOperationException($"Base path '{basePath} contains invalid characters'");
+            }
+
             var combinedPath = Path.Combine(basePath, filename);
 
             var fullPath = Path.GetFullPath(combinedPath);
@@ -42,10 +47,9 @@
         }
 
         /// <summary>
-        /// Constructs a secure path by combining multiple path segments, performing various validations to ensure the resulting path is secure.
+        /// Constructs a secure path by combining multiple path segments, performing various validations to ensure the resulting path is secure. Note that is only secure as long as the base path cannot be manipulated.
         /// </summary>
-        /// <param name="paths">An array of path segments to combine, where the first position is considered the base path, and the last position is considered the filename, being all the segments in between considered as paths.</param>
-        /// <param name="allowSubDirectories">Boolean indicating whether the sub-directories of the base path are allowed in the filename argumnet. (Default = <see langword="false")/></param>
+        /// <param name="paths">An array of path segments to combine, where the first position is considered the base path, and the last position is considered the filename, being all the segments in between considered as sub-directories relative to the base path.</param>
         /// <returns>The full and validated secure path.</returns>
         /// <exception cref="ArgumentNullException">Thrown if <paramref name="paths"/> is null.</exception>
         /// <exception cref="ArgumentException">
@@ -54,7 +58,7 @@
         /// <exception cref="InvalidOperationException">
         /// Thrown if the constructed full path is not a valid path or if it does not start with the specified base path.
         /// </exception>
-        public static string ConstructSecurePath(bool allowSubDirectories = false, params string[] paths)
+        public static string ConstructSecurePath(params string[] paths)
         {
             if (paths is null)
             {
@@ -68,11 +72,16 @@
 
             var basePath = paths[0];
 
+            if (!basePath.IsPathValid())
+            {
+                throw new InvalidOperationException($"Base path '{basePath} contains invalid characters'");
+            }
+
             var combinedPath = Path.Combine(paths);
 
             var fullPath = Path.GetFullPath(combinedPath);
 
-            InnerPathValidation(allowSubDirectories, basePath, fullPath);
+            InnerPathValidation(allowSubDirectories: true, basePath, fullPath);
 
             return fullPath;
         }
@@ -93,8 +102,16 @@
                 throw new ArgumentException($"'{nameof(path)}' cannot be null or whitespace.", nameof(path));
             }
 
+            var filename = Path.GetFileName(path);
+
+            if (filename.IndexOfAny(Path.GetInvalidFileNameChars()) != -1)
+            {
+                return false;
+            }
+
             if (path.IndexOfAny(Path.GetInvalidPathChars()) != -1
                 || path.IndexOf('\0') != -1
+                || path.IndexOf('/') != -1
                 || path.IndexOf("..") != -1
                 || path.Count(c => c == '%') > 1)
             {
@@ -114,6 +131,11 @@
             if (!fullPath.StartsWith(basePath, StringComparison.OrdinalIgnoreCase))
             {
                 throw new InvalidOperationException($"Invalid path '{fullPath}'");
+            }
+
+            if(!basePath.Equals(Path.GetPathRoot(basePath), StringComparison.OrdinalIgnoreCase))
+            {
+                basePath = basePath.TrimEnd('\\');
             }
 
             if (!allowSubDirectories && !Path.GetDirectoryName(fullPath).Equals(basePath, StringComparison.OrdinalIgnoreCase))
