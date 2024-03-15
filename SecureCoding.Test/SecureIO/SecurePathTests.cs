@@ -7,31 +7,40 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Tests
     {
         [TestMethod]
         // straightforward cases
-        [DataRow(@"C:\skyline dataminer\", @"test.txt", false, @"C:\skyline dataminer\test.txt")]
-        [DataRow(@"C:\skyline dataminer", @"test.txt", false, @"C:\skyline dataminer\test.txt")]
-        // straightforward cases with subdirectories
-        [DataRow(@"C:\skyline dataminer\", @"subdir\test.txt", true, @"C:\skyline dataminer\subdir\test.txt")]
-        [DataRow(@"C:\skyline dataminer", @"subdir\test.txt", true, @"C:\skyline dataminer\subdir\test.txt")]
+        [DataRow(@"C:\skyline dataminer\", @"test.txt", @"C:\skyline dataminer\test.txt")]
+        [DataRow(@"C:\skyline dataminer", @"test.txt", @"C:\skyline dataminer\test.txt")]
         // edge case where we traverse out of a subdir
-        [DataRow(@"C:\skyline dataminer\", @"subdir\..\test.txt", false, @"C:\skyline dataminer\test.txt")]
-        [DataRow(@"C:\skyline dataminer", @"subdir\..\test.txt", false, @"C:\skyline dataminer\test.txt")]
-        [DataRow(@"C:\", @"subdir\..\..\test.txt", false, @"C:\test.txt")]
+        [DataRow(@"C:\skyline dataminer\", @"subdir\..\test.txt", @"C:\skyline dataminer\test.txt")]
+        [DataRow(@"C:\skyline dataminer", @"subdir\..\test.txt", @"C:\skyline dataminer\test.txt")]
+        [DataRow(@"C:\", @"subdir\..\..\test.txt", @"C:\test.txt")]
         // edge case where filename is an absolute path but point to the expected location
-        [DataRow(@"C:\skyline dataminer\", @"C:\skyline dataminer\test.txt", false, @"C:\skyline dataminer\test.txt")]
-        [DataRow(@"C:\skyline dataminer", @"C:\skyline dataminer\subdir1\test.txt", true, @"C:\skyline dataminer\subdir1\test.txt")]
+        [DataRow(@"C:\skyline dataminer\", @"C:\skyline dataminer\test.txt", @"C:\skyline dataminer\test.txt")]
         // network paths
-        [DataRow(@"\\127.0.0.1\c$\skyline dataminer\", @"test.txt", false, @"\\127.0.0.1\c$\skyline dataminer\test.txt")]
-        [DataRow(@"\\127.0.0.1\c$\skyline dataminer", @"test.txt", false, @"\\127.0.0.1\c$\skyline dataminer\test.txt")]
-        [DataRow(@"\\127.0.0.1\c$\skyline dataminer\", @"subdir\test.txt", true, @"\\127.0.0.1\c$\skyline dataminer\subdir\test.txt")]
-        [DataRow(@"\\127.0.0.1\c$\skyline dataminer", @"subdir\test.txt", true, @"\\127.0.0.1\c$\skyline dataminer\subdir\test.txt")]
-        [DataRow(@"\\127.0.0.1\c$\skyline dataminer\", @"subdir\..\test.txt", false, @"\\127.0.0.1\c$\skyline dataminer\test.txt")]
-        [DataRow(@"\\127.0.0.1\c$\skyline dataminer", @"subdir\..\test.txt", false, @"\\127.0.0.1\c$\skyline dataminer\test.txt")]
-        [DataRow(@"\\127.0.0.1\c$\", @"subdir\..\..\test.txt", false, @"\\127.0.0.1\c$\test.txt")]
-        [DataRow(@"\\127.0.0.1\c$\skyline dataminer\", @"\\127.0.0.1\c$\skyline dataminer\test.txt", false, @"\\127.0.0.1\c$\skyline dataminer\test.txt")]
-        [DataRow(@"\\127.0.0.1\c$\skyline dataminer", @"\\127.0.0.1\c$\skyline dataminer\subdir1\test.txt", true, @"\\127.0.0.1\c$\skyline dataminer\subdir1\test.txt")]
-        public void ConstructSecurePathSuccess(string basePath, string filename, bool subdirectoriesAllowed, string expectedResult)
+        [DataRow(@"\\127.0.0.1\c$\skyline dataminer\", @"test.txt", @"\\127.0.0.1\c$\skyline dataminer\test.txt")]
+        [DataRow(@"\\127.0.0.1\c$\skyline dataminer", @"test.txt", @"\\127.0.0.1\c$\skyline dataminer\test.txt")]
+        [DataRow(@"\\127.0.0.1\c$\skyline dataminer\", @"subdir\..\test.txt", @"\\127.0.0.1\c$\skyline dataminer\test.txt")]
+        [DataRow(@"\\127.0.0.1\c$\skyline dataminer", @"subdir\..\test.txt", @"\\127.0.0.1\c$\skyline dataminer\test.txt")]
+        [DataRow(@"\\127.0.0.1\c$\", @"subdir\..\..\test.txt", @"\\127.0.0.1\c$\test.txt")]
+        [DataRow(@"\\127.0.0.1\c$\skyline dataminer\", @"\\127.0.0.1\c$\skyline dataminer\test.txt", @"\\127.0.0.1\c$\skyline dataminer\test.txt")]
+        public void ConstructSecurePathSuccess(string basePath, string filename, string expectedResult)
         {
-            string result = SecurePath.ConstructSecurePath(basePath, filename, subdirectoriesAllowed);
+            string result = SecurePath.ConstructSecurePath(basePath, filename);
+            Assert.AreEqual(result, expectedResult);
+        }
+
+        [TestMethod]
+        // straightforward cases
+        [DataRow(@"C:\skyline dataminer\", @"subdir\test.txt", @"C:\skyline dataminer\subdir\test.txt")]
+        [DataRow(@"C:\skyline dataminer", @"subdir\test.txt", @"C:\skyline dataminer\subdir\test.txt")]
+        // edge case where filename is an absolute path but point to the expected location
+        [DataRow(@"C:\skyline dataminer", @"C:\skyline dataminer\subdir1\test.txt", @"C:\skyline dataminer\subdir1\test.txt")]
+        // network paths
+        [DataRow(@"\\127.0.0.1\c$\skyline dataminer\", @"subdir\test.txt", @"\\127.0.0.1\c$\skyline dataminer\subdir\test.txt")]
+        [DataRow(@"\\127.0.0.1\c$\skyline dataminer", @"subdir\test.txt", @"\\127.0.0.1\c$\skyline dataminer\subdir\test.txt")]
+        [DataRow(@"\\127.0.0.1\c$\skyline dataminer", @"\\127.0.0.1\c$\skyline dataminer\subdir1\test.txt", @"\\127.0.0.1\c$\skyline dataminer\subdir1\test.txt")]
+        public void ConstructSecurePathWithSubdirectoriesSuccess(string basePath, string filename, string expectedResult)
+        {
+            string result = SecurePath.ConstructSecurePathWithSubDirectories(basePath, filename);
             Assert.AreEqual(result, expectedResult);
         }
 
@@ -59,34 +68,36 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Tests
 
         [TestMethod]
         // cases with invalid basedir
-        [DataRow(null, @"\subdir\test.txt", false, typeof(ArgumentException))]
-        [DataRow("", @"\subdir\test.txt", false, typeof(ArgumentException))]
-        [DataRow(" ", @"\subdir\test.txt", false, typeof(ArgumentException))]
-        [DataRow("\n", @"\subdir\test.txt", false, typeof(ArgumentException))]
+        [DataRow(null, @"\subdir\test.txt", typeof(ArgumentException))]
+        [DataRow("", @"\subdir\test.txt", typeof(ArgumentException))]
+        [DataRow(" ", @"\subdir\test.txt", typeof(ArgumentException))]
+        [DataRow("\n", @"\subdir\test.txt", typeof(ArgumentException))]
         // cases with invalid filename
-        [DataRow(@"C:\skyline dataminer\", null, false, typeof(ArgumentException))]
-        [DataRow(@"C:\skyline dataminer\", "", false, typeof(ArgumentException))]
-        [DataRow(@"C:\skyline dataminer\", " ", false, typeof(ArgumentException))]
-        [DataRow(@"C:\skyline dataminer\", "\n", false, typeof(ArgumentException))]
+        [DataRow(@"C:\skyline dataminer\", null, typeof(ArgumentException))]
+        [DataRow(@"C:\skyline dataminer\", "", typeof(ArgumentException))]
+        [DataRow(@"C:\skyline dataminer\", " ", typeof(ArgumentException))]
+        [DataRow(@"C:\skyline dataminer\", "\n", typeof(ArgumentException))]
         // cases with invalid characters
-        [DataRow(@"C:\skyline dataminer>\", @"test.txt", false, typeof(InvalidOperationException))]
-        [DataRow(@"C:\skyline dataminer\", @"<test.txt", false, typeof(InvalidOperationException))]
-        [DataRow(@"C:\skyline dataminer|\", @"test.txt", false, typeof(InvalidOperationException))]
-        [DataRow(@"C:\skyline dataminer\", "\"test.txt", false, typeof(InvalidOperationException))]
+        [DataRow(@"C:\skyline dataminer>\", @"test.txt", typeof(InvalidOperationException))]
+        [DataRow(@"C:\skyline dataminer\", @"<test.txt", typeof(InvalidOperationException))]
+        [DataRow(@"C:\skyline dataminer|\", @"test.txt", typeof(InvalidOperationException))]
+        [DataRow(@"C:\skyline dataminer*\", @"test.txt", typeof(InvalidOperationException))]
+        [DataRow(@"C:\skyline dataminer?\", @"test.txt", typeof(InvalidOperationException))]
+        [DataRow(@"C:\skyline dataminer\", "\"test.txt", typeof(InvalidOperationException))]
         // cases with directory traversal
-        [DataRow(@"C:\skyline dataminer", @"..\..\..\test.txt", false, typeof(InvalidOperationException))]
-        [DataRow(@"C:\skyline dataminer", @"C:\test.txt", false, typeof(InvalidOperationException))]
-        [DataRow(@"C:\skyline dataminer", @"\\127.0.0.1\c$\test.txt", false, typeof(InvalidOperationException))]
-        [DataRow(@"%programfiles%", @"test.txt", false, typeof(InvalidOperationException))]
-        [DataRow(@"C:\skyline dataminer", @"%programfiles%\test.txt", false, typeof(InvalidOperationException))]
-        [DataRow(@"%programfiles%", @"C:\skyline dataminer\test.txt", false, typeof(InvalidOperationException))]
+        [DataRow(@"C:\skyline dataminer", @"..\..\..\test.txt", typeof(InvalidOperationException))]
+        [DataRow(@"C:\skyline dataminer", @"C:\test.txt", typeof(InvalidOperationException))]
+        [DataRow(@"C:\skyline dataminer", @"\\127.0.0.1\c$\test.txt", typeof(InvalidOperationException))]
+        [DataRow(@"%programfiles%", @"test.txt", typeof(InvalidOperationException))]
+        [DataRow(@"C:\skyline dataminer", @"%programfiles%\test.txt", typeof(InvalidOperationException))]
+        [DataRow(@"%programfiles%", @"C:\skyline dataminer\test.txt", typeof(InvalidOperationException))]
         // cases with subdirectories while it's not allowed
-        [DataRow(@"C:\skyline dataminer\", @"subdir\test.txt", false, typeof(InvalidOperationException))]
+        [DataRow(@"C:\skyline dataminer\", @"subdir\test.txt", typeof(InvalidOperationException))]
         // case where wrong directory delimiter is used
-        [DataRow(@"C:/skyline dataminer/", @"test.txt", false, typeof(InvalidOperationException))]
-        [DataRow(@"C:/skyline dataminer/", @"test.txt", false, typeof(InvalidOperationException))]
+        [DataRow(@"C:/skyline dataminer/", @"test.txt", typeof(InvalidOperationException))]
+        [DataRow(@"C:/skyline dataminer/", @"test.txt", typeof(InvalidOperationException))]
         [DataRow(@"C:\skyline dataminer\", @"subdir/test.txt", true, typeof(InvalidOperationException))]
-        public void ConstructSecurePathFailure(string basePath, string filename, bool subdirectoriesAllowed, Type expectedExceptionType)
+        public void ConstructSecurePathFailure(string basePath, string filename, Type expectedExceptionType)
         {
             typeof(Assert)
                 .GetMethods()
@@ -94,12 +105,12 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Tests
                 .Where(m => m.GetParameters().Length == 1)
                 .First(m => m.GetParameters()[0].ParameterType == typeof(Func<object?>))
                 .MakeGenericMethod(expectedExceptionType)
-                .Invoke(null, new object[] { () => SecurePath.ConstructSecurePath(basePath, filename, subdirectoriesAllowed) });
+                .Invoke(null, new object[] { () => SecurePath.ConstructSecurePath(basePath, filename) });
         }
 
         [TestMethod]
         //case with invalid arguments
-        [DataRow(typeof(ArgumentNullException), null)]
+        [DataRow(typeof(ArgumentException), null)]
         [DataRow(typeof(ArgumentException), @"C:\skyline dataminer\")]
         // case with invalid characters in basepath
         [DataRow(typeof(InvalidOperationException), @"C:/skyline dataminer/", @"subdir1", @"test.txt")]
@@ -115,12 +126,14 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Tests
         [DataRow(typeof(InvalidOperationException), @"C:\skyline dataminer\", @"subdir1<", @"subdir2", @"test.txt")]
         [DataRow(typeof(InvalidOperationException), @"C:\skyline dataminer\", @"subdir1|", @"subdir2", @"test.txt")]
         [DataRow(typeof(InvalidOperationException), @"C:\skyline dataminer\", "subdir1\0", @"subdir2", @"test.txt")]
+        [DataRow(typeof(InvalidOperationException), @"C:\skyline dataminer\", "subdir1\"", @"subdir2", @"test.txt")]
         // case with invalid characters in filename
         [DataRow(typeof(InvalidOperationException), @"C:\skyline dataminer", @"subdir1", @"/test.txt")]
         [DataRow(typeof(InvalidOperationException), @"C:\skyline dataminer\", @"subdir1", @"<test.txt")]
         [DataRow(typeof(InvalidOperationException), @"C:\skyline dataminer\", @"subdir1", @">test.txt")]
         [DataRow(typeof(InvalidOperationException), @"C:\skyline dataminer\", @"subdir1", @"|test.txt")]
         [DataRow(typeof(InvalidOperationException), @"C:\skyline dataminer\", @"subdir1", "\0test.txt")]
+        [DataRow(typeof(InvalidOperationException), @"C:\skyline dataminer\", @"subdir1", "\"test.txt")]
         // case with directory traversal
         [DataRow(typeof(InvalidOperationException), @"C:\skyline dataminer\", @"subdir1", @"..", "test.txt")]
         [DataRow(typeof(InvalidOperationException), @"C:\skyline dataminer\", @"subdir1", @"C:\", "test.txt")]
