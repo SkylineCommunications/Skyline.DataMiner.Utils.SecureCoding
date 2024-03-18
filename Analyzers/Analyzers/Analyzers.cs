@@ -17,7 +17,7 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers
             {
                 // IO
                 new PathCombineAnalyzer(),
-                new FileOperationAnalyzer(),
+                //new FileOperationAnalyzer(),
 
                 // Serialization
                 new NewtonsoftDeserializationAnalyzer(),
@@ -35,7 +35,7 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers
         {
             foreach (var analyzer in analyzers)
             {
-                context.RegisterSyntaxNodeAction(analyzer.AnalyzeNode, SyntaxKind.InvocationExpression);
+                context.RegisterSyntaxNodeAction(analyzer.Analyze, SyntaxKind.InvocationExpression);
             }
         }
     }

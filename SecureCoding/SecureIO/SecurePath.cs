@@ -205,6 +205,7 @@
                 '\u001E', '\u001F', '\u0022', '\u002A', '\u003C', '\u003E', '\u003F', '\u007C'
             };
         }
+
         private static char[] GetInvalidFileNameChars()
         {         
             // This method replicates the behavior of Path.GetInvalidFileNameChars
