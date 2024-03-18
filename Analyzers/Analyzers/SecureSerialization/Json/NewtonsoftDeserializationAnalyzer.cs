@@ -18,7 +18,7 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.SecureSerialization.Jso
             isEnabledByDefault: true
          );
 
-        public override void AnalyzeNode(SyntaxNodeAnalysisContext context)
+        public override void Analyze(SyntaxNodeAnalysisContext context)
         {
             if (!(context.Node is InvocationExpressionSyntax node))
             {

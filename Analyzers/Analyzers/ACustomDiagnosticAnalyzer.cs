@@ -7,7 +7,7 @@
     {
         public abstract DiagnosticDescriptor Rule { get; }
 
-        public abstract void AnalyzeNode(SyntaxNodeAnalysisContext context);
+        public abstract void Analyze(SyntaxNodeAnalysisContext context);
 
         private protected string GetNamespaceFullname(INamespaceSymbol ns)
         {
