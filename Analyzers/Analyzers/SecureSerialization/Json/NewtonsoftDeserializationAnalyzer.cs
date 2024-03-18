@@ -5,14 +5,14 @@ using System;
 
 namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.SecureSerialization.Json
 {
-    internal class NewtonsoftDeserializationAnalyzer : ACustomDiagnosticAnalyzer
+    public class NewtonsoftDeserializationAnalyzer : ACustomDiagnosticAnalyzer
     {
         public const string DiagnosticId = "NewtonsoftDeserializationUsage";
 
         public override DiagnosticDescriptor Rule => new DiagnosticDescriptor(
             DiagnosticId,
-            "Avoid deserializing json strings directly.",
-            "Avoid deserializing json strings directly.\nConsider using SecureJsonDeserialization.DeserializeObject instead.",
+            "Avoid deserializing json strings by using Newtonsoft directly.",
+            "Avoid deserializing json strings by using Newtonsoft directly.\nConsider using SecureJsonDeserialization.DeserializeObject instead.",
             "Usage",
             DiagnosticSeverity.Warning,
             isEnabledByDefault: true
@@ -29,7 +29,6 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.SecureSerialization.Jso
             {
                 return;
             }
-
 
             context.ReportDiagnostic(
                 Diagnostic.Create(

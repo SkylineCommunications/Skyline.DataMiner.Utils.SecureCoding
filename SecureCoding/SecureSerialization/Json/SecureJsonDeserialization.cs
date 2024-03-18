@@ -58,7 +58,7 @@ namespace Skyline.DataMiner.Utils.SecureCoding.SecureSerialization.Json
             settings.TypeNameHandling = TypeNameHandling.None;
             settings.SerializationBinder = null;
 
-            return JsonConvert.DeserializeObject<T>(json, settings);
+            return JsonConvert.DeserializeObject<T>(json, settings); 
         }
 
         /// <summary>
