@@ -1,0 +1,33 @@
+﻿using Newtonsoft.Json;
+using System;
+
+namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.Tests.TestScenarios
+{
+    internal class JsonConvert
+    {
+        public object Deserialize<T>(string json)
+        {
+            return Newtonsoft.Json.JsonConvert.DeserializeObject(json);
+        }
+
+        public object DeserializeWithSettings<T>(string json)
+        {
+            return Newtonsoft.Json.JsonConvert.DeserializeObject(json, new JsonSerializerSettings { });
+        }
+
+        public object DeserializeWithOtherArguments<T>(string json)
+        {
+            return Newtonsoft.Json.JsonConvert.DeserializeObject(json, typeof(int), new JsonSerializerSettings { });
+        }
+
+        public object DeserializeGeneric(string json)
+        {
+            return Newtonsoft.Json.JsonConvert.DeserializeObject<int>(json);
+        }
+
+        public object DeserializeWithSettingsGeneric(string json)
+        {
+            return Newtonsoft.Json.JsonConvert.DeserializeObject<int>(json, new JsonSerializerSettings { });
+        }
+    }
+}

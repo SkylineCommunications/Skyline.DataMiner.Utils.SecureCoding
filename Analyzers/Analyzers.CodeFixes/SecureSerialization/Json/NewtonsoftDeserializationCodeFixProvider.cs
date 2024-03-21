@@ -22,10 +22,15 @@ namespace Skyline.DataMiner.Utils.SecureCoding.CodeFixProviders.SecureSerializat
     [ExportCodeFixProvider(LanguageNames.CSharp, Name = nameof(NewtonsoftDeserializationCodeFixProvider)), Shared]
     public class NewtonsoftDeserializationCodeFixProvider : CodeFixProvider
     {
+        private const string secureDeserializationNamespace = "Skyline.DataMiner.Utils.SecureCoding.SecureSerialization.Json";
+
         public override ImmutableArray<string> FixableDiagnosticIds
         {
             get { return ImmutableArray.Create(NewtonsoftDeserializationAnalyzer.DiagnosticId); }
         }
+
+        public static string SecureDeserializationFixEquivalenceKey = "SecureDeserializationFix";
+        public static string KnownTypesSecureDeserializationFixEquivalenceKey = "KnownTypesSecureDeserializationFix";
 
         public sealed override FixAllProvider GetFixAllProvider()
         {
@@ -43,13 +48,15 @@ namespace Skyline.DataMiner.Utils.SecureCoding.CodeFixProviders.SecureSerializat
             context.RegisterCodeFix(
                 CodeAction.Create(
                     title: "Replace by JsonConvert.DeserializeObject by SecureDeserialization.DeserializeObject",
-                    createChangedDocument: c => ReplaceDeserializeObject(context.Document, invocation, false, c)),
+                    createChangedDocument: c => ReplaceDeserializeObject(context.Document, invocation, false, c),
+                    SecureDeserializationFixEquivalenceKey),
                 diagnostic);
 
             context.RegisterCodeFix(
                 CodeAction.Create(
                     title: "Replace by SecureDeserialization.DeserializeObject with a list of known types",
-                    createChangedDocument: c => ReplaceDeserializeObject(context.Document, invocation, true, c)),
+                    createChangedDocument: c => ReplaceDeserializeObject(context.Document, invocation, true, c),
+                    KnownTypesSecureDeserializationFixEquivalenceKey),
                 diagnostic);
         }
 
@@ -57,9 +64,10 @@ namespace Skyline.DataMiner.Utils.SecureCoding.CodeFixProviders.SecureSerializat
         {
             SyntaxNode root = await document.GetSyntaxRootAsync(cancellationToken).ConfigureAwait(false);
             InvocationExpressionSyntax newInvocation = await GetNewDeserializeObjectInvocation(document, invocation, withKnoownTypesList, cancellationToken);
-            SyntaxNode newRoot = root.ReplaceNode(invocation, newInvocation.WithTriviaFrom(invocation)); // Keep original form
-            Document newDocument = document.WithSyntaxRoot(newRoot);
-
+            SyntaxNode codeFixRoot = root.ReplaceNode(invocation, newInvocation.WithTriviaFrom(invocation)); // Keep original form
+            codeFixRoot = AddUsingDirectiveIfNecessary(codeFixRoot);
+     
+            Document newDocument = document.WithSyntaxRoot(codeFixRoot);
             return newDocument;
         }
 
@@ -101,12 +109,28 @@ namespace Skyline.DataMiner.Utils.SecureCoding.CodeFixProviders.SecureSerializat
             var methodSymbol = model.GetSymbolInfo(invocation).Symbol as IMethodSymbol;
             if (methodSymbol != null && methodSymbol.TypeArguments.Length > 0)
             {
-                genericType = methodSymbol.TypeArguments.First().Name;
+                genericType = methodSymbol.TypeArguments.First().ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat);
             }
 
             return invocation
-                .WithExpression(SyntaxFactory.ParseExpression($"Skyline.DataMiner.Utils.SecureCoding.SecureSerialization.Json.SecureJsonDeserialization.DeserializeObject<{genericType}>"))
+                .WithExpression(SyntaxFactory.ParseExpression($"SecureJsonDeserialization.DeserializeObject<{genericType}>"))
                 .WithArgumentList(arguments);
+        }
+
+        private SyntaxNode AddUsingDirectiveIfNecessary(SyntaxNode root)
+        {
+            CompilationUnitSyntax newRoot = root as CompilationUnitSyntax;
+            if(newRoot != null && !newRoot.Usings.Any(u => u.Name.ToString() == secureDeserializationNamespace))
+            {
+                newRoot = newRoot.AddUsings(SyntaxFactory.UsingDirective(SyntaxFactory.ParseName(secureDeserializationNamespace)));
+            }
+
+            if(newRoot != null && !newRoot.Usings.Any(u => u.Name.ToString() == "System.Collections.Generic")) 
+            {
+                newRoot = newRoot.AddUsings(SyntaxFactory.UsingDirective(SyntaxFactory.ParseName("System.Collections.Generic")));
+            }
+
+            return newRoot;
         }
 
         private string GetNamespaceFullname(INamespaceSymbol ns)
