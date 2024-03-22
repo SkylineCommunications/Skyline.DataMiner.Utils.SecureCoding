@@ -3,6 +3,8 @@ using Microsoft.CodeAnalysis;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Threading.Tasks;
 using Skyline.DataMiner.Utils.SecureCoding.Analyzers.SecureIO;
+using System.Linq;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace Analyzers.Test
 {
@@ -18,23 +20,38 @@ namespace Analyzers.Test
 
                 class Program
                 {
-                    static void Main()
+                    static void Main(string arg1, string arg2, int arg3, string argtest, Holder holder)
                     {
 
                         var windowsPath = ""C:\\Windows"";
 
-                        var holder = new Holder(windowsPath);
+                        holder._path = SecurePath.ConstructSecurePath();
                         File.WriteAllText(holder.Path, """");
 
-                        string securePath = holder.GetPath(windowsPath);
-                        File.WriteAllText(securePath, """");
+                        string securePath = holder.GetPath(windowsPath);                        
+                        securePath = ""C:\\Windows"";                        
+                        securePath = ""C:\\Windows"";
+                        securePath = ""C:\\Windows"";
+                        securePath = ""C:\\Windows"";
+
+                        argtest = ""TESTING"";
+                        File.WriteAllText(argtest, """");
 
                         var securePath2 = SecurePath.ConstructSecurePath(windowsPath);
                         File.WriteAllText(securePath2, """");
 
 
+                        var testPath = ""C:\\Skyline DataMiner\\Test"";
+                        File.WriteAllText(testPath, """");
+
                         var randomPath = ""C:\\Skyline DataMiner\\Test"";
-                        File.WriteAllText(randomPath, """");
+                        File.WriteAllText(randomPath, """");                        
+
+                        File.WriteAllText(arg2, arg3);
+
+
+            
+
 
                         Path.Combine(""1"", ""2\\"");
 
@@ -45,6 +62,8 @@ namespace Analyzers.Test
 
                     public class Holder
                     {
+                        public string _path;
+
                         public Holder(string path)
                         {
                             this.Path = path;
@@ -58,9 +77,18 @@ namespace Analyzers.Test
                     }
                 }";
 
-            SyntaxTree tree = CSharpSyntaxTree.ParseText(code);
-            SyntaxNode root = tree.GetRoot();
-            //FileOperationAnalyzer.Analyze(root);
+            var tree = CSharpSyntaxTree.ParseText(code);
+
+            var compilation = CSharpCompilation.Create("MyCompilation", syntaxTrees: new[] { tree });
+
+            var model = compilation.GetSemanticModel(tree);
+
+            var control = model.AnalyzeControlFlow(tree.GetRoot().DescendantNodesAndSelf().OfType<BlockSyntax>().First());
+
+
+            var analysis = model.AnalyzeDataFlow(tree.GetRoot().DescendantNodesAndSelf().OfType<BlockSyntax>().First());
+
+
         }
     }
 }
