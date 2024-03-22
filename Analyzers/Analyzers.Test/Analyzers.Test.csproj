@@ -26,8 +26,4 @@
     <ProjectReference Include="..\Analyzers\Analyzers.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="SecureSerialization\Json\TestScenarios\NoDiagnosticsExpected\" />
-  </ItemGroup>
-
 </Project>
