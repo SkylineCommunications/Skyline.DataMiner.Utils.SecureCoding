@@ -2,8 +2,6 @@
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
-using Skyline.DataMiner.Utils.SecureCoding;
-using System.Collections.Immutable;
 
 namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.SecureIO
 {
