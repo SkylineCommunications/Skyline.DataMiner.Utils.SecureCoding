@@ -19,8 +19,4 @@
     <EmbeddedResource Update="CodeFixResources.resx" Generator="ResXFileCodeGenerator" LastGenOutput="CodeFixResources.Designer.cs" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="SecureSerialization\" />
-  </ItemGroup>
-
 </Project>
