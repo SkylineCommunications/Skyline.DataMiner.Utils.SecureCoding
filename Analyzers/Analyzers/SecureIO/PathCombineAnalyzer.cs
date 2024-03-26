@@ -2,16 +2,17 @@
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
+using System.Collections.Immutable;
 
 namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.SecureIO
 {
     [DiagnosticAnalyzer(LanguageNames.CSharp)]
-    public class PathCombineAnalyzer : ACustomDiagnosticAnalyzer
+    public class PathCombineAnalyzer : DiagnosticAnalyzer
     {
         public const string DiagnosticId = "PathCombineUsage";
         private const string Category = "Usage";
 
-        public override DiagnosticDescriptor Rule => new DiagnosticDescriptor(
+        public static DiagnosticDescriptor Rule => new DiagnosticDescriptor(
             DiagnosticId,
             title: "Avoid using 'System.IO.Path.Combine'",
             messageFormat: "Consider using 'SecureIO.ConstructSecurePath' instead of 'System.IO.Path.Combine'",
@@ -19,7 +20,18 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.SecureIO
             DiagnosticSeverity.Warning,
             isEnabledByDefault: true);
 
-        public override void Analyze(SyntaxNodeAnalysisContext context)
+        public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get { return ImmutableArray.Create(Rule); } }
+
+        public override void Initialize(AnalysisContext context)
+        {
+            context.ConfigureGeneratedCodeAnalysis(GeneratedCodeAnalysisFlags.None);
+
+            context.EnableConcurrentExecution();
+
+            context.RegisterSyntaxNodeAction(AnalyzeUsages, SyntaxKind.InvocationExpression);
+        }
+
+        public static void AnalyzeUsages(SyntaxNodeAnalysisContext context)
         {
             var invocationExpression = context.Node as InvocationExpressionSyntax;
             if (invocationExpression == null)

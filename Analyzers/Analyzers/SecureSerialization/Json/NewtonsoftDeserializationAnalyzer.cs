@@ -1,15 +1,17 @@
 ﻿using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
-using System;
+using System.Collections.Immutable;
 
 namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.SecureSerialization.Json
 {
-    public class NewtonsoftDeserializationAnalyzer : ACustomDiagnosticAnalyzer
+    [DiagnosticAnalyzer(LanguageNames.CSharp)]
+    public class NewtonsoftDeserializationAnalyzer : DiagnosticAnalyzer
     {
         public const string DiagnosticId = "NewtonsoftDeserializationUsage";
 
-        public override DiagnosticDescriptor Rule => new DiagnosticDescriptor(
+        public static DiagnosticDescriptor Rule => new DiagnosticDescriptor(
             DiagnosticId,
             "Avoid deserializing json strings by using Newtonsoft directly.",
             "Avoid deserializing json strings by using Newtonsoft directly.\nConsider using SecureJsonDeserialization.DeserializeObject instead.",
@@ -18,7 +20,18 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.SecureSerialization.Jso
             isEnabledByDefault: true
          );
 
-        public override void Analyze(SyntaxNodeAnalysisContext context)
+        public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get { return ImmutableArray.Create(Rule); } }
+
+        public override void Initialize(AnalysisContext context)
+        {
+            context.ConfigureGeneratedCodeAnalysis(GeneratedCodeAnalysisFlags.None);
+
+            context.EnableConcurrentExecution();
+
+            context.RegisterSyntaxNodeAction(Analyze, SyntaxKind.InvocationExpression);
+        }
+
+        public static void Analyze(SyntaxNodeAnalysisContext context)
         {
             if (!(context.Node is InvocationExpressionSyntax node))
             {
@@ -38,7 +51,7 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.SecureSerialization.Jso
             );
         }
 
-        private bool IsJsonConvertDeserialization(InvocationExpressionSyntax node, SyntaxNodeAnalysisContext context)
+        private static bool IsJsonConvertDeserialization(InvocationExpressionSyntax node, SyntaxNodeAnalysisContext context)
         {
             if (!(node.Expression is MemberAccessExpressionSyntax deserializeObjectAccess))
             {
