@@ -2,11 +2,14 @@
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
+using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.IO;
 using System.Linq;
+using System.Xml.Linq;
 
-namespace PropertyAnalyzer
+namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.SecureIO
 {
     [DiagnosticAnalyzer(LanguageNames.CSharp)]
     public class FileOperationAnalyzer : DiagnosticAnalyzer
@@ -14,7 +17,14 @@ namespace PropertyAnalyzer
         public const string DiagnosticId = "FileOperationUsage";
         private const string Category = "Usage";
 
+        private static List<string> receiverTypes = new List<string>
+        {
+            "System.IO.File",
+            "System.IO.StreamWritter",
+        };
+
         private const string METHOD_COSTRUCTSECUREPATH = "SecurePath.ConstructSecurePath";
+        private const string METHOD_ISPATHVALID = "SecurePath.IsPathValid";
 
         private static readonly DiagnosticDescriptor Rule = new DiagnosticDescriptor(
             DiagnosticId,
@@ -38,112 +48,209 @@ namespace PropertyAnalyzer
         private static void AnalyzeFileOperationUsages(CodeBlockAnalysisContext context)
         {
             var descendantNodes = context.CodeBlock.DescendantNodes(descendIntoChildren: node => node.ChildNodes().Any());
-
             var invocations = descendantNodes.OfType<InvocationExpressionSyntax>();
+            var objectCreations = descendantNodes.OfType<ObjectCreationExpressionSyntax>();
+            var variableDeclarators = descendantNodes.OfType<VariableDeclaratorSyntax>();
 
-            var isPathValidArguments = invocations
-                .Where(invocation => IsPathValidMethod(context, invocation))
-                .Select(isPathValidInvocation => isPathValidInvocation.ArgumentList.Arguments[0])
-                .Distinct();
+            var fileOperationsPathArguments = new List<ArgumentSyntax>();
+            var secureMethodsLocations = new List<Location>();
 
-            var pathArguments = invocations
-                .Where(invocation => IsFileOperationMethod(context, invocation))
-                .Select(fileOperationInvocation => fileOperationInvocation.ArgumentList.Arguments[0])
-                .Distinct();
-
-            var variableDeclarators = descendantNodes.OfType<VariableDeclaratorSyntax>()
-                .Where(variableDeclarator => variableDeclarator != null);
-
-            var assigments = descendantNodes.OfType<AssignmentExpressionSyntax>()
-                .Where(assignment => assignment != null);
-
-            foreach (var pathArgument in pathArguments)
+            foreach (var invocation in invocations)
             {
-                var pathArgumentName = pathArgument.Expression.ToString();
-
-                var pathArgumentLocation = pathArgument.GetLocation();
-
-                var matchingAssignments = assigments
-                    .Where(assignment => pathArgumentName == GetAssignmentName(assignment))
-                    .Distinct();
-
-                foreach (var assignment in matchingAssignments)
+                if (invocation == null || invocation.ArgumentList?.Arguments.Count < 1)
                 {
-                    var assignmentLocation = assignment.GetLocation();
+                    continue;
+                }
 
-                    if (isPathValidArguments.Any(methodArgument =>
-                        IsBetweenLocations(methodArgument.GetLocation(), assignmentLocation, pathArgumentLocation))
-                        || assignment.Right.ToString().Contains(METHOD_COSTRUCTSECUREPATH))
+                var methodSymbol = context.SemanticModel.GetSymbolInfo(invocation).Symbol as IMethodSymbol;
+                if (methodSymbol == null)
+                {
+                    continue;
+                }
+
+                if (!methodSymbol.Name.Contains("Read") && !methodSymbol.Name.Contains("Write"))
+                {
+                    continue;
+                }
+
+                var pathArgument = invocation.ArgumentList.Arguments[0];
+
+                var receiverType = methodSymbol.ReceiverType.ToDisplayString();
+
+                switch (receiverType)
+                {
+                    case "System.IO.File":
+                        fileOperationsPathArguments.Add(pathArgument);
+                        break;
+
+                    case "System.IO.StreamWritter":
+                        if (invocation.Expression is MemberAccessExpressionSyntax memberAccess)
+                        {
+                            var variableDeclaratorMatchingMemberAccess = variableDeclarators
+                                .FirstOrDefault(variableDeclarator => variableDeclarator.Identifier.ToString() == memberAccess.Expression.ToString());
+
+                            if (variableDeclaratorMatchingMemberAccess != null
+                                && variableDeclaratorMatchingMemberAccess.Initializer.Value.ToString().Contains(pathArgument.Expression.ToString()))
+                            {
+
+                            }
+
+
+
+
+                        }
+                        break;
+
+                    default:
+                        continue;
+                }
+
+
+
+
+
+
+                if (IsPathValidMethod(context, invocation)
+                    || IsConstructSecurePathMethod(context, invocation))
+                {
+                    secureMethodsLocations.Add(invocation.GetLocation());
+                }
+            }
+
+            var locationsToAnalyze = GetLocationsToAnalyze(context, descendantNodes, fileOperationsPathArguments);
+
+            AnalyzeLocations(context, fileOperationsPathArguments, secureMethodsLocations, locationsToAnalyze);
+        }
+
+        private static void AnalyzeLocations(
+            CodeBlockAnalysisContext context,
+            List<ArgumentSyntax> fileOperationsPathArguments,
+            List<Location> secureMethodsLocations,
+            List<LocationToAnalyze> locationsToAnalyze)
+        {
+            var reportedLocations = new HashSet<Location>();
+
+            foreach (var locationToAnalyze in locationsToAnalyze)
+            {
+                // Get the next file operations with the same path argument name
+                var nextFileOperationArgument = fileOperationsPathArguments
+                    .Find(pathArgument =>
+                        pathArgument.Expression.ToString() == locationToAnalyze.PathArgumentName
+                        && pathArgument.GetLocation().IsPosteriorLocation(locationToAnalyze.Location));
+
+                var nextFileOperationArgumentLocation = nextFileOperationArgument.GetLocation();
+
+                // Flag if there is no IsPathValid or ConstructSecurePath methods between the assignment and the file operation
+                if (!secureMethodsLocations.Exists(methodLocation => methodLocation.IsBetweenLocations(locationToAnalyze.Location, nextFileOperationArgumentLocation)))
+                {
+                    if (reportedLocations.Contains(nextFileOperationArgumentLocation))
                     {
                         continue;
                     }
 
-                    context.ReportDiagnostic(Diagnostic.Create(Rule, pathArgumentLocation, assignmentLocation.GetLineSpan().StartLinePosition.ToString()));
+                    reportedLocations.Add(nextFileOperationArgumentLocation);
+
+                    context.ReportDiagnostic(Diagnostic.Create(Rule, nextFileOperationArgumentLocation, nextFileOperationArgument.Expression.ToString()));
                 }
+            }
+        }
 
-                // In case there's no assignments => check the variable declaration
-                var matchingVariableDeclarator = variableDeclarators
-                    .FirstOrDefault(variableDeclarator => variableDeclarator?.Identifier.Text == pathArgumentName);
+        private static List<LocationToAnalyze> GetLocationsToAnalyze(
+            CodeBlockAnalysisContext context,
+            IEnumerable<SyntaxNode> descendantNodes,
+            List<ArgumentSyntax> fileOperationsPathArguments)
+        {
+            var assignments = descendantNodes.OfType<AssignmentExpressionSyntax>();
 
-                if (matchingVariableDeclarator != null
-                    && !matchingVariableDeclarator.Initializer.ToString().Contains(METHOD_COSTRUCTSECUREPATH))
+            var variableDeclarators = descendantNodes.OfType<VariableDeclaratorSyntax>();
+
+            var inputParameters = context.CodeBlock
+                .FirstAncestorOrSelf<MethodDeclarationSyntax>().ParameterList
+                .ChildNodes()
+                .OfType<ParameterSyntax>();
+
+            var locationsToAnalyze = new List<LocationToAnalyze>();
+
+            foreach (var pathArgument in fileOperationsPathArguments)
+            {
+                var hasLocationToAnalyze = false;
+
+                var pathArgumentName = pathArgument.Expression.ToString();
+
+                // Assignments Locations
+                var assignmentsLocations = assignments
+                    .Where(assignment => assignment != null
+                        && assignment.GetAssignmentName() == pathArgumentName
+                        && !assignment.Right.ToString().Contains(METHOD_COSTRUCTSECUREPATH))
+                    .Select(assignment => new LocationToAnalyze(assignment.GetLocation(), pathArgumentName));
+
+                if (assignmentsLocations.Any())
                 {
-                    context.ReportDiagnostic(Diagnostic.Create(Rule, pathArgumentLocation, pathArgumentName));
+                    locationsToAnalyze.AddRange(assignmentsLocations);
+
+                    hasLocationToAnalyze = true;
+                }
+
+                // VariableDeclarators Locations
+                var variableDeclaratorsLocations = variableDeclarators
+                    .Where(variableDeclarator => variableDeclarator != null
+                        && (variableDeclarator.Identifier.Text == pathArgumentName || variableDeclarator.Initializer.ToString().Contains(pathArgumentName))
+                        && !variableDeclarator.Initializer.ToString().Contains(METHOD_COSTRUCTSECUREPATH))
+                    .Select(variableDeclarator => new LocationToAnalyze(variableDeclarator.GetLocation(), pathArgumentName));
+
+                if (variableDeclaratorsLocations.Any())
+                {
+                    locationsToAnalyze.AddRange(variableDeclaratorsLocations);
+
+                    hasLocationToAnalyze = true;
+                }
+
+                // Method Arguments
+                var methodArgumentsLocations = inputParameters
+                    .Where(inputArgument => inputArgument != null
+                        && inputArgument.Identifier.ToString() == pathArgumentName)
+                    .Select(inputArgument => new LocationToAnalyze(inputArgument.GetLocation(), pathArgumentName));
+
+                if (methodArgumentsLocations.Any())
+                {
+                    locationsToAnalyze.AddRange(methodArgumentsLocations);
+
+                    hasLocationToAnalyze = true;
+                }
+
+                // Other scenarios, such as foreachs
+                if (!hasLocationToAnalyze)
+                {
+                    locationsToAnalyze.Add(new LocationToAnalyze(descendantNodes.First().GetLocation(), pathArgumentName));
                 }
             }
+
+            return locationsToAnalyze;
         }
 
-        private static string GetAssignmentName(AssignmentExpressionSyntax assignment)
+        private static bool IsFileOperationMethod(
+            CodeBlockAnalysisContext context,
+            InvocationExpressionSyntax invocation)
         {
-            // Regular case => Variables/Properties assignments
-            if (!assignment.Parent.IsKind(SyntaxKind.ObjectInitializerExpression))
+            if (invocation?.ArgumentList?.Arguments.Count < 1)
             {
-                return assignment.Left.ToString();
+
+                return false;
             }
 
-            // Special case => Object Initializations
-            var ancestorVariableDeclarator = assignment
-                .FirstAncestorOrSelf<VariableDeclaratorSyntax>(ascendOutOfTrivia: true);
-
-            if (ancestorVariableDeclarator != null)
-            {
-                return $"{ancestorVariableDeclarator.Identifier}.{assignment.Left}";
-            }
-
-            // Regular case => Variables/Properties assignments
-            return assignment.Left.ToString();
-        }
-
-        private static bool IsPosteriorLocation(Location location, Location otherLocation)
-        {
-            // Check if location comes after other location
-            return location.SourceSpan.Start > otherLocation.SourceSpan.End;
-        }
-
-        public static bool IsBetweenLocations(Location location, Location start, Location end)
-        {
-            // Check if the location is between start and end
-            return location.SourceSpan.Start >= start.SourceSpan.Start &&
-                   location.SourceSpan.End <= end.SourceSpan.End;
-        }
-
-        private static bool IsFileOperationMethod(CodeBlockAnalysisContext context, InvocationExpressionSyntax invocationExpression)
-        {
-            if (invocationExpression?.ArgumentList?.Arguments.Count < 1)
+            var methodSymbol = context.SemanticModel.GetSymbolInfo(invocation).Symbol as IMethodSymbol;
+            if (methodSymbol == null)
             {
                 return false;
             }
 
-            var methodSymbol = context.SemanticModel.GetSymbolInfo(invocationExpression).Symbol as IMethodSymbol;
+            var receiverType = methodSymbol.ReceiverType.ToDisplayString();
 
-            if (methodSymbol != null
-                && methodSymbol.ContainingNamespace?.ToDisplayString() == "System.IO"
-                && methodSymbol.ContainingType?.Name == "File")
-            {
-                return true;
-            }
+            var isFileOperationMethod = receiverTypes.Contains(receiverType);
 
-            return false;
+            var isReadWriteOperation = methodSymbol.Name.Contains("Read") || methodSymbol.Name.Contains("Write");
+
+            return isFileOperationMethod && isReadWriteOperation;
         }
 
         private static bool IsPathValidMethod(CodeBlockAnalysisContext context, InvocationExpressionSyntax invocationExpression)
@@ -163,6 +270,39 @@ namespace PropertyAnalyzer
             }
 
             return false;
+        }
+
+        private static bool IsConstructSecurePathMethod(CodeBlockAnalysisContext context, InvocationExpressionSyntax invocationExpression)
+        {
+            if (invocationExpression?.ArgumentList?.Arguments.Count < 1)
+            {
+                return false;
+            }
+
+            var methodSymbol = context.SemanticModel.GetSymbolInfo(invocationExpression).Symbol as IMethodSymbol;
+
+            if (methodSymbol != null
+                && methodSymbol.ContainingType?.Name == "SecurePath"
+                && methodSymbol.Name == "ConstructSecurePath")
+            {
+                return true;
+            }
+
+            return false;
+        }
+
+        private sealed class LocationToAnalyze
+        {
+            public LocationToAnalyze(Location location, string pathArgumentName)
+            {
+                this.Location = location;
+
+                this.PathArgumentName = pathArgumentName;
+            }
+
+            public string PathArgumentName { get; }
+
+            public Location Location { get; }
         }
     }
 }
