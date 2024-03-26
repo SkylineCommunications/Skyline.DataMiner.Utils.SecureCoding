@@ -3,9 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using Newtonsoft.Json.Serialization;
+using SecureCoding.SecureSerialization;
+using Skyline.DataMiner.Utils.SecureCoding.SecureSerialization.Json;
 
 [assembly: InternalsVisibleTo("Skyline.DataMiner.Utils.SecureCoding.Analyzers.Tests")]
-namespace Skyline.DataMiner.Utils.SecureCoding.SecureSerialization.Json
+namespace Skyline.DataMiner.Utils.SecureCoding.SecureSerialization.Json.Newtonsoft
 {
     internal class KnownTypesSerializationBinder : ISerializationBinder
     {
@@ -22,7 +24,7 @@ namespace Skyline.DataMiner.Utils.SecureCoding.SecureSerialization.Json
             fullTypeNameToType = new Dictionary<string, Type>();
             foreach (Type knownType in knownTypes)
             {
-                if (IsExploitableType(knownType))
+                if (knownType.IsKnownExploitableType())
                 {
                     throw new KnownExploitableTypeException($"{knownType.AssemblyQualifiedName}.{knownType.FullName} is a known exploitable type, it is not secure to deserialize this type.");
                 }
@@ -45,41 +47,5 @@ namespace Skyline.DataMiner.Utils.SecureCoding.SecureSerialization.Json
             assemblyName = serializedType.AssemblyQualifiedName;
             typeName = serializedType.FullName;
         }
-
-        private static bool IsExploitableType(Type type)
-        {
-            return knownExploitableTypes.Exists(t => type.FullName.Contains(t));
-        }
-
-        private static readonly List<string> knownExploitableTypes = new List<string>
-        {
-            "ActivitySurrogateDisableTypeCheck",
-            "TypeConfuseDelegateGenerator",
-            "ActivitySurrogateSelector",
-            "ActivitySurrogateSelectorFromFile",
-            "AxHostState",
-            "ClaimsIdentity",
-            "ClaimsPrincipal",
-            "System.Data.DataSet",
-            "DataSetOldBehaviour",
-            "DataSetOldBehaviourFromFile",
-            "DataSetTypeSpoof",
-            "GenericPrincipal",
-            "ObjectDataProvider",
-            "ObjRef",
-            "PSObject",
-            "ResourceSet",
-            "RolePrincipal",
-            "SessionSecurityToken",
-            "SessionViewStateHistoryItem",
-            "TextFormattingRunProperties",
-            "ToolboxItemContainer",
-            "TypeConfuseDelegate",
-            "TypeConfuseDelegateMono",
-            "WindowsClaimsIdentity",
-            "WindowsIdentity",
-            "WindowsPrincipal",
-            "XamlAssemblyLoadFromFile"
-        };
     }
 }

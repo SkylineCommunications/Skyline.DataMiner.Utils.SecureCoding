@@ -56,8 +56,8 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.SecureSerialization.Jso
                 return false;
             }
 
-            string namespaceFullname = GetNamespaceFullname(jsonConvertSymbol.ContainingNamespace);
-            if (namespaceFullname == null || namespaceFullname != "Newtonsoft.Json")
+            string namespaceFullname = jsonConvertSymbol.ContainingNamespace.GetNamespaceFullname();
+            if (string.IsNullOrWhiteSpace(namespaceFullname) || namespaceFullname != "Newtonsoft.Json")
             {
                 return false;
             }
