@@ -37,8 +37,8 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.Tests
                 BuildDiagnosticResult(30, 20),
             };
 
-            CSharpCodeFixTest<Analyzers, NewtonsoftDeserializationCodeFixProvider, MSTestVerifier> analyzerFix
-                = new CSharpCodeFixTest<Analyzers, NewtonsoftDeserializationCodeFixProvider, MSTestVerifier>()
+            CSharpCodeFixTest<NewtonsoftDeserializationAnalyzer, NewtonsoftDeserializationCodeFixProvider, MSTestVerifier> analyzerFix
+                = new CSharpCodeFixTest<NewtonsoftDeserializationAnalyzer, NewtonsoftDeserializationCodeFixProvider, MSTestVerifier>()
                 {
                     TestState =
                     {
@@ -87,8 +87,8 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.Tests
                 BuildDiagnosticResult(30, 20),
             };
 
-            CSharpCodeFixTest<Analyzers, NewtonsoftDeserializationCodeFixProvider, MSTestVerifier> analyzerFix
-                = new CSharpCodeFixTest<Analyzers, NewtonsoftDeserializationCodeFixProvider, MSTestVerifier>()
+            CSharpCodeFixTest<NewtonsoftDeserializationAnalyzer, NewtonsoftDeserializationCodeFixProvider, MSTestVerifier> analyzerFix
+                = new CSharpCodeFixTest<NewtonsoftDeserializationAnalyzer, NewtonsoftDeserializationCodeFixProvider, MSTestVerifier>()
                 {
                     TestState =
                     {
