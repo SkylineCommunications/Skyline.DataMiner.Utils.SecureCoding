@@ -35,7 +35,7 @@ namespace Analyzers.SecureSerialization.Json
             context.EnableConcurrentExecution();
 
             context.RegisterSyntaxNodeAction(AnalyzeInvoccationExpression, SyntaxKind.InvocationExpression);
-            //context.RegisterSyntaxNodeAction(AnalyzeObjectCreationExpression, SyntaxKind.ObjectCreationExpression);
+            context.RegisterSyntaxNodeAction(AnalyzeObjectCreationExpression, SyntaxKind.ObjectCreationExpression);
         }
 
         public void AnalyzeInvoccationExpression(SyntaxNodeAnalysisContext context)
@@ -66,8 +66,8 @@ namespace Analyzers.SecureSerialization.Json
                 return;
             }
 
-            ITypeSymbol javaScriptSerializerSymbol = context.SemanticModel.GetSymbolInfo(node).Symbol as ITypeSymbol;
-            if (javaScriptSerializerSymbol == null || javaScriptSerializerSymbol.Name != "JavaScriptSerializer")
+            ISymbol javaScriptSerializerSymbol = context.SemanticModel.GetSymbolInfo(node).Symbol;
+            if (javaScriptSerializerSymbol == null  || node.Type.ToString() != "JavaScriptSerializer")
             {
                 return;
             }
@@ -90,16 +90,16 @@ namespace Analyzers.SecureSerialization.Json
         {
             if (!(node.Expression is MemberAccessExpressionSyntax deserializeAccess))
             {
-                return true;
+                return false;
             }
 
             string invokedMethod = deserializeAccess.Name.Identifier.Text;
-            if (string.IsNullOrWhiteSpace(invokedMethod) || !invokedMethod.StartsWith("Serialize") || !invokedMethod.StartsWith("Deserialize"))
+            if (string.IsNullOrWhiteSpace(invokedMethod) || (!invokedMethod.Contains("Serialize") && !invokedMethod.Contains("Deserialize")) )
             {
-                return true;
+                return false;
             }
 
-            ISymbol javaScriptSerializerSymbol = context.SemanticModel.GetSymbolInfo(deserializeAccess.Expression).Symbol;
+            ISymbol javaScriptSerializerSymbol = context.SemanticModel.GetSymbolInfo(deserializeAccess).Symbol;
             if (javaScriptSerializerSymbol == null)
             {
                 return false;
