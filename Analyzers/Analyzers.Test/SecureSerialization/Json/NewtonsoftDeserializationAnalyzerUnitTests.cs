@@ -1,7 +1,6 @@
 ﻿using Microsoft.CodeAnalysis.CSharp.Testing;
 using Microsoft.CodeAnalysis.Testing.Verifiers;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Skyline.DataMiner.Utils.SecureCoding.SecureSerialization.Json;
 using Skyline.DataMiner.Utils.SecureCoding.CodeFixProviders.SecureSerialization.Json;
 using Skyline.DataMiner.Utils.SecureCoding.Analyzers.SecureSerialization.Json;
 using System.IO;
@@ -10,6 +9,7 @@ using System.Threading.Tasks;
 using System.Collections.Immutable;
 using System.Collections.Generic;
 using Microsoft.CodeAnalysis;
+using Skyline.DataMiner.Utils.SecureCoding.SecureSerialization.Json.Newtonsoft;
 
 namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.Tests
 {
@@ -62,7 +62,7 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.Tests
                         .AddPackages(packages)
                     }
                 };
-            analyzerFix.FixedState.AdditionalReferences.Add(typeof(SecureJsonDeserialization).Assembly);
+            analyzerFix.FixedState.AdditionalReferences.Add(typeof(SecureNewtonsoftDeserialization).Assembly);
             analyzerFix.CodeActionEquivalenceKey = NewtonsoftDeserializationCodeFixProvider.SecureDeserializationFixEquivalenceKey;
             analyzerFix.NumberOfFixAllIterations = 2;
             analyzerFix.TestState.ExpectedDiagnostics.AddRange(expectedDiagnostics);
@@ -112,7 +112,7 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.Tests
                         .AddPackages(packages)
                     }
                 };
-            analyzerFix.FixedState.AdditionalReferences.Add(typeof(SecureJsonDeserialization).Assembly);
+            analyzerFix.FixedState.AdditionalReferences.Add(typeof(SecureNewtonsoftDeserialization).Assembly);
             analyzerFix.CodeActionEquivalenceKey = NewtonsoftDeserializationCodeFixProvider.KnownTypesSecureDeserializationFixEquivalenceKey;
             analyzerFix.NumberOfFixAllIterations = 2;
             analyzerFix.TestState.ExpectedDiagnostics.AddRange(expectedDiagnostics);
@@ -120,7 +120,7 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.Tests
             await analyzerFix.RunAsync();
         }
 
-        private DiagnosticResult BuildDiagnosticResult(int line, int column)
+        private static DiagnosticResult BuildDiagnosticResult(int line, int column)
         {
             return new DiagnosticResult(
                 new DiagnosticDescriptor(

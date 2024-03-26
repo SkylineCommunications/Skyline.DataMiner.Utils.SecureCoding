@@ -1,6 +1,6 @@
 using Newtonsoft.Json;
 using System;
-using Skyline.DataMiner.Utils.SecureCoding.SecureSerialization.Json;
+using Skyline.DataMiner.Utils.SecureCoding.SecureSerialization.Json.Newtonsoft;
 using System.Collections.Generic;
 
 namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.Tests.TestScenarios
@@ -9,27 +9,27 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.Tests.TestScenarios
     {
         public object Deserialize<T>(string json)
         {
-            return SecureJsonDeserialization.DeserializeObject<T>(json, new List<Type>() {});
+            return SecureNewtonsoftDeserialization.DeserializeObject<T>(json, new List<Type>() {});
         }
 
         public object DeserializeWithSettings<T>(string json)
         {
-            return SecureJsonDeserialization.DeserializeObject<T>(json, new List<Type>() {}, new JsonSerializerSettings { });
+            return SecureNewtonsoftDeserialization.DeserializeObject<T>(json, new List<Type>() {}, new JsonSerializerSettings { });
         }
 
         public object DeserializeWithOtherArguments<T>(string json)
         {
-            return SecureJsonDeserialization.DeserializeObject<T>(json, new List<Type>() {}, new JsonSerializerSettings { });
+            return SecureNewtonsoftDeserialization.DeserializeObject<T>(json, new List<Type>() {}, new JsonSerializerSettings { });
         }
 
         public object DeserializeGeneric(string json)
         {
-            return SecureJsonDeserialization.DeserializeObject<int>(json, new List<Type>() {});
+            return SecureNewtonsoftDeserialization.DeserializeObject<int>(json, new List<Type>() {});
         }
 
         public object DeserializeWithSettingsGeneric(string json)
         {
-            return SecureJsonDeserialization.DeserializeObject<int>(json, new List<Type>() {}, new JsonSerializerSettings { });
+            return SecureNewtonsoftDeserialization.DeserializeObject<int>(json, new List<Type>() {}, new JsonSerializerSettings { });
         }
     }
 }
