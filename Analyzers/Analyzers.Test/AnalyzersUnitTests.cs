@@ -79,6 +79,8 @@ namespace Analyzers.Test
 
             var tree = CSharpSyntaxTree.ParseText(code);
 
+            var root = tree.GetRoot().DescendantNodes(descendIntoChildren: node => node.ChildNodes().Any()).OfType<ArgumentSyntax>();
+
             var compilation = CSharpCompilation.Create("MyCompilation", syntaxTrees: new[] { tree });
 
             var model = compilation.GetSemanticModel(tree);
