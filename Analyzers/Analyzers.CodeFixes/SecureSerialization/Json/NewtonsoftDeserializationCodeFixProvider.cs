@@ -22,15 +22,15 @@ namespace Skyline.DataMiner.Utils.SecureCoding.CodeFixProviders.SecureSerializat
     [ExportCodeFixProvider(LanguageNames.CSharp, Name = nameof(NewtonsoftDeserializationCodeFixProvider)), Shared]
     public class NewtonsoftDeserializationCodeFixProvider : CodeFixProvider
     {
-        private const string secureDeserializationNamespace = "Skyline.DataMiner.Utils.SecureCoding.SecureSerialization.Json";
+        private const string secureDeserializationNamespace = "Skyline.DataMiner.Utils.SecureCoding.SecureSerialization.Json.Newtonsoft";
 
         public override ImmutableArray<string> FixableDiagnosticIds
         {
             get { return ImmutableArray.Create(NewtonsoftDeserializationAnalyzer.DiagnosticId); }
         }
 
-        public static string SecureDeserializationFixEquivalenceKey = "SecureDeserializationFix";
-        public static string KnownTypesSecureDeserializationFixEquivalenceKey = "KnownTypesSecureDeserializationFix";
+        public const string SecureDeserializationFixEquivalenceKey = "SecureDeserializationFix";
+        public const string KnownTypesSecureDeserializationFixEquivalenceKey = "KnownTypesSecureDeserializationFix";
 
         public sealed override FixAllProvider GetFixAllProvider()
         {
@@ -47,14 +47,14 @@ namespace Skyline.DataMiner.Utils.SecureCoding.CodeFixProviders.SecureSerializat
 
             context.RegisterCodeFix(
                 CodeAction.Create(
-                    title: "Replace by JsonConvert.DeserializeObject by SecureDeserialization.DeserializeObject",
+                    title: "Replace by SecureNewtonsoftDeserialization.DeserializeObject",
                     createChangedDocument: c => ReplaceDeserializeObject(context.Document, invocation, false, c),
                     SecureDeserializationFixEquivalenceKey),
                 diagnostic);
 
             context.RegisterCodeFix(
                 CodeAction.Create(
-                    title: "Replace by SecureDeserialization.DeserializeObject with a list of known types",
+                    title: "Replace by SecureNewtonsoftDeserialization.DeserializeObject with a list of known types",
                     createChangedDocument: c => ReplaceDeserializeObject(context.Document, invocation, true, c),
                     KnownTypesSecureDeserializationFixEquivalenceKey),
                 diagnostic);
@@ -106,14 +106,13 @@ namespace Skyline.DataMiner.Utils.SecureCoding.CodeFixProviders.SecureSerializat
             }
 
             string genericType = "T";
-            var methodSymbol = model.GetSymbolInfo(invocation).Symbol as IMethodSymbol;
-            if (methodSymbol != null && methodSymbol.TypeArguments.Length > 0)
+            if (model.GetSymbolInfo(invocation).Symbol is IMethodSymbol methodSymbol && methodSymbol.TypeArguments.Length > 0)
             {
                 genericType = methodSymbol.TypeArguments.First().ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat);
             }
 
             return invocation
-                .WithExpression(SyntaxFactory.ParseExpression($"SecureJsonDeserialization.DeserializeObject<{genericType}>"))
+                .WithExpression(SyntaxFactory.ParseExpression($"SecureNewtonsoftDeserialization.DeserializeObject<{genericType}>"))
                 .WithArgumentList(arguments);
         }
 

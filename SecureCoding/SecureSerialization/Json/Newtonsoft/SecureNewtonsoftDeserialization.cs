@@ -4,10 +4,11 @@ using System.IO;
 using System.Linq;
 using System.Runtime.Serialization;
 using Newtonsoft.Json;
+using Skyline.DataMiner.Utils.SecureCoding.SecureSerialization.Json;
 
-namespace Skyline.DataMiner.Utils.SecureCoding.SecureSerialization.Json
+namespace Skyline.DataMiner.Utils.SecureCoding.SecureSerialization.Json.Newtonsoft
 {
-    public static class SecureJsonDeserialization
+    public static class SecureNewtonsoftDeserialization
     {
         /// <summary>
         /// Deserializes the <paramref name="json"/> string to an object of the specified type <paramref name="T"/>.
@@ -18,6 +19,8 @@ namespace Skyline.DataMiner.Utils.SecureCoding.SecureSerialization.Json
         /// <param name="json">The json string representing the object that will be deserialized.</param>
         /// <returns>The deserialized object from the json string.</returns>
         /// <exception cref="ArgumentException">Thrown if the <paramref name="json"/> is null, empty or whitespace.</exception>
+        /// <exception cref="JsonReaderException">Thrown if the <paramref name="json"/> is not a valid json string.</exception>
+        /// <exception cref="JsonSerializationException">Thrown if the <paramref name="json"/> cannot be deserialized.</exception>
         public static T DeserializeObject<T>(string json)
         {
             if (string.IsNullOrWhiteSpace(json))
@@ -43,6 +46,9 @@ namespace Skyline.DataMiner.Utils.SecureCoding.SecureSerialization.Json
         /// <param name="settings">The settings that will be used for deserialization.</param>
         /// <returns>The deserialized object from the json string.</returns>
         /// <exception cref="ArgumentException">Thrown if the <paramref name="json"/> is null, empty or whitespace.</exception>
+        /// <exception cref="InsecureSerializationSettingsException">Thrown if the <paramref name="settings"/> typenamehandling is set to anything other than None.</exception>
+        /// <exception cref="JsonReaderException">Thrown if the <paramref name="json"/> is not a valid json string.</exception>
+        /// <exception cref="JsonSerializationException">Thrown if the <paramref name="json"/> cannot be deserialized.</exception>
         public static T DeserializeObject<T>(string json, JsonSerializerSettings settings)
         {
             if (string.IsNullOrWhiteSpace(json))
@@ -55,10 +61,14 @@ namespace Skyline.DataMiner.Utils.SecureCoding.SecureSerialization.Json
                 settings = new JsonSerializerSettings();
             }
 
-            settings.TypeNameHandling = TypeNameHandling.None;
+            if(settings.TypeNameHandling != TypeNameHandling.None)
+            {
+                throw new InsecureSerializationSettingsException($"Setting the Typenamehandling to {settings.TypeNameHandling} may result in insecure deserialization.");
+            }
+
             settings.SerializationBinder = null;
 
-            return JsonConvert.DeserializeObject<T>(json, settings); 
+            return JsonConvert.DeserializeObject<T>(json, settings);
         }
 
         /// <summary>
@@ -73,6 +83,8 @@ namespace Skyline.DataMiner.Utils.SecureCoding.SecureSerialization.Json
         /// <exception cref="ArgumentException">Thrown if the <paramref name="json"/> is null, empty or whitespace or if the <paramref name="knownTypes"/> list is null or empty.</exception>
         /// <exception cref="UnknownTypeException">Thrown if the <paramref name="json"/> contains a type that is not in the <paramref name="knownTypes"/>.</exception>
         /// <exception cref="KnownExploitableTypeException">Thrown if a type specified in the <paramref name="knownTypes"/> is known to be insecure for deserialization.</exception> 
+        /// <exception cref="JsonReaderException">Thrown if the <paramref name="json"/> is not a valid json string.</exception>
+        /// <exception cref="JsonSerializationException">Thrown if the <paramref name="json"/> cannot be deserialized.</exception>
         public static T DeserializeObject<T>(string json, IEnumerable<Type> knownTypes)
         {
             if (string.IsNullOrWhiteSpace(json))
@@ -106,7 +118,9 @@ namespace Skyline.DataMiner.Utils.SecureCoding.SecureSerialization.Json
         /// <returns>The deserialized object from the json string.</returns>
         /// <exception cref="ArgumentException">Thrown if the <paramref name="json"/> is null, empty or whitespace or if the <paramref name="knownTypes"/> list is null or empty.</exception>
         /// <exception cref="UnknownTypeException">Thrown if the <paramref name="json"/> contains a type that is not in the <paramref name="knownTypes"/>.</exception>
-        /// <exception cref="KnownExploitableTypeException">Thrown if a type specified in the <paramref name="knownTypes"/> is known to be insecure for deserialization.</exception> 
+        /// <exception cref="KnownExploitableTypeException">Thrown if a type specified in the <paramref name="knownTypes"/> is known to be insecure for deserialization.</exception>
+        /// <exception cref="JsonReaderException">Thrown if the <paramref name="json"/> is not a valid json string.</exception>
+        /// <exception cref="JsonSerializationException">Thrown if the <paramref name="json"/> cannot be deserialized.</exception>
         public static T DeserializeObject<T>(string json, IEnumerable<Type> knownTypes, JsonSerializerSettings settings)
         {
             if (string.IsNullOrWhiteSpace(json))

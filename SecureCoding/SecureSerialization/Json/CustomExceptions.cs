@@ -43,4 +43,24 @@ namespace Skyline.DataMiner.Utils.SecureCoding.SecureSerialization.Json
         }
     }
 
+    [Serializable]
+    public class InsecureSerializationSettingsException : Exception
+    {
+        public InsecureSerializationSettingsException()
+        {
+        }
+
+        public InsecureSerializationSettingsException(string message) : base(message)
+        {
+        }
+
+        public InsecureSerializationSettingsException(string message, Exception innerException) : base(message, innerException)
+        {
+        }
+
+        protected InsecureSerializationSettingsException(SerializationInfo info, StreamingContext context) : base(info, context)
+        {
+        }
+    }
+
 }
