@@ -11,7 +11,7 @@ using System.Collections.Generic;
 using Microsoft.CodeAnalysis;
 using Skyline.DataMiner.Utils.SecureCoding.SecureSerialization.Json.Newtonsoft;
 
-namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.Tests
+namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.Tests.SecureSerialization.Json
 {
     [TestClass]
     public class NewtonsoftDeserializationAnalyzerUnitTests
@@ -37,7 +37,7 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.Tests
                 BuildDiagnosticResult(30, 20),
             };
 
-            CSharpCodeFixTest<NewtonsoftDeserializationAnalyzer, NewtonsoftDeserializationCodeFixProvider, MSTestVerifier> analyzerFix
+            CSharpCodeFixTest<NewtonsoftDeserializationAnalyzer, NewtonsoftDeserializationCodeFixProvider, MSTestVerifier> analyzerVerifier
                 = new CSharpCodeFixTest<NewtonsoftDeserializationAnalyzer, NewtonsoftDeserializationCodeFixProvider, MSTestVerifier>()
                 {
                     TestState =
@@ -62,12 +62,12 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.Tests
                         .AddPackages(packages)
                     }
                 };
-            analyzerFix.FixedState.AdditionalReferences.Add(typeof(SecureNewtonsoftDeserialization).Assembly);
-            analyzerFix.CodeActionEquivalenceKey = NewtonsoftDeserializationCodeFixProvider.SecureDeserializationFixEquivalenceKey;
-            analyzerFix.NumberOfFixAllIterations = 2;
-            analyzerFix.TestState.ExpectedDiagnostics.AddRange(expectedDiagnostics);
+            analyzerVerifier.FixedState.AdditionalReferences.Add(typeof(SecureNewtonsoftDeserialization).Assembly);
+            analyzerVerifier.CodeActionEquivalenceKey = NewtonsoftDeserializationCodeFixProvider.SecureDeserializationFixEquivalenceKey;
+            analyzerVerifier.NumberOfFixAllIterations = 2;
+            analyzerVerifier.TestState.ExpectedDiagnostics.AddRange(expectedDiagnostics);
 
-            await analyzerFix.RunAsync();
+            await analyzerVerifier.RunAsync();
         }
         
         [TestMethod]
