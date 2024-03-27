@@ -3,17 +3,12 @@ using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
 using Skyline.DataMiner.Utils.SecureCoding.Analyzers;
-using System;
-using System.Collections.Generic;
 using System.Collections.Immutable;
-using System.Data;
-using System.Linq;
-using System.Text;
 
-namespace Analyzers.SecureSerialization.Json
+namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.SecureSerialization.Json
 {
     [DiagnosticAnalyzer(LanguageNames.CSharp)]
-    internal class JavaScriptSerializerDesializationAnalyzer : DiagnosticAnalyzer
+    public class JavaScriptSerializerDeserializationAnalyzer : DiagnosticAnalyzer
     {
 
         public const string DiagnosticId = "JavaScriptSerializerUsage";

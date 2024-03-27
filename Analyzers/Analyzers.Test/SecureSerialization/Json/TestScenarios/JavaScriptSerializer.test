@@ -1,0 +1,18 @@
+using System.Web.Script.Serialization;
+
+namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.Tests.TestScenarios
+{
+    internal class JavaScriptSerializerTest
+    {
+        public void TobeDetected()
+        {
+            JavaScriptSerializer serializer = new JavaScriptSerializer();
+            string serialized1 = new System.Web.Script.Serialization.JavaScriptSerializer().Serialize(new object());
+            object deserialized1 = new System.Web.Script.Serialization.JavaScriptSerializer().Deserialize<object>(serialized1);
+            string serialized2 = serializer.Serialize(new object());
+            object deserialized2 = serializer.Deserialize<object>(serialized2);
+            object deserialized3 = serializer.Deserialize(serialized2, typeof(object));
+            object deserialized4 = serializer.DeserializeObject(serialized2);
+        }
+    }
+}

@@ -1,20 +1,14 @@
 ﻿using Microsoft.CodeAnalysis.CodeFixes;
-using System;
-using System.Collections.Generic;
 using System.Collections.Immutable;
-using System.Text;
 using System.Threading.Tasks;
 using Skyline.DataMiner.Utils.SecureCoding.Analyzers.SecureSerialization.Json;
 using Microsoft.CodeAnalysis;
-using Skyline.DataMiner.Utils.SecureCoding.CodeFixProviders.SecureIO;
 using System.Composition;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using System.Linq;
 using Microsoft.CodeAnalysis.Text;
-using System.Runtime.CompilerServices;
 using Microsoft.CodeAnalysis.CodeActions;
 using System.Threading;
-using System.Linq.Expressions;
 using Microsoft.CodeAnalysis.CSharp;
 
 namespace Skyline.DataMiner.Utils.SecureCoding.CodeFixProviders.SecureSerialization.Json
