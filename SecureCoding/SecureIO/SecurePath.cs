@@ -1,9 +1,9 @@
-﻿namespace Skyline.DataMiner.Utils.Security.SecureIO
-{
-    using System;
-    using System.IO;
-    using System.Linq;
+﻿using System;
+using System.IO;
+using System.Linq;
 
+namespace Skyline.DataMiner.Utils.Security.SecureIO
+{
     public static class SecurePath
     {
         /// <summary>
@@ -76,11 +76,16 @@
                 throw new InvalidOperationException($"Base path '{basePath} contains invalid characters'");
             }
 
-            for(int i = 1; i < paths.Length-1; i++)
+            for (int i = 1; i < paths.Length - 1; i++)
             {
                 if (paths[i].ContainsInvalidPathCharacters())
                 {
                     throw new InvalidOperationException($"Path segment '{paths[i]} contains invalid characters'");
+                }
+
+                if (Path.IsPathRooted(paths[i]))
+                {
+                    throw new InvalidOperationException($"Path segment '{paths[i]}' cannot be a rooted path");
                 }
             }
 
@@ -126,13 +131,18 @@
 
             if (basePath.ContainsInvalidPathCharacters())
             {
-                throw new InvalidOperationException($"Base path '{basePath} contains invalid characters'");
+                throw new InvalidOperationException($"Base path '{basePath}' contains invalid characters");
+            }
+
+            if (Path.IsPathRooted(relativePath))
+            {
+                throw new InvalidOperationException($"Relative path '{relativePath}' cannot be a rooted path");
             }
 
             if (!relativePath.IsPathValid())
             {
-                throw new InvalidOperationException($"Relative path '{relativePath} contains invalid characters'");
-            }  
+                throw new InvalidOperationException($"Relative path '{relativePath}' contains invalid characters");
+            }
 
             var combinedPath = Path.Combine(basePath, relativePath);
 
@@ -160,7 +170,7 @@
             }
 
             var filename = Path.GetFileName(path);
-            
+
             return !ContainsInvalidPathCharacters(path) && !ContainsInvalidFilenameCharacters(filename);
         }
 
@@ -207,7 +217,7 @@
         }
 
         private static char[] GetInvalidFileNameChars()
-        {         
+        {
             // This method replicates the behavior of Path.GetInvalidFileNameChars
             return new char[] {
                 '\u0000', '\u0001', '\u0002', '\u0003', '\u0004', '\u0005', '\u0006', '\u0007', '\u0008', '\u0009',

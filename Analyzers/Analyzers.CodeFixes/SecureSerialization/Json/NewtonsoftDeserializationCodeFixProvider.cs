@@ -146,6 +146,4 @@ namespace Skyline.DataMiner.Utils.SecureCoding.CodeFixProviders.SecureSerializat
             return GetNamespaceFullname(ns.ContainingNamespace) + "." + ns.Name;
         }
     }
-
-
 }

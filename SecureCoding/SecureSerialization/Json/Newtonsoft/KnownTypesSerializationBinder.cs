@@ -4,7 +4,6 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using Newtonsoft.Json.Serialization;
 using SecureCoding.SecureSerialization;
-using Skyline.DataMiner.Utils.SecureCoding.SecureSerialization.Json;
 
 [assembly: InternalsVisibleTo("Skyline.DataMiner.Utils.SecureCoding.Analyzers.Tests")]
 namespace Skyline.DataMiner.Utils.SecureCoding.SecureSerialization.Json.Newtonsoft
@@ -38,6 +37,7 @@ namespace Skyline.DataMiner.Utils.SecureCoding.SecureSerialization.Json.Newtonso
             {
                 throw new UnknownTypeException($"{typeName} is not a known Type.");
             }
+
             return deserializedType;
         }
 
