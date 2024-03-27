@@ -1,6 +1,8 @@
 ﻿using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis;
+using System.Linq;
+using System;
 
 namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers
 {
@@ -39,21 +41,21 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers
         }
 
         /// <summary>
-        /// Retrieves the name of an assignment represented by the provided AssignmentExpressionSyntax object.
+        /// Gets the name of the assignment from the given assignment expression syntax.
         /// </summary>
-        /// <param name="assignment">The assignment expression syntax to retrieve the name for.</param>
+        /// <param name="assignment">The assignment expression syntax.</param>
         /// <returns>
-        /// Returns the name of the assignment. 
-        /// For regular cases (variables/properties assignments not within object initializers), 
-        /// it returns the name of the left-hand side of the assignment. 
-        /// For assignments within object initializers, it returns the concatenation of the ancestor 
-        /// variable declarator's identifier and the name of the left-hand side of the assignment, 
-        /// separated by a period. 
-        /// If the assignment is not within an object initializer and no ancestor variable declarator 
-        /// is found, it behaves the same as the regular case.
+        /// The name of the assignment, which is typically the name of the variable or property being assigned to.
+        /// For object initializer expressions, it returns the name prefixed with the variable's or property's identifier.
         /// </returns>
+        /// <exception cref="ArgumentNullException">Thrown when the assignment expression syntax is null.</exception>
         public static string GetAssignmentName(this AssignmentExpressionSyntax assignment)
         {
+            if (assignment is null)
+            {
+                throw new ArgumentNullException(nameof(assignment));
+            }
+
             // Regular case => Variables/Properties assignments
             if (!assignment.Parent.IsKind(SyntaxKind.ObjectInitializerExpression))
             {
@@ -81,10 +83,48 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers
         /// <returns>
         /// Returns <see langword="true"/> if the specified location comes after the other location in the source code; otherwise, <see langword="false"/>.
         /// </returns>
+        /// <exception cref="ArgumentNullException">
+        /// Thrown when either <paramref name="location"/> or <paramref name="otherLocation"/> is null.
+        /// </exception>
         public static bool IsPosteriorLocation(this Location location, Location otherLocation)
         {
+            if (location is null)
+            {
+                throw new ArgumentNullException(nameof(location));
+            }
+
+            if (otherLocation is null)
+            {
+                throw new ArgumentNullException(nameof(otherLocation));
+            }
+
             // Check if location comes after other location
             return location.SourceSpan.Start > otherLocation.SourceSpan.End;
+        }
+
+        /// <summary>
+        /// Determines if the specified location comes before another location.
+        /// </summary>
+        /// <param name="location">The location to compare.</param>
+        /// <param name="otherLocation">The other location to compare against.</param>
+        /// <returns>Returns <see langword="true"/> if the specified location comes before the other location; otherwise, <see langword="false"/>.
+        /// <exception cref="ArgumentNullException">
+        /// Thrown when either <paramref name="location"/> or <paramref name="otherLocation"/> is null.
+        /// </exception>
+        public static bool IsAnteriorLocation(this Location location, Location otherLocation)
+        {
+            if (location is null)
+            {
+                throw new ArgumentNullException(nameof(location));
+            }
+
+            if (otherLocation is null)
+            {
+                throw new ArgumentNullException(nameof(otherLocation));
+            }
+
+            // Check if location comes before other location
+            return location.SourceSpan.Start < otherLocation.SourceSpan.End;
         }
 
         /// <summary>
@@ -96,11 +136,93 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers
         /// <returns>
         /// Returns <see langword="true"/> if the specified location is between the start and end locations (inclusive); otherwise, <see langword="false"/>.
         /// </returns>
+        /// <exception cref="ArgumentNullException">
+        /// Thrown when <paramref name="location"/>, <paramref name="start"/>, or <paramref name="end"/> is null.
+        /// </exception>
         public static bool IsBetweenLocations(this Location location, Location start, Location end)
         {
+            if (location is null)
+            {
+                throw new ArgumentNullException(nameof(location));
+            }
+
+            if (start is null)
+            {
+                throw new ArgumentNullException(nameof(start));
+            }
+
+            if (end is null)
+            {
+                throw new ArgumentNullException(nameof(end));
+            }
+
             // Check if the location is between start and end
             return location.SourceSpan.Start >= start.SourceSpan.Start &&
                    location.SourceSpan.End <= end.SourceSpan.End;
+        }
+
+        /// <summary>
+        /// Determines whether two locations in source code overlap with each other.
+        /// </summary>
+        /// <param name="location">The first location to compare.</param>
+        /// <param name="otherLocation">The other location to compare against.</param>
+        /// <returns>
+        /// True if there is an overlap between the two locations; otherwise, false.
+        /// </returns>
+        /// <exception cref="ArgumentNullException">
+        /// Thrown when either <paramref name="location"/> or <paramref name="otherLocation"/> is null.
+        /// </exception>
+        public static bool IsLocationOverlapping(this Location location, Location otherLocation)
+        {
+            if (location is null)
+            {
+                throw new ArgumentNullException(nameof(location));
+            }
+
+            if (otherLocation is null)
+            {
+                throw new ArgumentNullException(nameof(otherLocation));
+            }
+
+            // Get the source spans of the locations
+            var span1 = location.GetLineSpan();
+            var span2 = otherLocation.GetLineSpan();
+
+            // Check if the spans overlap
+            return span1.StartLinePosition <= span2.EndLinePosition
+                && span2.StartLinePosition <= span1.EndLinePosition;
+        }
+
+        /// <summary>
+        /// Gets the index of the first parameter in the specified method symbol whose name matches any of the specified names.
+        /// </summary>
+        /// <param name="methodSymbol">The method symbol to search.</param>
+        /// <param name="namesToMatch">The parameter names to match.</param>
+        /// <returns>
+        /// The index of the first matching parameter, or -1 if no match is found.
+        /// </returns>
+        /// <exception cref="ArgumentNullException">
+        /// Thrown when <paramref name="methodSymbol"/> or <paramref name="namesToMatch"/> is null.
+        /// </exception>
+        public static int GetParameterSymbolIndexByName(this IMethodSymbol methodSymbol, params string[] namesToMatch)
+        {
+            if (methodSymbol is null)
+            {
+                throw new ArgumentNullException(nameof(methodSymbol));
+            }
+
+            if (namesToMatch is null)
+            {
+                throw new ArgumentNullException(nameof(namesToMatch));
+            }
+
+            var matchingParameter = methodSymbol.Parameters.FirstOrDefault(parameter => namesToMatch.Contains(parameter.Name));
+            if (matchingParameter == null)
+            {
+                return -1;
+            }
+
+            return methodSymbol.Parameters.IndexOf(matchingParameter);
         }
     }
 }

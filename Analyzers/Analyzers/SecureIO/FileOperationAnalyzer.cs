@@ -2,35 +2,50 @@
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
-using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
-using System.IO;
 using System.Linq;
-using System.Xml.Linq;
+using System.Security.Cryptography.X509Certificates;
 
 namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.SecureIO
 {
     [DiagnosticAnalyzer(LanguageNames.CSharp)]
     public class FileOperationAnalyzer : DiagnosticAnalyzer
     {
-        public const string DiagnosticId = "FileOperationUsage";
-        private const string Category = "Usage";
-
-        private static List<string> receiverTypes = new List<string>
+        #region Configuration
+        private static List<string> secureMethods = new List<string>
         {
-            "System.IO.File",
-            "System.IO.StreamWritter",
+            "ConstructSecurePath",
+            "IsPathValid"
         };
 
-        private const string METHOD_COSTRUCTSECUREPATH = "SecurePath.ConstructSecurePath";
-        private const string METHOD_ISPATHVALID = "SecurePath.IsPathValid";
+        private static List<string> invocationReceiverTypes = new List<string>
+        {
+            "System.IO.File",
+            "System.IO.Directory",
+            "System.Reflection.Assembly",
+        };
+
+        private static List<string> objectCreationReceiverTypes = new List<string>
+        {
+            "System.IO.StreamWriter",
+            "System.IO.StreamReader",
+            "System.IO.DirectoryInfo",
+        };
+
+        private static List<string> invocationParameterNamesToMatch = new List<string>
+        {
+            "path",
+            "filename",
+            "assemblyString"
+        };
+        #endregion
 
         private static readonly DiagnosticDescriptor Rule = new DiagnosticDescriptor(
-            DiagnosticId,
+            "FileOperationUsage",
             title: "File operation usage detected without secure path construction",
             messageFormat: "File operation used with a path '{0}' not constructed by 'SecurePath.ConstructSecurePath' neither validated by 'IsPathValid'",
-            Category,
+            "Usage",
             DiagnosticSeverity.Warning,
             isEnabledByDefault: true);
 
@@ -49,7 +64,6 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.SecureIO
         {
             var descendantNodes = context.CodeBlock.DescendantNodes(descendIntoChildren: node => node.ChildNodes().Any());
             var invocations = descendantNodes.OfType<InvocationExpressionSyntax>();
-            var objectCreations = descendantNodes.OfType<ObjectCreationExpressionSyntax>();
             var variableDeclarators = descendantNodes.OfType<VariableDeclaratorSyntax>();
 
             var fileOperationsPathArguments = new List<ArgumentSyntax>();
@@ -57,69 +71,146 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.SecureIO
 
             foreach (var invocation in invocations)
             {
-                if (invocation == null || invocation.ArgumentList?.Arguments.Count < 1)
-                {
-                    continue;
-                }
+                GetFileOperationsPathArguments(context, variableDeclarators, fileOperationsPathArguments, invocation);
 
-                var methodSymbol = context.SemanticModel.GetSymbolInfo(invocation).Symbol as IMethodSymbol;
-                if (methodSymbol == null)
-                {
-                    continue;
-                }
-
-                if (!methodSymbol.Name.Contains("Read") && !methodSymbol.Name.Contains("Write"))
-                {
-                    continue;
-                }
-
-                var pathArgument = invocation.ArgumentList.Arguments[0];
-
-                var receiverType = methodSymbol.ReceiverType.ToDisplayString();
-
-                switch (receiverType)
-                {
-                    case "System.IO.File":
-                        fileOperationsPathArguments.Add(pathArgument);
-                        break;
-
-                    case "System.IO.StreamWritter":
-                        if (invocation.Expression is MemberAccessExpressionSyntax memberAccess)
-                        {
-                            var variableDeclaratorMatchingMemberAccess = variableDeclarators
-                                .FirstOrDefault(variableDeclarator => variableDeclarator.Identifier.ToString() == memberAccess.Expression.ToString());
-
-                            if (variableDeclaratorMatchingMemberAccess != null
-                                && variableDeclaratorMatchingMemberAccess.Initializer.Value.ToString().Contains(pathArgument.Expression.ToString()))
-                            {
-
-                            }
-
-
-
-
-                        }
-                        break;
-
-                    default:
-                        continue;
-                }
-
-
-
-
-
-
-                if (IsPathValidMethod(context, invocation)
-                    || IsConstructSecurePathMethod(context, invocation))
-                {
-                    secureMethodsLocations.Add(invocation.GetLocation());
-                }
+                GetSecureMethodsLocations(context, secureMethodsLocations, invocation);
             }
 
             var locationsToAnalyze = GetLocationsToAnalyze(context, descendantNodes, fileOperationsPathArguments);
 
             AnalyzeLocations(context, fileOperationsPathArguments, secureMethodsLocations, locationsToAnalyze);
+        }
+
+        private static void GetSecureMethodsLocations(
+            CodeBlockAnalysisContext context,
+            List<Location> secureMethodsLocations,
+            InvocationExpressionSyntax invocation)
+        {
+            if (invocation == null || invocation.ArgumentList?.Arguments.Count < 1)
+            {
+                return;
+            }
+
+            var methodSymbol = context.SemanticModel.GetSymbolInfo(invocation).Symbol as IMethodSymbol;
+            if (methodSymbol != null
+                && methodSymbol.ContainingType.ToDisplayString() == "Skyline.DataMiner.Utils.Security.SecureIO.SecurePath"
+                && secureMethods.Contains(methodSymbol.Name))
+            {
+                secureMethodsLocations.Add(invocation.GetLocation());
+            }
+        }
+
+        private static void GetFileOperationsPathArguments(
+            CodeBlockAnalysisContext context,
+            IEnumerable<VariableDeclaratorSyntax> variableDeclarators,
+            List<ArgumentSyntax> fileOperationsPathArguments,
+            InvocationExpressionSyntax invocation)
+        {
+            if (invocation == null)
+            {
+                return;
+            }
+
+            var invocationSymbol = context.SemanticModel.GetSymbolInfo(invocation).Symbol as IMethodSymbol;
+            if (invocationSymbol == null)
+            {
+                return;
+            }
+
+            var pathArgument = GetPathArgument(context, variableDeclarators, invocation, invocationSymbol);
+            if (pathArgument == default(ArgumentSyntax))
+            {
+                return;
+            }
+
+            fileOperationsPathArguments.Add(pathArgument);
+        }
+
+        private static ArgumentSyntax GetPathArgument(
+            CodeBlockAnalysisContext context,
+            IEnumerable<VariableDeclaratorSyntax> variableDeclarators,
+            InvocationExpressionSyntax invocation,
+            IMethodSymbol invocationSymbol)
+        {
+            var receiverType = invocationSymbol.ReceiverType.ToDisplayString();
+
+            if (invocationReceiverTypes.Contains(receiverType))
+            {
+                return GetPathArgumentFromInvocation(invocation, invocationSymbol);
+            }
+
+            if (objectCreationReceiverTypes.Contains(receiverType))
+            {
+                return GetPathArgumentFromObjectCreation(context, variableDeclarators, invocation);
+            }
+
+            return default;
+        }
+
+        private static ArgumentSyntax GetPathArgumentFromObjectCreation(
+            CodeBlockAnalysisContext context,
+            IEnumerable<VariableDeclaratorSyntax> variableDeclarators,
+            InvocationExpressionSyntax invocation)
+        {
+            if (!(invocation.Expression is MemberAccessExpressionSyntax memberAccess))
+            {
+                return default;
+            }
+
+            var variableDeclaratorMatchingMemberAccess = variableDeclarators
+                .FirstOrDefault(variableDeclarator => variableDeclarator.Identifier.ToString() == memberAccess.Expression.ToString());
+
+            if (variableDeclaratorMatchingMemberAccess is null)
+            {
+                return default;
+            }
+
+            var objectCreationWitinVariableDeclarator = variableDeclaratorMatchingMemberAccess
+                .DescendantNodes(descendIntoChildren: node => node.ChildNodes().Any())
+                .OfType<ObjectCreationExpressionSyntax>()
+                .First();
+
+            if (objectCreationWitinVariableDeclarator is null)
+            {
+                return default;
+            }
+
+            var objectCreationSymbol = context.SemanticModel.GetSymbolInfo(objectCreationWitinVariableDeclarator).Symbol as IMethodSymbol;
+            if (objectCreationSymbol == null)
+            {
+                return default;
+            }
+
+            var index = objectCreationSymbol.GetParameterSymbolIndexByName(invocationParameterNamesToMatch.ToArray());
+            if (index < 0)
+            {
+                return default;
+            }
+
+            if (objectCreationWitinVariableDeclarator.ArgumentList.Arguments.Count < 1)
+            {
+                return default;
+            }
+
+            return objectCreationWitinVariableDeclarator.ArgumentList.Arguments[index];
+        }
+
+        private static ArgumentSyntax GetPathArgumentFromInvocation(
+            InvocationExpressionSyntax invocation,
+            IMethodSymbol invocationSymbol)
+        {
+            if (invocation.ArgumentList?.Arguments.Count < 1)
+            {
+                return default;
+            }
+
+            var index = invocationSymbol.GetParameterSymbolIndexByName(invocationParameterNamesToMatch.ToArray());
+            if (index < 0)
+            {
+                return default;
+            }
+
+            return invocation.ArgumentList.Arguments[index];
         }
 
         private static void AnalyzeLocations(
@@ -132,27 +223,52 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.SecureIO
 
             foreach (var locationToAnalyze in locationsToAnalyze)
             {
-                // Get the next file operations with the same path argument name
-                var nextFileOperationArgument = fileOperationsPathArguments
-                    .Find(pathArgument =>
-                        pathArgument.Expression.ToString() == locationToAnalyze.PathArgumentName
-                        && pathArgument.GetLocation().IsPosteriorLocation(locationToAnalyze.Location));
-
-                var nextFileOperationArgumentLocation = nextFileOperationArgument.GetLocation();
-
-                // Flag if there is no IsPathValid or ConstructSecurePath methods between the assignment and the file operation
-                if (!secureMethodsLocations.Exists(methodLocation => methodLocation.IsBetweenLocations(locationToAnalyze.Location, nextFileOperationArgumentLocation)))
+                foreach (var pathArgument in fileOperationsPathArguments)
                 {
-                    if (reportedLocations.Contains(nextFileOperationArgumentLocation))
+                    var pathArgumentLocation = pathArgument.GetLocation();
+
+                    var pathArgumentName = pathArgument.Expression.ToString();
+
+                    if (pathArgumentName != locationToAnalyze.PathArgumentName)
                     {
                         continue;
                     }
 
-                    reportedLocations.Add(nextFileOperationArgumentLocation);
+                    // Gets the next file operation and checks if there's a secure method in betweeen
+                    if (pathArgumentLocation.IsPosteriorLocation(locationToAnalyze.Location))
+                    {
+                        if (!secureMethodsLocations.Exists(methodLocation => methodLocation.IsBetweenLocations(locationToAnalyze.Location, pathArgumentLocation)))
+                        {
+                            ReportDiagnostic(context, reportedLocations, pathArgumentLocation, pathArgumentName);
+                        }
 
-                    context.ReportDiagnostic(Diagnostic.Create(Rule, nextFileOperationArgumentLocation, nextFileOperationArgument.Expression.ToString()));
+                        continue;
+                    }
+
+                    // In case there's no next file operation => Gets the previous file operation and checks if there's a secure method in betweeen
+                    if (pathArgumentLocation.IsAnteriorLocation(locationToAnalyze.Location)
+                        && !secureMethodsLocations.Exists(methodLocation => methodLocation.IsBetweenLocations(pathArgumentLocation, locationToAnalyze.Location)))
+                    {
+                        ReportDiagnostic(context, reportedLocations, pathArgumentLocation, pathArgumentName);
+                    }
                 }
             }
+        }
+
+        private static void ReportDiagnostic(
+            CodeBlockAnalysisContext context,
+            HashSet<Location> reportedLocations,
+            Location location,
+            string description)
+        {
+            if (reportedLocations.Contains(location))
+            {
+                return;
+            }
+
+            reportedLocations.Add(location);
+
+            context.ReportDiagnostic(Diagnostic.Create(Rule, location, description));
         }
 
         private static List<LocationToAnalyze> GetLocationsToAnalyze(
@@ -161,6 +277,8 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.SecureIO
             List<ArgumentSyntax> fileOperationsPathArguments)
         {
             var assignments = descendantNodes.OfType<AssignmentExpressionSyntax>();
+
+            var forEachNodes = descendantNodes.OfType<ForEachStatementSyntax>();
 
             var variableDeclarators = descendantNodes.OfType<VariableDeclaratorSyntax>();
 
@@ -173,122 +291,45 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.SecureIO
 
             foreach (var pathArgument in fileOperationsPathArguments)
             {
-                var hasLocationToAnalyze = false;
-
                 var pathArgumentName = pathArgument.Expression.ToString();
 
                 // Assignments Locations
-                var assignmentsLocations = assignments
+                locationsToAnalyze.AddRange(
+                    assignments
                     .Where(assignment => assignment != null
                         && assignment.GetAssignmentName() == pathArgumentName
-                        && !assignment.Right.ToString().Contains(METHOD_COSTRUCTSECUREPATH))
-                    .Select(assignment => new LocationToAnalyze(assignment.GetLocation(), pathArgumentName));
-
-                if (assignmentsLocations.Any())
-                {
-                    locationsToAnalyze.AddRange(assignmentsLocations);
-
-                    hasLocationToAnalyze = true;
-                }
+                        && !assignment.Right.ToString().Contains("SecurePath.ConstructSecurePath"))
+                    .Select(assignment => new LocationToAnalyze(assignment.GetLocation(), pathArgumentName)));
 
                 // VariableDeclarators Locations
-                var variableDeclaratorsLocations = variableDeclarators
-                    .Where(variableDeclarator => variableDeclarator != null
-                        && (variableDeclarator.Identifier.Text == pathArgumentName || variableDeclarator.Initializer.ToString().Contains(pathArgumentName))
-                        && !variableDeclarator.Initializer.ToString().Contains(METHOD_COSTRUCTSECUREPATH))
-                    .Select(variableDeclarator => new LocationToAnalyze(variableDeclarator.GetLocation(), pathArgumentName));
-
-                if (variableDeclaratorsLocations.Any())
-                {
-                    locationsToAnalyze.AddRange(variableDeclaratorsLocations);
-
-                    hasLocationToAnalyze = true;
-                }
+                locationsToAnalyze.AddRange(
+                   variableDeclarators
+                   .Where(variableDeclarator => variableDeclarator != null
+                       && (variableDeclarator.Identifier.Text == pathArgumentName || variableDeclarator.Initializer.ToString().Contains(pathArgumentName))
+                       && !variableDeclarator.Initializer.ToString().Contains("SecurePath.ConstructSecurePath"))
+                   .Select(variableDeclarator => new LocationToAnalyze(variableDeclarator.GetLocation(), pathArgumentName)));
 
                 // Method Arguments
-                var methodArgumentsLocations = inputParameters
+                locationsToAnalyze.AddRange(
+                    inputParameters
                     .Where(inputArgument => inputArgument != null
                         && inputArgument.Identifier.ToString() == pathArgumentName)
-                    .Select(inputArgument => new LocationToAnalyze(inputArgument.GetLocation(), pathArgumentName));
+                    .Select(inputArgument => new LocationToAnalyze(inputArgument.GetLocation(), pathArgumentName)));
 
-                if (methodArgumentsLocations.Any())
-                {
-                    locationsToAnalyze.AddRange(methodArgumentsLocations);
+                // ForEach Nodes
+                locationsToAnalyze.AddRange(
+                    forEachNodes
+                    .Where(node => pathArgument.GetLocation().IsLocationOverlapping(node.GetLocation()))
+                    .Select(node => new LocationToAnalyze(node.GetLocation(), pathArgumentName)));
 
-                    hasLocationToAnalyze = true;
-                }
-
-                // Other scenarios, such as foreachs
-                if (!hasLocationToAnalyze)
+                // Cases where the path argument was not added to the locations to analyze => assume the first position of the block
+                if (!locationsToAnalyze.Exists(locationToAnalyze => locationToAnalyze.PathArgumentName == pathArgumentName))
                 {
                     locationsToAnalyze.Add(new LocationToAnalyze(descendantNodes.First().GetLocation(), pathArgumentName));
                 }
             }
 
             return locationsToAnalyze;
-        }
-
-        private static bool IsFileOperationMethod(
-            CodeBlockAnalysisContext context,
-            InvocationExpressionSyntax invocation)
-        {
-            if (invocation?.ArgumentList?.Arguments.Count < 1)
-            {
-
-                return false;
-            }
-
-            var methodSymbol = context.SemanticModel.GetSymbolInfo(invocation).Symbol as IMethodSymbol;
-            if (methodSymbol == null)
-            {
-                return false;
-            }
-
-            var receiverType = methodSymbol.ReceiverType.ToDisplayString();
-
-            var isFileOperationMethod = receiverTypes.Contains(receiverType);
-
-            var isReadWriteOperation = methodSymbol.Name.Contains("Read") || methodSymbol.Name.Contains("Write");
-
-            return isFileOperationMethod && isReadWriteOperation;
-        }
-
-        private static bool IsPathValidMethod(CodeBlockAnalysisContext context, InvocationExpressionSyntax invocationExpression)
-        {
-            if (invocationExpression?.ArgumentList?.Arguments.Count < 1)
-            {
-                return false;
-            }
-
-            var methodSymbol = context.SemanticModel.GetSymbolInfo(invocationExpression).Symbol as IMethodSymbol;
-
-            if (methodSymbol != null
-                && methodSymbol.ContainingType?.Name == "SecurePath"
-                && methodSymbol.Name == "IsPathValid")
-            {
-                return true;
-            }
-
-            return false;
-        }
-
-        private static bool IsConstructSecurePathMethod(CodeBlockAnalysisContext context, InvocationExpressionSyntax invocationExpression)
-        {
-            if (invocationExpression?.ArgumentList?.Arguments.Count < 1)
-            {
-                return false;
-            }
-
-            var methodSymbol = context.SemanticModel.GetSymbolInfo(invocationExpression).Symbol as IMethodSymbol;
-
-            if (methodSymbol != null
-                && methodSymbol.ContainingType?.Name == "SecurePath"
-                && methodSymbol.Name == "ConstructSecurePath")
-            {
-                return true;
-            }
-
-            return false;
         }
 
         private sealed class LocationToAnalyze

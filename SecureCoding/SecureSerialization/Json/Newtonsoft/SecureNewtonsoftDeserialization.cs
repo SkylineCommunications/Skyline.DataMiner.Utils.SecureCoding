@@ -1,10 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
-using System.Runtime.Serialization;
 using Newtonsoft.Json;
-using Skyline.DataMiner.Utils.SecureCoding.SecureSerialization.Json;
 
 namespace Skyline.DataMiner.Utils.SecureCoding.SecureSerialization.Json.Newtonsoft
 {
@@ -74,6 +71,7 @@ namespace Skyline.DataMiner.Utils.SecureCoding.SecureSerialization.Json.Newtonso
         /// <summary>
         /// Deserializes the json string to an object of the specified type.
         /// This method will make use of the types specified in the json to determine which objects should be constructed.
+        /// Please note that JSON results may not be reliable if deserialization is attempted on an object not serialized with TypeNameHandling set to 'All'.
         /// To make the deserialization secure, only the types specified in the knownTypes list will be resolved.
         /// Because of this, this method can handle more complex objects that make use of polymorphism or inheritance.
         /// </summary>
@@ -99,8 +97,9 @@ namespace Skyline.DataMiner.Utils.SecureCoding.SecureSerialization.Json.Newtonso
 
             JsonSerializerSettings settings = new JsonSerializerSettings
             {
-                TypeNameHandling = TypeNameHandling.Auto,
+                TypeNameHandling = TypeNameHandling.All,
                 SerializationBinder = new KnownTypesSerializationBinder(knownTypes),
+                MissingMemberHandling = MissingMemberHandling.Error,
             };
 
             return JsonConvert.DeserializeObject<T>(json, settings);
@@ -108,7 +107,8 @@ namespace Skyline.DataMiner.Utils.SecureCoding.SecureSerialization.Json.Newtonso
 
         /// <summary>
         /// Deserializes the json string to an object of the specified type using the provided deserialization settings.
-        /// This method will make use of the types specified in the json to determine which objects should be constructed.
+        /// This method will make use of the types specified in the json to determine which objects should be constructed. 
+        /// Please note that JSON results may not be reliable if deserialization is attempted on an object not serialized with TypeNameHandling set to 'All'.
         /// To make the deserialization secure, the serializationbinder setting will be overriden and only the types specified in the knownTypes list will be resolved.
         /// Because of this, this method can handle more complex objects that make use of polymorphism or inheritance.
         /// </summary>
@@ -138,11 +138,11 @@ namespace Skyline.DataMiner.Utils.SecureCoding.SecureSerialization.Json.Newtonso
                 settings = new JsonSerializerSettings();
             }
 
-            settings.TypeNameHandling = TypeNameHandling.Auto;
+            settings.TypeNameHandling = TypeNameHandling.All;
             settings.SerializationBinder = new KnownTypesSerializationBinder(knownTypes);
+            settings.MissingMemberHandling = MissingMemberHandling.Error;
 
             return JsonConvert.DeserializeObject<T>(json, settings);
         }
-
     }
 }

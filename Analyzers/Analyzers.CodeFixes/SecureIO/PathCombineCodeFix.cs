@@ -15,6 +15,8 @@ namespace Skyline.DataMiner.Utils.SecureCoding.CodeFixProviders.SecureIO
     [ExportCodeFixProvider(LanguageNames.CSharp, Name = nameof(PathCombineCodeFix)), Shared]
     public class PathCombineCodeFix : CodeFixProvider
     {
+        private const string SECUREPATH_NAMESPACE = "Skyline.DataMiner.Utils.Security.SecureIO.SecurePath";
+
         public sealed override ImmutableArray<string> FixableDiagnosticIds
         {
             get { return ImmutableArray.Create(PathCombineAnalyzer.DiagnosticId); }
@@ -50,7 +52,14 @@ namespace Skyline.DataMiner.Utils.SecureCoding.CodeFixProviders.SecureIO
 
             var newRoot = root.ReplaceNode(invocation, newInvocation.WithTriviaFrom(invocation)); // Keep original form
 
-            var newDocument = document.WithSyntaxRoot(newRoot);
+            var compilationUnit = newRoot as CompilationUnitSyntax;
+
+            if (!compilationUnit.Usings.Any(@using => @using.Name.ToString() == SECUREPATH_NAMESPACE))
+            {
+                compilationUnit.Usings.Add(SyntaxFactory.UsingDirective(SyntaxFactory.ParseName(SECUREPATH_NAMESPACE)));
+            }
+
+            var newDocument = document.WithSyntaxRoot(compilationUnit);
 
             return newDocument;
         }
@@ -64,7 +73,7 @@ namespace Skyline.DataMiner.Utils.SecureCoding.CodeFixProviders.SecureIO
             else if (invocation.ArgumentList.Arguments.Count > 2)
             {
                 return invocation
-                    .WithExpression(SyntaxFactory.ParseExpression("Skyline.DataMiner.Utils.Security.SecureIO.SecurePath.ConstructSecurePath"))
+                    .WithExpression(SyntaxFactory.ParseExpression("SecurePath.ConstructSecurePath"))
                     .WithArgumentList(invocation.ArgumentList);
             }
             else
@@ -74,12 +83,12 @@ namespace Skyline.DataMiner.Utils.SecureCoding.CodeFixProviders.SecureIO
                 if (lastArgument.Contains("/") || lastArgument.Contains("\\"))
                 {
                     return invocation
-                        .WithExpression(SyntaxFactory.ParseExpression("Skyline.DataMiner.Utils.Security.SecureIO.SecurePath.ConstructSecurePathWithSubDirectories"))
+                        .WithExpression(SyntaxFactory.ParseExpression("SecurePath.ConstructSecurePathWithSubDirectories"))
                         .WithArgumentList(invocation.ArgumentList);
                 }
 
                 return invocation
-                    .WithExpression(SyntaxFactory.ParseExpression("Skyline.DataMiner.Utils.Security.SecureIO.SecurePath.ConstructSecurePath"))
+                    .WithExpression(SyntaxFactory.ParseExpression("SecurePath.ConstructSecurePath"))
                     .WithArgumentList(invocation.ArgumentList);
             }
         }
