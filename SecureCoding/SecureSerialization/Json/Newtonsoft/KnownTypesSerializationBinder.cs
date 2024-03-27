@@ -26,24 +26,28 @@ namespace Skyline.DataMiner.Utils.SecureCoding.SecureSerialization.Json.Newtonso
             {
                 if (knownType.IsKnownExploitableType())
                 {
-                    throw new KnownExploitableTypeException($"{knownType.AssemblyQualifiedName}.{knownType.FullName} is a known exploitable type, it is not secure to deserialize this type.");
+                    throw new KnownExploitableTypeException($"{knownType.FullName} is a known exploitable type, it is not secure to deserialize this type.");
                 }
-                fullTypeNameToType[$"{knownType.AssemblyQualifiedName}.{knownType.Name}"] = knownType;
+                fullTypeNameToType[knownType.FullName] = knownType;
             }
         }
 
         public Type BindToType(string assemblyName, string typeName)
         {
-            string fullName = $"{assemblyName}.{typeName}";
-            if (!fullTypeNameToType.TryGetValue(fullName, out Type deserializedType))
+            if (!fullTypeNameToType.TryGetValue(typeName, out Type deserializedType))
             {
-                throw new UnknownTypeException($"{fullName} is not a known Type.");
+                throw new UnknownTypeException($"{typeName} is not a known Type.");
             }
             return deserializedType;
         }
 
         public void BindToName(Type serializedType, out string assemblyName, out string typeName)
         {
+            if (!fullTypeNameToType.ContainsKey(serializedType.FullName))
+            {
+                throw new UnknownTypeException($"{serializedType.FullName} is not a known Type.");
+            }
+
             assemblyName = serializedType.AssemblyQualifiedName;
             typeName = serializedType.FullName;
         }
