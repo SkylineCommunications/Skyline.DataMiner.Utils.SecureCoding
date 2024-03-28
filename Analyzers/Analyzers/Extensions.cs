@@ -194,17 +194,17 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers
         }
 
         /// <summary>
-        /// Gets the index of the first parameter in the specified method symbol whose name matches any of the specified names.
+        /// Gets the index of the parameters in the specified method symbol whose name matches any of the specified names.
         /// </summary>
         /// <param name="methodSymbol">The method symbol to search.</param>
         /// <param name="namesToMatch">The parameter names to match.</param>
         /// <returns>
-        /// The index of the first matching parameter, or -1 if no match is found.
+        /// The index of the matching parameters, or -1 if no match is found.
         /// </returns>
         /// <exception cref="ArgumentNullException">
         /// Thrown when <paramref name="methodSymbol"/> or <paramref name="namesToMatch"/> is null.
         /// </exception>
-        public static int GetParameterSymbolIndexByName(this IMethodSymbol methodSymbol, params string[] namesToMatch)
+        public static int[] GetParametersSymbolIndexByName(this IMethodSymbol methodSymbol, params string[] namesToMatch)
         {
             if (methodSymbol is null)
             {
@@ -216,13 +216,10 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers
                 throw new ArgumentNullException(nameof(namesToMatch));
             }
 
-            var matchingParameter = methodSymbol.Parameters.FirstOrDefault(parameter => namesToMatch.Contains(parameter.Name));
-            if (matchingParameter == null)
-            {
-                return -1;
-            }
-
-            return methodSymbol.Parameters.IndexOf(matchingParameter);
+            return methodSymbol.Parameters
+                .Where(parameter => namesToMatch.Contains(parameter.Name))
+                .Select(matchingParam => methodSymbol.Parameters.IndexOf(matchingParam))
+                .ToArray();
         }
     }
 }
