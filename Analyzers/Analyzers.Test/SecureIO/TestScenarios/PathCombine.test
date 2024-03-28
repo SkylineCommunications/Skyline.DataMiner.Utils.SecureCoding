@@ -1,0 +1,27 @@
+using System.IO;
+
+namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.Tests.SecureIO.TestScenarios
+{
+    internal class PathCombineTest
+    {
+        private string combinedPathWithSubDirectories = Path.Combine("basePath", @"relativePath\subRelativePath");
+
+        public PathCombineTest()
+        {
+            Path.Combine("basePath", "fileName");
+        }
+
+        public void TobeDetected()
+        {
+            Path.Combine("basePath", "pathSegment", "fileName");
+        }
+
+        public string CombinedPathWithParams
+        {
+            get
+            {
+                return Path.Combine("basePath", "pathSegment", "otherPathSegment", "fileName");
+            }
+        }
+    }
+}
