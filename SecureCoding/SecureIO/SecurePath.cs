@@ -2,7 +2,7 @@
 using System.IO;
 using System.Linq;
 
-namespace Skyline.DataMiner.Utils.Security.SecureIO
+namespace Skyline.DataMiner.Utils.SecureCoding.SecureIO
 {
     public static class SecurePath
     {

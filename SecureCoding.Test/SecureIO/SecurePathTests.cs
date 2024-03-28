@@ -1,4 +1,4 @@
-﻿using Skyline.DataMiner.Utils.Security.SecureIO;
+﻿using Skyline.DataMiner.Utils.SecureCoding.SecureIO;
 
 namespace Skyline.DataMiner.Utils.SecureCoding.Tests
 {
