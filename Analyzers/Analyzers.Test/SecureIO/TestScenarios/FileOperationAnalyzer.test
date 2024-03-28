@@ -1,0 +1,140 @@
+using System;
+using System.IO;
+using System.Diagnostics;
+using System.Reflection;
+
+namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.Tests.SecureIO.TestScenarios
+{
+	internal class FileOperationTest
+	{
+		public void ToDetectFileMethods(string insecurePath)
+		{
+			var destinationPath = string.Empty;
+
+			File.AppendAllLines(insecurePath, new string[] { });
+			File.AppendAllLinesAsync(insecurePath, new string[] { });
+			File.AppendAllText(insecurePath, string.Empty);
+			File.AppendAllTextAsync(insecurePath, string.Empty);
+			File.AppendText(insecurePath);
+			File.Copy(insecurePath, destinationPath);
+			File.Create(insecurePath);
+			File.CreateSymbolicLink(insecurePath, destinationPath);
+			File.Decrypt(insecurePath);
+			File.Delete(insecurePath);
+			File.Encrypt(insecurePath);
+			File.Exists(insecurePath);
+			File.Move(insecurePath, destinationPath);
+			File.Open(insecurePath, FileMode.Open);
+			File.OpenHandle(insecurePath);
+			File.OpenRead(insecurePath);
+			File.OpenText(insecurePath);
+			File.OpenWrite(insecurePath);
+			File.Replace(insecurePath, destinationPath, null);
+			File.ReadAllBytes(insecurePath);
+			File.ReadAllBytesAsync(insecurePath);
+			File.ReadAllText(insecurePath);
+			File.WriteAllBytes(insecurePath, new byte[4096]);
+			File.WriteAllBytesAsync(insecurePath, new byte[4096]);
+			File.WriteAllLines(insecurePath, new string[] { });
+			File.WriteAllLinesAsync(insecurePath, new string[] { });
+			File.WriteAllText(insecurePath, string.Empty);
+			File.WriteAllTextAsync(insecurePath, string.Empty);
+
+			var sw = new StreamWriter(insecurePath);
+			sw.Write(string.Empty);
+
+			using (var sr = new StreamReader(insecurePath))
+			{
+				sr.Read();
+			}
+		}
+
+		public void ToDetectDeclarationsAndAssignments()
+		{
+			// Class Field Case
+			var pathHolderField = new PathHolder();
+			pathHolderField.pathField = "InsecurePath";
+			File.WriteAllText(pathHolderField.pathField, string.Empty);
+
+			// Class Field Object Initialization
+			var pathHolderFieldObjInit = new PathHolder
+			{
+				pathField = "InsecurePath"
+			};
+			File.WriteAllText(pathHolderFieldObjInit.pathField, string.Empty);
+
+			// Class Property Case
+			var pathHolderProperty = new PathHolder();
+			pathHolderProperty.PathProperty = "InsecurePath";
+			File.WriteAllText(pathHolderProperty.pathField, string.Empty);
+
+			// Class Field Property Initialization
+			var pathHolderPropertyObjInit = new PathHolder
+			{
+				PathProperty = "InsecurePath"
+			};
+			File.WriteAllText(pathHolderPropertyObjInit.pathField, string.Empty);
+
+			// Declaration Case
+			var path = string.Empty;
+			File.WriteAllText(path, string.Empty);
+
+			// Assignment Case
+			path = string.Empty;
+			File.WriteAllText(path, string.Empty);
+		}
+
+		public void ToDetectDirectoryMethods()
+		{
+			var insecurePath = string.Empty;
+			var targetPath = string.Empty;
+
+			Directory.CreateDirectory(insecurePath);
+			Directory.CreateSymbolicLink(insecurePath, targetPath);
+			Directory.Delete(insecurePath);
+			Directory.EnumerateDirectories(insecurePath);
+			Directory.EnumerateFiles(insecurePath);
+			Directory.EnumerateFileSystemEntries(insecurePath);
+			Directory.Exists(insecurePath);
+			Directory.GetCreationTime(insecurePath);
+			Directory.GetCreationTimeUtc(insecurePath);
+			Directory.GetDirectories(insecurePath);
+			Directory.GetFiles(insecurePath);
+			Directory.GetFileSystemEntries(insecurePath);
+			Directory.GetLastAccessTime(insecurePath);
+			Directory.GetLastAccessTimeUtc(insecurePath);
+			Directory.GetParent(insecurePath);
+			Directory.ResolveLinkTarget(insecurePath, true);
+			Directory.SetCreationTime(insecurePath, DateTime.MinValue);
+			Directory.SetCreationTimeUtc(insecurePath, DateTime.MinValue);
+			Directory.SetCurrentDirectory(insecurePath);
+			Directory.SetLastAccessTime(insecurePath, DateTime.MinValue);
+			Directory.SetLastAccessTimeUtc(insecurePath, DateTime.MinValue);
+			Directory.SetLastWriteTime(insecurePath, DateTime.MinValue);
+			Directory.SetLastWriteTimeUtc(insecurePath, DateTime.MinValue);
+		}
+
+		public void ToDetectOtherMethods(string insecurePath)
+		{
+			Assembly.Load(insecurePath);
+			Assembly.LoadFrom(insecurePath);
+			Assembly.LoadFile(insecurePath);
+			Assembly.UnsafeLoadFrom(insecurePath);
+
+			Process.Start(insecurePath);
+		}
+
+	}
+
+	internal class PathHolder
+	{
+		public string pathField;
+
+		public PathHolder()
+		{
+
+		}
+
+		public string PathProperty { get; set; }
+	}
+}
