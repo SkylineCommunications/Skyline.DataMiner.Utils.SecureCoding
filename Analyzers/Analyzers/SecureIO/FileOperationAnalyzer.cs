@@ -5,7 +5,6 @@ using Microsoft.CodeAnalysis.Diagnostics;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
-using System.Security.Cryptography.X509Certificates;
 
 namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.SecureIO
 {
@@ -24,6 +23,7 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.SecureIO
             "System.IO.File",
             "System.IO.Directory",
             "System.Reflection.Assembly",
+            "System.Diagnostics.Process"
         };
 
         private static List<string> objectCreationReceiverTypes = new List<string>
@@ -36,8 +36,8 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.SecureIO
         private static List<string> invocationParameterNamesToMatch = new List<string>
         {
             "path",
-            "filename",
-            "assemblyString"
+            "fileName",
+            "assemblyString",
         };
         #endregion
 
@@ -76,7 +76,7 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.SecureIO
                 GetSecureMethodsLocations(context, secureMethodsLocations, invocation);
             }
 
-            var locationsToAnalyze = GetLocationsToAnalyze(context, descendantNodes, fileOperationsPathArguments);
+            var locationsToAnalyze = GetLocationsToAnalyze(context, descendantNodes, variableDeclarators, fileOperationsPathArguments);
 
             AnalyzeLocations(context, fileOperationsPathArguments, secureMethodsLocations, locationsToAnalyze);
         }
@@ -274,13 +274,12 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.SecureIO
         private static List<LocationToAnalyze> GetLocationsToAnalyze(
             CodeBlockAnalysisContext context,
             IEnumerable<SyntaxNode> descendantNodes,
+            IEnumerable<VariableDeclaratorSyntax> variableDeclarators,
             List<ArgumentSyntax> fileOperationsPathArguments)
         {
             var assignments = descendantNodes.OfType<AssignmentExpressionSyntax>();
 
             var forEachNodes = descendantNodes.OfType<ForEachStatementSyntax>();
-
-            var variableDeclarators = descendantNodes.OfType<VariableDeclaratorSyntax>();
 
             var inputParameters = context.CodeBlock
                 .FirstAncestorOrSelf<MethodDeclarationSyntax>().ParameterList

@@ -71,7 +71,7 @@ namespace Skyline.DataMiner.Utils.SecureCoding.SecureSerialization.Json.Newtonso
         /// <summary>
         /// Deserializes the json string to an object of the specified type.
         /// This method will make use of the types specified in the json to determine which objects should be constructed.
-        /// Please note that JSON results may not be reliable if deserialization is attempted on an object not serialized with TypeNameHandling set to 'All'.
+        /// Please note that JSON results may not be reliable if deserialization is attempted on an object that was serialized with TypeNameHandling set to 'None'.
         /// To make the deserialization secure, only the types specified in the knownTypes list will be resolved.
         /// Because of this, this method can handle more complex objects that make use of polymorphism or inheritance.
         /// </summary>
@@ -79,7 +79,7 @@ namespace Skyline.DataMiner.Utils.SecureCoding.SecureSerialization.Json.Newtonso
         /// <param name="knownTypes">The list of types that the deserializer will be able to resolve.</param>
         /// <returns>The deserialized object from the json string.</returns>
         /// <exception cref="ArgumentException">Thrown if the <paramref name="json"/> is null, empty or whitespace or if the <paramref name="knownTypes"/> list is null or empty.</exception>
-        /// <exception cref="UnknownTypeException">Thrown if the <paramref name="json"/> contains a type that is not in the <paramref name="knownTypes"/>.</exception>
+        /// <exception cref="JsonSerializationException">Thrown if the <paramref name="json"/> contains a type that is not in the <paramref name="knownTypes"/>.</exception>
         /// <exception cref="KnownExploitableTypeException">Thrown if a type specified in the <paramref name="knownTypes"/> is known to be insecure for deserialization.</exception> 
         /// <exception cref="JsonReaderException">Thrown if the <paramref name="json"/> is not a valid json string.</exception>
         /// <exception cref="JsonSerializationException">Thrown if the <paramref name="json"/> cannot be deserialized.</exception>
@@ -97,9 +97,8 @@ namespace Skyline.DataMiner.Utils.SecureCoding.SecureSerialization.Json.Newtonso
 
             JsonSerializerSettings settings = new JsonSerializerSettings
             {
-                TypeNameHandling = TypeNameHandling.All,
+                TypeNameHandling = TypeNameHandling.Auto,
                 SerializationBinder = new KnownTypesSerializationBinder(knownTypes),
-                MissingMemberHandling = MissingMemberHandling.Error,
             };
 
             return JsonConvert.DeserializeObject<T>(json, settings);
@@ -108,7 +107,7 @@ namespace Skyline.DataMiner.Utils.SecureCoding.SecureSerialization.Json.Newtonso
         /// <summary>
         /// Deserializes the json string to an object of the specified type using the provided deserialization settings.
         /// This method will make use of the types specified in the json to determine which objects should be constructed. 
-        /// Please note that JSON results may not be reliable if deserialization is attempted on an object not serialized with TypeNameHandling set to 'All'.
+        /// Please note that JSON results may not be reliable if deserialization is attempted on an object that was serialized with TypeNameHandling set to 'None'.
         /// To make the deserialization secure, the serializationbinder setting will be overriden and only the types specified in the knownTypes list will be resolved.
         /// Because of this, this method can handle more complex objects that make use of polymorphism or inheritance.
         /// </summary>
@@ -138,9 +137,8 @@ namespace Skyline.DataMiner.Utils.SecureCoding.SecureSerialization.Json.Newtonso
                 settings = new JsonSerializerSettings();
             }
 
-            settings.TypeNameHandling = TypeNameHandling.All;
+            settings.TypeNameHandling = TypeNameHandling.Auto;
             settings.SerializationBinder = new KnownTypesSerializationBinder(knownTypes);
-            settings.MissingMemberHandling = MissingMemberHandling.Error;
 
             return JsonConvert.DeserializeObject<T>(json, settings);
         }

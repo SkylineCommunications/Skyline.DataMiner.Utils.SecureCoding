@@ -22,13 +22,9 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Tests
         // straightforward cases
         [DataRow(@"C:\skyline dataminer\", @"subdir\test.txt", @"C:\skyline dataminer\subdir\test.txt")]
         [DataRow(@"C:\skyline dataminer", @"subdir\test.txt", @"C:\skyline dataminer\subdir\test.txt")]
-        // edge case where filename is an absolute path but point to the expected location
-        [DataRow(@"C:\skyline dataminer", @"C:\skyline dataminer\subdir1\test.txt", @"C:\skyline dataminer\subdir1\test.txt")]
         // network paths
         [DataRow(@"\\127.0.0.1\c$\skyline dataminer\", @"subdir\test.txt", @"\\127.0.0.1\c$\skyline dataminer\subdir\test.txt")]
         [DataRow(@"\\127.0.0.1\c$\skyline dataminer", @"subdir\test.txt", @"\\127.0.0.1\c$\skyline dataminer\subdir\test.txt")]
-        [DataRow(@"\\127.0.0.1\c$\skyline dataminer", @"\\127.0.0.1\c$\skyline dataminer\subdir1\test.txt", @"\\127.0.0.1\c$\skyline dataminer\subdir1\test.txt")]
-        [DataRow(@"\\127.0.0.1\c$\skyline dataminer\", @"\\127.0.0.1\c$\skyline dataminer\test.txt", @"\\127.0.0.1\c$\skyline dataminer\test.txt")]
         public void ConstructSecurePathWithSubdirectoriesSuccess(string basePath, string filename, string expectedResult)
         {
             string result = SecurePath.ConstructSecurePathWithSubDirectories(basePath, filename);
@@ -106,6 +102,8 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Tests
         [DataRow(@"\\127.0.0.1\c$\skyline dataminer", @"subdir1/test.txt", typeof(InvalidOperationException))]
         [DataRow(@"\\127.0.0.1\c$\skyline dataminer", @"..\..\..\test.txt", typeof(InvalidOperationException))]
         [DataRow(@"\\127.0.0.1\c$\skyline dataminer", @"%programfiles%\test.txt", typeof(InvalidOperationException))]
+        [DataRow(@"\\127.0.0.1\c$\skyline dataminer\", @"\\127.0.0.1\c$\skyline dataminer\test.txt", typeof(InvalidOperationException))]
+        [DataRow(@"\\127.0.0.1\c$\skyline dataminer", @"\\127.0.0.1\c$\skyline dataminer\subdir1\test.txt", typeof(InvalidOperationException))]
         public void ConstructSecurePathFailure(string basePath, string filename, Type expectedExceptionType)
         {
             typeof(Assert)
@@ -277,7 +275,7 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Tests
         [DataRow("\n")]
         public void IsPathValidException(string path)
         {
-            Assert.ThrowsException<ArgumentException>( () => { SecurePath.IsPathValid(path); });
+            Assert.ThrowsException<ArgumentException>(() => { SecurePath.IsPathValid(path); });
         }
     }
 }
