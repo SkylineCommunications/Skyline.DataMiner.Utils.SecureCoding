@@ -33,12 +33,12 @@ namespace Skyline.DataMiner.Utils.Security.SecureIO
 
             if (basePath.ContainsInvalidPathCharacters())
             {
-                throw new InvalidOperationException($"Base path '{basePath} contains invalid characters'");
+                throw new InvalidOperationException($"Base path '{basePath}' contains invalid characters");
             }
 
             if (filename.ContainsInvalidFilenameCharacters())
             {
-                throw new InvalidOperationException($"Filename '{filename} contains invalid characters'");
+                throw new InvalidOperationException($"Filename '{filename}' contains invalid characters");
             }
 
             var combinedPath = Path.Combine(basePath, filename);
@@ -56,11 +56,9 @@ namespace Skyline.DataMiner.Utils.Security.SecureIO
         /// <param name="paths">An array of path segments to combine, where the first position is considered the base path, and the last position is considered the filename, being all the segments in between considered as sub-directories relative to the base path.</param>
         /// <returns>The full and validated secure path.</returns>
         /// <exception cref="ArgumentNullException">Thrown if <paramref name="paths"/> is null.</exception>
-        /// <exception cref="ArgumentException">
-        /// Thrown if <paramref name="paths"/> has a length less than 1, or if any path segment contains invalid characters.
-        /// </exception>
-        /// <exception cref="InvalidOperationException">
-        /// Thrown if the constructed full path is not a valid path or if it does not start with the specified base path.
+        /// <exception cref="ArgumentException">Thrown if <paramref name="paths"/> has a length less than 1, or if any path segment contains invalid characters.</exception>
+        /// <exception cref="InvalidOperationException">Thrown if the constructed full path is not a valid path, if it does not start with the specified base path,
+        /// when any path segment contains invalid characters or when the base path is a rooted path.
         /// </exception>
         public static string ConstructSecurePath(params string[] paths)
         {
@@ -73,14 +71,14 @@ namespace Skyline.DataMiner.Utils.Security.SecureIO
 
             if (basePath.ContainsInvalidPathCharacters())
             {
-                throw new InvalidOperationException($"Base path '{basePath} contains invalid characters'");
+                throw new InvalidOperationException($"Base path '{basePath}' contains invalid characters");
             }
 
             for (int i = 1; i < paths.Length - 1; i++)
             {
                 if (paths[i].ContainsInvalidPathCharacters())
                 {
-                    throw new InvalidOperationException($"Path segment '{paths[i]} contains invalid characters'");
+                    throw new InvalidOperationException($"Path segment '{paths[i]}' contains invalid characters");
                 }
 
                 if (Path.IsPathRooted(paths[i]))
@@ -92,7 +90,7 @@ namespace Skyline.DataMiner.Utils.Security.SecureIO
             var filename = paths[paths.Length - 1];
             if (filename.ContainsInvalidFilenameCharacters())
             {
-                throw new InvalidOperationException($"Filename '{filename} contains invalid characters'");
+                throw new InvalidOperationException($"Filename '{filename}' contains invalid characters");
             }
 
             var combinedPath = Path.Combine(paths);
@@ -110,12 +108,11 @@ namespace Skyline.DataMiner.Utils.Security.SecureIO
         /// <param name="basePath">The base path to combine with the filename.</param>
         /// <param name="relativePath">The path relative to the base path which may contain a filename.</param>
         /// <returns>The full and validated secure path.</returns>
-        /// <exception cref="ArgumentException">
-        /// Thrown if <paramref name="basePath"/> or <paramref name="relativePath"/> is null, empty, or whitespace,
+        /// <exception cref="ArgumentException">Thrown if <paramref name="basePath"/> or <paramref name="relativePath"/> is null, empty, or whitespace,
         /// or if the base path contains invalid characters.
         /// </exception>
-        /// <exception cref="InvalidOperationException">
-        /// Thrown if the constructed full path is not a valid path or if it does not start with the specified base path.
+        /// <exception cref="InvalidOperationException">Thrown if the constructed full path is not a valid path or if it does not start with the specified base path, 
+        /// when the base path contains invalid characters, when the relative path is rooted or invalid, or when the relative path contains invalid characters.
         /// </exception>
         public static string ConstructSecurePathWithSubDirectories(string basePath, string relativePath)
         {
