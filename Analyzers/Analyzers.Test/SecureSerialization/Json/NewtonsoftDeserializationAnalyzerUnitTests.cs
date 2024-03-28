@@ -1,6 +1,4 @@
-﻿using Microsoft.CodeAnalysis.CSharp.Testing;
-using Microsoft.CodeAnalysis.Testing.Verifiers;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Skyline.DataMiner.Utils.SecureCoding.CodeFixProviders.SecureSerialization.Json;
 using Skyline.DataMiner.Utils.SecureCoding.Analyzers.SecureSerialization.Json;
 using System.IO;
@@ -22,46 +20,28 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.Tests.SecureSerializati
 
         [TestMethod]
         public async Task VerifyNewtonsoftDeserializationUsageDiagnosticAndCodeFix()
-        {            
-            ImmutableArray<PackageIdentity> packages = new PackageIdentity[]
+        {
+            var packages = new PackageIdentity[]
             {
                 new PackageIdentity("Newtonsoft.json","13.0.3"),
-            }.ToImmutableArray();
+            }
+            .ToImmutableArray();
 
-            List<DiagnosticResult> expectedDiagnostics = new List<DiagnosticResult>()
+            var expectedDiagnostics = new List<DiagnosticResult>()
             {
-                BuildDiagnosticResult(10, 20),
-                BuildDiagnosticResult(15, 20),
-                BuildDiagnosticResult(20, 20),
-                BuildDiagnosticResult(25, 20),
-                BuildDiagnosticResult(30, 20),
+                AnalyzerVerifierHelper.BuildDiagnosticResult(NewtonsoftDeserializationAnalyzer.DiagnosticId, DiagnosticSeverity.Warning, 10, 20),
+                AnalyzerVerifierHelper.BuildDiagnosticResult(NewtonsoftDeserializationAnalyzer.DiagnosticId, DiagnosticSeverity.Warning, 15, 20),
+                AnalyzerVerifierHelper.BuildDiagnosticResult(NewtonsoftDeserializationAnalyzer.DiagnosticId, DiagnosticSeverity.Warning, 20, 20),
+                AnalyzerVerifierHelper.BuildDiagnosticResult(NewtonsoftDeserializationAnalyzer.DiagnosticId, DiagnosticSeverity.Warning, 25, 20),
+                AnalyzerVerifierHelper.BuildDiagnosticResult(NewtonsoftDeserializationAnalyzer.DiagnosticId, DiagnosticSeverity.Warning, 30, 20),
             };
 
-            CSharpCodeFixTest<NewtonsoftDeserializationAnalyzer, NewtonsoftDeserializationCodeFixProvider, MSTestVerifier> analyzerVerifier
-                = new CSharpCodeFixTest<NewtonsoftDeserializationAnalyzer, NewtonsoftDeserializationCodeFixProvider, MSTestVerifier>()
-                {
-                    TestState =
-                    {
-                        Sources = { testCase },
-                        ReferenceAssemblies = new ReferenceAssemblies(
-                            "net8.0",
-                            new PackageIdentity("Microsoft.NETCore.App.Ref", "8.0.0"),
-                            Path.Combine("ref", "net8.0")
-                            )
-                        .AddPackages(packages),
-                    },
-                    
-                    FixedState =
-                    {
-                        Sources = { expectedCodefix },
-                        ReferenceAssemblies = new ReferenceAssemblies(
-                            "net8.0",
-                            new PackageIdentity("Microsoft.NETCore.App.Ref","8.0.0"),
-                            Path.Combine("ref", "net8.0")
-                            )
-                        .AddPackages(packages)
-                    }
-                };
+            var analyzerVerifier = AnalyzerVerifierHelper.
+                BuildAnalyzerVerifierWithCodeFix<NewtonsoftDeserializationAnalyzer, NewtonsoftDeserializationCodeFixProvider>(
+                    testCase,
+                    expectedCodefix,
+                    packages);
+
             analyzerVerifier.FixedState.AdditionalReferences.Add(typeof(SecureNewtonsoftDeserialization).Assembly);
             analyzerVerifier.CodeActionEquivalenceKey = NewtonsoftDeserializationCodeFixProvider.SecureDeserializationFixEquivalenceKey;
             analyzerVerifier.NumberOfFixAllIterations = 2;
@@ -69,69 +49,37 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.Tests.SecureSerializati
 
             await analyzerVerifier.RunAsync();
         }
-        
+
         [TestMethod]
         public async Task VerifyNewtonsoftDeserializationUsageDiagnosticAndKnownTypesCodeFix()
         {
-            ImmutableArray<PackageIdentity> packages = new PackageIdentity[]
+            var packages = new PackageIdentity[]
             {
                 new PackageIdentity("Newtonsoft.json","13.0.3"),
-            }.ToImmutableArray();
+            }
+            .ToImmutableArray();
 
-            List<DiagnosticResult> expectedDiagnostics = new List<DiagnosticResult>()
+            var expectedDiagnostics = new List<DiagnosticResult>()
             {
-                BuildDiagnosticResult(10, 20),
-                BuildDiagnosticResult(15, 20),
-                BuildDiagnosticResult(20, 20),
-                BuildDiagnosticResult(25, 20),
-                BuildDiagnosticResult(30, 20),
+                AnalyzerVerifierHelper.BuildDiagnosticResult(NewtonsoftDeserializationAnalyzer.DiagnosticId, DiagnosticSeverity.Warning, 10, 20),
+                AnalyzerVerifierHelper.BuildDiagnosticResult(NewtonsoftDeserializationAnalyzer.DiagnosticId, DiagnosticSeverity.Warning, 15, 20),
+                AnalyzerVerifierHelper.BuildDiagnosticResult(NewtonsoftDeserializationAnalyzer.DiagnosticId, DiagnosticSeverity.Warning, 20, 20),
+                AnalyzerVerifierHelper.BuildDiagnosticResult(NewtonsoftDeserializationAnalyzer.DiagnosticId, DiagnosticSeverity.Warning, 25, 20),
+                AnalyzerVerifierHelper.BuildDiagnosticResult(NewtonsoftDeserializationAnalyzer.DiagnosticId, DiagnosticSeverity.Warning, 30, 20),
             };
 
-            CSharpCodeFixTest<NewtonsoftDeserializationAnalyzer, NewtonsoftDeserializationCodeFixProvider, MSTestVerifier> analyzerFix
-                = new CSharpCodeFixTest<NewtonsoftDeserializationAnalyzer, NewtonsoftDeserializationCodeFixProvider, MSTestVerifier>()
-                {
-                    TestState =
-                    {
-                        Sources = { testCase },
-                        ReferenceAssemblies = new ReferenceAssemblies(
-                            "net8.0",
-                            new PackageIdentity("Microsoft.NETCore.App.Ref", "8.0.0"),
-                            Path.Combine("ref", "net8.0")
-                            )
-                        .AddPackages(packages),
-                    },
-                    
-                    FixedState =
-                    {
-                        Sources = { knownTypesExpectedCodeFix },
-                        ReferenceAssemblies = new ReferenceAssemblies(
-                            "net8.0",
-                            new PackageIdentity("Microsoft.NETCore.App.Ref","8.0.0"),
-                            Path.Combine("ref", "net8.0")
-                            )
-                        .AddPackages(packages)
-                    }
-                };
-            analyzerFix.FixedState.AdditionalReferences.Add(typeof(SecureNewtonsoftDeserialization).Assembly);
-            analyzerFix.CodeActionEquivalenceKey = NewtonsoftDeserializationCodeFixProvider.KnownTypesSecureDeserializationFixEquivalenceKey;
-            analyzerFix.NumberOfFixAllIterations = 2;
-            analyzerFix.TestState.ExpectedDiagnostics.AddRange(expectedDiagnostics);
+            var analyzerVerifier = AnalyzerVerifierHelper.
+                BuildAnalyzerVerifierWithCodeFix<NewtonsoftDeserializationAnalyzer, NewtonsoftDeserializationCodeFixProvider>(
+                    testCase,
+                    knownTypesExpectedCodeFix,
+                    packages);
 
-            await analyzerFix.RunAsync();
-        }
+            analyzerVerifier.FixedState.AdditionalReferences.Add(typeof(SecureNewtonsoftDeserialization).Assembly);
+            analyzerVerifier.CodeActionEquivalenceKey = NewtonsoftDeserializationCodeFixProvider.KnownTypesSecureDeserializationFixEquivalenceKey;
+            analyzerVerifier.NumberOfFixAllIterations = 2;
+            analyzerVerifier.TestState.ExpectedDiagnostics.AddRange(expectedDiagnostics);
 
-        private static DiagnosticResult BuildDiagnosticResult(int line, int column)
-        {
-            return new DiagnosticResult(
-                new DiagnosticDescriptor(
-                    NewtonsoftDeserializationAnalyzer.DiagnosticId,
-                        "Avoid deserializing json strings by using Newtonsoft directly.",
-                        "Avoid deserializing json strings by using Newtonsoft directly.\nConsider using SecureJsonDeserialization.DeserializeObject instead.",
-                        "Usage",
-                        DiagnosticSeverity.Warning,
-                         isEnabledByDefault: true
-                )
-            ).WithLocation(line, column);
+            await analyzerVerifier.RunAsync();
         }
     }
 }

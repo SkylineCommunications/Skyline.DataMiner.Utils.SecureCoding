@@ -10,7 +10,6 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.SecureSerialization.Jso
     [DiagnosticAnalyzer(LanguageNames.CSharp)]
     public class JavaScriptSerializerDeserializationAnalyzer : DiagnosticAnalyzer
     {
-
         public const string DiagnosticId = "JavaScriptSerializerUsage";
 
         public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create(

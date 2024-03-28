@@ -10,8 +10,7 @@ namespace Skyline.DataMiner.Utils.SecureCoding.SecureSerialization.Json.Newtonso
 {
     internal class KnownTypesSerializationBinder : ISerializationBinder
     {
-        private readonly Dictionary<string, Type> fullTypeNameToType;
-
+        private readonly HashSet<Type> deserializerTypes;
 
         public KnownTypesSerializationBinder(IEnumerable<Type> knownTypes)
         {
@@ -20,20 +19,28 @@ namespace Skyline.DataMiner.Utils.SecureCoding.SecureSerialization.Json.Newtonso
                 throw new ArgumentNullException(nameof(knownTypes));
             }
 
-            fullTypeNameToType = new Dictionary<string, Type>();
+            deserializerTypes = new HashSet<Type>();
+
             foreach (Type knownType in knownTypes)
             {
                 if (knownType.IsKnownExploitableType())
                 {
                     throw new KnownExploitableTypeException($"{knownType.FullName} is a known exploitable type, it is not secure to deserialize this type.");
                 }
-                fullTypeNameToType[knownType.FullName] = knownType;
+
+                deserializerTypes.Add(knownType);
             }
         }
 
         public Type BindToType(string assemblyName, string typeName)
         {
-            if (!fullTypeNameToType.TryGetValue(typeName, out Type deserializedType))
+            var assembly = AppDomain.CurrentDomain.GetAssemblies().FirstOrDefault(a => a.GetName().Name == assemblyName)
+                ?? throw new UnknownTypeException($"{assemblyName} assembly is not loaded.");
+
+            // Try to find the type by its name in the assembly
+            Type deserializedType = assembly.GetType(typeName);
+
+            if (!deserializerTypes.Contains(deserializedType))
             {
                 throw new UnknownTypeException($"{typeName} is not a known Type.");
             }
@@ -43,13 +50,11 @@ namespace Skyline.DataMiner.Utils.SecureCoding.SecureSerialization.Json.Newtonso
 
         public void BindToName(Type serializedType, out string assemblyName, out string typeName)
         {
-            if (!fullTypeNameToType.ContainsKey(serializedType.FullName))
-            {
-                throw new UnknownTypeException($"{serializedType.FullName} is not a known Type.");
-            }
+            var matchingSerializedType = deserializerTypes.FirstOrDefault(type => type == serializedType)
+                ?? throw new UnknownTypeException($"{serializedType.FullName} is not a known Type.");
 
-            assemblyName = serializedType.AssemblyQualifiedName;
-            typeName = serializedType.FullName;
+            assemblyName = matchingSerializedType.AssemblyQualifiedName;
+            typeName = matchingSerializedType.FullName;
         }
     }
 }

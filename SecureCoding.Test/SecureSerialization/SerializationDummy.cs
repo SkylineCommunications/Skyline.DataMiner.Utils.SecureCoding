@@ -12,6 +12,8 @@
             RuntimeProperty = runtimeProperty;
         }
 
+        public string Content { get; set; }
+
         public override bool Equals(object? obj)
         {
             if (obj == null) return false;
@@ -34,11 +36,23 @@
 
     public class ComplexDummy : IDummy
     {
-        public List<IDummy> Dummies { get; }
+        public List<IDummy> Dummies { get; set; }
+
+        public Dictionary<ComplexDummy, IDummy> ComplexDummyToDummy { get; }
+
+        public ComplexDummy()
+        {
+
+        }
 
         public ComplexDummy(List<IDummy> dummies)
         {
             Dummies = dummies;
+        }
+
+        public ComplexDummy(Dictionary<ComplexDummy, IDummy> dummies)
+        {
+            ComplexDummyToDummy = dummies;
         }
 
         public override bool Equals(object? obj)
@@ -50,13 +64,34 @@
                 return false;
             }
 
-            if (this.Dummies.Count != dummy.Dummies.Count) return false;
-
-            for (int i = 0; i < this.Dummies.Count; i++)
+            if (this.Dummies != null && dummy.Dummies != null)
             {
-                if (!this.Dummies[i].Equals(dummy.Dummies[i]))
+                if (this.Dummies.Count != dummy.Dummies.Count) return false;
+
+                for (int i = 0; i < this.Dummies.Count; i++)
                 {
-                    return false;
+                    if (!this.Dummies[i].Equals(dummy.Dummies[i]))
+                    {
+                        return false;
+                    }
+                }
+            }
+
+            if (this.ComplexDummyToDummy != null && dummy.ComplexDummyToDummy != null)
+            {
+                if (this.ComplexDummyToDummy.Count != dummy.ComplexDummyToDummy.Count) return false;
+
+                foreach (var kvp in ComplexDummyToDummy)
+                {
+                    if (!dummy.ComplexDummyToDummy.TryGetValue(kvp.Key, out var value))
+                    {
+                        return false;
+                    }
+
+                    if (value != kvp.Value)
+                    {
+                        return false;
+                    }
                 }
             }
 
@@ -66,9 +101,21 @@
         public override int GetHashCode()
         {
             int hash = 97;
-            foreach (var dummy in Dummies)
+
+            if (Dummies != null)
             {
-                hash += dummy.GetHashCode();
+                foreach (var dummy in Dummies)
+                {
+                    hash += dummy.GetHashCode();
+                }
+            }
+
+            if (ComplexDummyToDummy != null)
+            {
+                foreach (var kvp in ComplexDummyToDummy)
+                {
+                    hash += kvp.GetHashCode();
+                }
             }
 
             return hash % 39916801;
