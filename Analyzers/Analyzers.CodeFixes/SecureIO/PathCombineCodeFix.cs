@@ -15,7 +15,7 @@ namespace Skyline.DataMiner.Utils.SecureCoding.CodeFixProviders.SecureIO
     [ExportCodeFixProvider(LanguageNames.CSharp, Name = nameof(PathCombineCodeFix)), Shared]
     public class PathCombineCodeFix : CodeFixProvider
     {
-        private const string SECUREPATH_NAMESPACE = "Skyline.DataMiner.Utils.Security.SecureIO.SecurePath";
+        private const string SECUREPATH_NAMESPACE = "Skyline.DataMiner.Utils.SecureCoding.SecureIO";
 
         public sealed override ImmutableArray<string> FixableDiagnosticIds
         {
@@ -56,7 +56,7 @@ namespace Skyline.DataMiner.Utils.SecureCoding.CodeFixProviders.SecureIO
 
             if (!compilationUnit.Usings.Any(@using => @using.Name.ToString() == SECUREPATH_NAMESPACE))
             {
-                compilationUnit.Usings.Add(SyntaxFactory.UsingDirective(SyntaxFactory.ParseName(SECUREPATH_NAMESPACE)));
+                compilationUnit = compilationUnit.AddUsings(SyntaxFactory.UsingDirective(SyntaxFactory.ParseName(SECUREPATH_NAMESPACE)));
             }
 
             var newDocument = document.WithSyntaxRoot(compilationUnit);

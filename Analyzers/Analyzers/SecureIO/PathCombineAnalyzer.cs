@@ -9,14 +9,13 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.SecureIO
     [DiagnosticAnalyzer(LanguageNames.CSharp)]
     public class PathCombineAnalyzer : DiagnosticAnalyzer
     {
-        public const string DiagnosticId = "PathCombineUsage";
-        private const string Category = "Usage";
+        public const string DiagnosticId = "PathCombineAnalyzerUsage";
 
         public static DiagnosticDescriptor Rule => new DiagnosticDescriptor(
             DiagnosticId,
             title: "Avoid using 'System.IO.Path.Combine'",
             messageFormat: "Consider using 'SecureIO.ConstructSecurePath' instead of 'System.IO.Path.Combine'",
-            Category,
+            "Usage",
             DiagnosticSeverity.Warning,
             isEnabledByDefault: true);
 
@@ -42,8 +41,8 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.SecureIO
             var methodSymbol = context.SemanticModel.GetSymbolInfo(invocationExpression).Symbol as IMethodSymbol;
 
             if (methodSymbol != null
-                && methodSymbol.Name == "Path.Combine"
-                && methodSymbol.ContainingType.ToDisplayString() == "System.IO")
+                && methodSymbol.Name == "Combine"
+                && methodSymbol.ReceiverType.ToDisplayString() == "System.IO.Path")
             {
                 var diagnostic = Diagnostic.Create(Rule, invocationExpression.GetLocation());
                 context.ReportDiagnostic(diagnostic);

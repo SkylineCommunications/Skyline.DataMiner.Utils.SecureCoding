@@ -2,7 +2,7 @@
 using SecureCoding.Test.SecureSerialization.SerializationDummy;
 using Skyline.DataMiner.Utils.SecureCoding.SecureSerialization.Json;
 using Skyline.DataMiner.Utils.SecureCoding.SecureSerialization.Json.Newtonsoft;
-using Skyline.DataMiner.Utils.Security.SecureIO;
+using Skyline.DataMiner.Utils.SecureCoding.SecureIO;
 
 namespace Skyline.DataMiner.Utils.SecureCoding.Tests.SecureSerialization.Json
 {

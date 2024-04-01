@@ -30,19 +30,30 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.SecureIO
         {
             "System.IO.StreamWriter",
             "System.IO.StreamReader",
+            "System.IO.FileStream",
+            "System.IO.TextReader",
+            "System.IO.TextWritter",
             "System.IO.DirectoryInfo",
         };
 
         private static List<string> invocationParameterNamesToMatch = new List<string>
         {
-            "path",
+            "destFileName",
+            "destinationFileName",
+            "destinationBackupFileName",
             "fileName",
+            "linkPath",
+            "path",
+            "pathToTarget",
+            "sourceFileName",
             "assemblyString",
         };
         #endregion
 
+        public const string DiagnosticId = "FileOperationUsage";
+
         private static readonly DiagnosticDescriptor Rule = new DiagnosticDescriptor(
-            "FileOperationUsage",
+            DiagnosticId,
             title: "File operation usage detected without secure path construction",
             messageFormat: "File operation used with a path '{0}' not constructed by 'SecurePath.ConstructSecurePath' neither validated by 'IsPathValid'",
             "Usage",
@@ -93,7 +104,7 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.SecureIO
 
             var methodSymbol = context.SemanticModel.GetSymbolInfo(invocation).Symbol as IMethodSymbol;
             if (methodSymbol != null
-                && methodSymbol.ContainingType.ToDisplayString() == "Skyline.DataMiner.Utils.Security.SecureIO.SecurePath"
+                && methodSymbol.ContainingType.ToDisplayString() == "Skyline.DataMiner.Utils.SecureCoding.SecureIO.SecurePath"
                 && secureMethods.Contains(methodSymbol.Name))
             {
                 secureMethodsLocations.Add(invocation.GetLocation());
@@ -117,16 +128,12 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.SecureIO
                 return;
             }
 
-            var pathArgument = GetPathArgument(context, variableDeclarators, invocation, invocationSymbol);
-            if (pathArgument == default(ArgumentSyntax))
-            {
-                return;
-            }
+            var pathArguments = GetPathArguments(context, variableDeclarators, invocation, invocationSymbol);
 
-            fileOperationsPathArguments.Add(pathArgument);
+            fileOperationsPathArguments.AddRange(pathArguments);
         }
 
-        private static ArgumentSyntax GetPathArgument(
+        private static IEnumerable<ArgumentSyntax> GetPathArguments(
             CodeBlockAnalysisContext context,
             IEnumerable<VariableDeclaratorSyntax> variableDeclarators,
             InvocationExpressionSyntax invocation,
@@ -136,25 +143,25 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.SecureIO
 
             if (invocationReceiverTypes.Contains(receiverType))
             {
-                return GetPathArgumentFromInvocation(invocation, invocationSymbol);
+                return GetPathArgumentsFromInvocation(invocation, invocationSymbol);
             }
 
             if (objectCreationReceiverTypes.Contains(receiverType))
             {
-                return GetPathArgumentFromObjectCreation(context, variableDeclarators, invocation);
+                return GetPathArgumentsFromObjectCreation(context, variableDeclarators, invocation);
             }
 
-            return default;
+            return Enumerable.Empty<ArgumentSyntax>();
         }
 
-        private static ArgumentSyntax GetPathArgumentFromObjectCreation(
+        private static IEnumerable<ArgumentSyntax> GetPathArgumentsFromObjectCreation(
             CodeBlockAnalysisContext context,
             IEnumerable<VariableDeclaratorSyntax> variableDeclarators,
             InvocationExpressionSyntax invocation)
         {
             if (!(invocation.Expression is MemberAccessExpressionSyntax memberAccess))
             {
-                return default;
+                return Enumerable.Empty<ArgumentSyntax>();
             }
 
             var variableDeclaratorMatchingMemberAccess = variableDeclarators
@@ -162,7 +169,7 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.SecureIO
 
             if (variableDeclaratorMatchingMemberAccess is null)
             {
-                return default;
+                return Enumerable.Empty<ArgumentSyntax>();
             }
 
             var objectCreationWitinVariableDeclarator = variableDeclaratorMatchingMemberAccess
@@ -172,45 +179,37 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.SecureIO
 
             if (objectCreationWitinVariableDeclarator is null)
             {
-                return default;
+                return Enumerable.Empty<ArgumentSyntax>();
             }
 
             var objectCreationSymbol = context.SemanticModel.GetSymbolInfo(objectCreationWitinVariableDeclarator).Symbol as IMethodSymbol;
             if (objectCreationSymbol == null)
             {
-                return default;
-            }
-
-            var index = objectCreationSymbol.GetParameterSymbolIndexByName(invocationParameterNamesToMatch.ToArray());
-            if (index < 0)
-            {
-                return default;
+                return Enumerable.Empty<ArgumentSyntax>();
             }
 
             if (objectCreationWitinVariableDeclarator.ArgumentList.Arguments.Count < 1)
             {
-                return default;
+                return Enumerable.Empty<ArgumentSyntax>();
             }
 
-            return objectCreationWitinVariableDeclarator.ArgumentList.Arguments[index];
+            var indexes = objectCreationSymbol.GetParametersSymbolIndexByName(invocationParameterNamesToMatch.ToArray());
+
+            return indexes.Select(index => objectCreationWitinVariableDeclarator.ArgumentList.Arguments[index]);
         }
 
-        private static ArgumentSyntax GetPathArgumentFromInvocation(
+        private static IEnumerable<ArgumentSyntax> GetPathArgumentsFromInvocation(
             InvocationExpressionSyntax invocation,
             IMethodSymbol invocationSymbol)
         {
             if (invocation.ArgumentList?.Arguments.Count < 1)
             {
-                return default;
+                return Enumerable.Empty<ArgumentSyntax>();
             }
 
-            var index = invocationSymbol.GetParameterSymbolIndexByName(invocationParameterNamesToMatch.ToArray());
-            if (index < 0)
-            {
-                return default;
-            }
+            var indexes = invocationSymbol.GetParametersSymbolIndexByName(invocationParameterNamesToMatch.ToArray());
 
-            return invocation.ArgumentList.Arguments[index];
+            return indexes.Select(index => invocation.ArgumentList.Arguments[index]);
         }
 
         private static void AnalyzeLocations(
@@ -281,16 +280,16 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.SecureIO
 
             var forEachNodes = descendantNodes.OfType<ForEachStatementSyntax>();
 
-            var inputParameters = context.CodeBlock
-                .FirstAncestorOrSelf<MethodDeclarationSyntax>().ParameterList
-                .ChildNodes()
+            var inputParameters = context.CodeBlock?
+                .FirstAncestorOrSelf<MethodDeclarationSyntax>()?.ParameterList?
+                .ChildNodes()?
                 .OfType<ParameterSyntax>();
 
             var locationsToAnalyze = new List<LocationToAnalyze>();
 
             foreach (var pathArgument in fileOperationsPathArguments)
             {
-                var pathArgumentName = pathArgument.Expression.ToString();
+                var pathArgumentName = pathArgument.Expression?.ToString();
 
                 // Assignments Locations
                 locationsToAnalyze.AddRange(
