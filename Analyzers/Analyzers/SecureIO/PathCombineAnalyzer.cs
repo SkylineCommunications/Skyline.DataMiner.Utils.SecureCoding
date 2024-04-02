@@ -17,6 +17,7 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.SecureIO
             messageFormat: "Consider using 'SecureIO.ConstructSecurePath' instead of 'System.IO.Path.Combine'",
             "Usage",
             DiagnosticSeverity.Warning,
+            helpLinkUri: "https://github.com/SkylineCommunications/Skyline.DataMiner.Utils.SecureCoding/blob/main/docs/Rules/SLC-SC0002.md",
             isEnabledByDefault: true);
 
         public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get { return ImmutableArray.Create(Rule); } }

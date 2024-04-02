@@ -58,6 +58,7 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.SecureIO
             messageFormat: "File operation used with a path '{0}' not constructed by 'SecurePath.ConstructSecurePath' neither validated by 'IsPathValid'",
             "Usage",
             DiagnosticSeverity.Warning,
+            helpLinkUri: "https://github.com/SkylineCommunications/Skyline.DataMiner.Utils.SecureCoding/blob/main/docs/Rules/SLC-SC0001.md",
             isEnabledByDefault: true);
 
         public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get { return ImmutableArray.Create(Rule); } }

@@ -19,6 +19,7 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.SecureSerialization.Jso
                 "Avoid using the JavaScriptSerializer for (de)serialization.\nMicrosoft recommends to use System.Text.Json or Newtonsoft.Json instead.",
                 "Usage",
                 DiagnosticSeverity.Warning,
+                helpLinkUri: "https://github.com/SkylineCommunications/Skyline.DataMiner.Utils.SecureCoding/blob/main/docs/Rules/SLC-SC0003.md",
                 isEnabledByDefault: true
             )
         );
