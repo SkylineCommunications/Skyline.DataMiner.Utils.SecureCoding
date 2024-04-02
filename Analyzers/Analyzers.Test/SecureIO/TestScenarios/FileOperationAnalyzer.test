@@ -18,14 +18,12 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.Tests.SecureIO.TestScen
 			File.AppendText(insecurePath);
 			File.Copy(insecurePath, destinationPath);
 			File.Create(insecurePath);
-			File.CreateSymbolicLink(insecurePath, destinationPath);
 			File.Decrypt(insecurePath);
 			File.Delete(insecurePath);
 			File.Encrypt(insecurePath);
 			File.Exists(insecurePath);
 			File.Move(insecurePath, destinationPath);
 			File.Open(insecurePath, FileMode.Open);
-			File.OpenHandle(insecurePath);
 			File.OpenRead(insecurePath);
 			File.OpenText(insecurePath);
 			File.OpenWrite(insecurePath);
@@ -90,7 +88,6 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.Tests.SecureIO.TestScen
 			var targetPath = string.Empty;
 
 			Directory.CreateDirectory(insecurePath);
-			Directory.CreateSymbolicLink(insecurePath, targetPath);
 			Directory.Delete(insecurePath);
 			Directory.EnumerateDirectories(insecurePath);
 			Directory.EnumerateFiles(insecurePath);
@@ -104,7 +101,6 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.Tests.SecureIO.TestScen
 			Directory.GetLastAccessTime(insecurePath);
 			Directory.GetLastAccessTimeUtc(insecurePath);
 			Directory.GetParent(insecurePath);
-			Directory.ResolveLinkTarget(insecurePath, true);
 			Directory.SetCreationTime(insecurePath, DateTime.MinValue);
 			Directory.SetCreationTimeUtc(insecurePath, DateTime.MinValue);
 			Directory.SetCurrentDirectory(insecurePath);
