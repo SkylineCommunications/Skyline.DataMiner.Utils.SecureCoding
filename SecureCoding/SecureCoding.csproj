@@ -1,26 +1,42 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <TargetFramework>netstandard2.0</TargetFramework>
-    <PackageId>Skyline.DataMiner.Utils.SecureCoding</PackageId>
-    <Title>Secure Coding Helper</Title>
-    <Authors>Skyline Communications</Authors>
-    <PackageIcon></PackageIcon>
-    <PackageProjectUrl>https://github.com/SkylineCommunications/Skyline.DataMiner.Utils.SecureCoding</PackageProjectUrl>
-    <RepositoryUrl>https://github.com/SkylineCommunications/Skyline.DataMiner.Utils.SecureCoding</RepositoryUrl>
-    <PackageTags>Security, Coding</PackageTags>
-    <Description>Provides a comprehensive library offering a set of robust and secure coding methods for .NET development.</Description>
-    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
-  </PropertyGroup>
+    <PropertyGroup>
+        <AssemblyName>Skyline.DataMiner.Utils.SecureCoding</AssemblyName>
+        <PackageVersion>1.0.0.0</PackageVersion>
+        <TargetFramework>netstandard2.0</TargetFramework>
+        <PackageId>Skyline.DataMiner.Utils.SecureCoding</PackageId>
+        <Title>Secure Coding Helper</Title>
+        <Authors>SkylineCommunications</Authors>
+        <PackageProjectUrl>https://github.com/SkylineCommunications/Skyline.DataMiner.Utils.SecureCoding</PackageProjectUrl>
+        <RepositoryUrl>https://github.com/SkylineCommunications/Skyline.DataMiner.Utils.SecureCoding</RepositoryUrl>
+        <PackageTags>Skyline, DataMiner, Security, Coding</PackageTags>
+        <Description>Provides a comprehensive library offering a set of robust and secure coding methods for .NET development.</Description>
+        <GenerateDocumentationFile>True</GenerateDocumentationFile>
+        <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+        <PackageLicenseFile>License.txt</PackageLicenseFile>
+        <PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
+        <PackageIcon>Icon.png</PackageIcon>
+    </PropertyGroup>
 
-  <ItemGroup>
-    <Compile Remove="Serialization\**" />
-    <EmbeddedResource Remove="Serialization\**" />
-    <None Remove="Serialization\**" />
-  </ItemGroup>
+    <ItemGroup>
+        <Compile Remove="Serialization\**" />
+        <EmbeddedResource Remove="Serialization\**" />
+        <None Remove="Serialization\**" />
+    </ItemGroup>
 
-  <ItemGroup>
-    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
-  </ItemGroup>
+    <ItemGroup>
+        <None Include="..\License.txt">
+            <Pack>True</Pack>
+            <PackagePath>\</PackagePath>
+        </None>
+        <None Include="..\nuget\Icon.png">
+          <Pack>True</Pack>
+          <PackagePath>\</PackagePath>
+        </None>
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+    </ItemGroup>
 
 </Project>
