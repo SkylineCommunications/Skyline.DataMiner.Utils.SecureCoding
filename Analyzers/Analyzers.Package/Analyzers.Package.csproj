@@ -1,6 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
+        <AssemblyName>Skyline.DataMiner.Utils.SecureCoding.Analyzers</AssemblyName>
         <PackageId>Skyline.DataMiner.Utils.SecureCoding.Analyzers</PackageId>
         <PackageVersion>1.0.0.0</PackageVersion>
         <Title>Secure Coding Roslyn Analyzers</Title>
