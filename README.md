@@ -11,16 +11,24 @@ Secure Coding is a NuGet library designed to streamline secure development by mi
 
 ## Installation
 
+
+
 # Skyline.DataMiner.Utils.SecureCoding.Analyzers
 A complementary NuGet package designed to complement your security arsenal by harnessing the powerful capabilities of the **Roslyn compiler platform**. It provides a suite of code analysis tools meticulously crafted to elevate the security posture of your .NET applications.
 
 # Analyzers's rules
+This section outlines essential rules for secure coding practices:
+
+<!-- rules -->
+
 |Id|Category|Description|Severity|Is enabled|Code fix|
 |--|--------|-----------|:------:|:--------:|:------:|
-|[SLC-SC0001]()|Usage|File operation usage detected without secure path construction|<span title='Warning'>⚠️</span>|✔️|❌|
-|[SLC-SC0002]()|Usage|Avoid using 'System.IO.Path.Combine'|<span title='Warning'>⚠️</span>|✔️|✔️|
-|[SLC-SC0003]()|Usage|Avoid using the JavaScriptSerializer for (de)serialization.|<span title='Warning'>⚠️</span>|✔️|❌|
-|[SLC-SC0004]()|Usage|Avoid deserializing json strings by using Newtonsoft directly.|<span title='Warning'>⚠️</span>|✔️|✔️|
+|[SLC-SC0001](https://github.com/SkylineCommunications/Skyline.DataMiner.Utils.SecureCoding/blob/main/docs/Rules/SLC-SC0001.md)|Usage|File operation usage detected without secure path construction or validation|⚠️|✔️|❌|
+|[SLC-SC0002](https://github.com/SkylineCommunications/Skyline.DataMiner.Utils.SecureCoding/blob/main/docs/Rules/SLC-SC0002.md)|Usage|Avoid using 'System.IO.Path.Combine'|⚠️|✔️|✔️|
+|[SLC-SC0003](https://github.com/SkylineCommunications/Skyline.DataMiner.Utils.SecureCoding/blob/main/docs/Rules/SLC-SC0003.md)|Usage|Avoid using the JavaScriptSerializer for (de)serialization.|⚠️|✔️|❌|
+|[SLC-SC0004](https://github.com/SkylineCommunications/Skyline.DataMiner.Utils.SecureCoding/blob/main/docs/Rules/SLC-SC0004.md)|Usage|Avoid deserializing json strings by using Newtonsoft directly.|⚠️|✔️|✔️|
+
+<!-- rules -->
 
 # .editorconfig - default values
 
