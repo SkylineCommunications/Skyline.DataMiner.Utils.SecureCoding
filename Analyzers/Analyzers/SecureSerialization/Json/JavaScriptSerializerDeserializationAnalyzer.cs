@@ -10,7 +10,7 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.SecureSerialization.Jso
     [DiagnosticAnalyzer(LanguageNames.CSharp)]
     public class JavaScriptSerializerDeserializationAnalyzer : DiagnosticAnalyzer
     {
-        public const string DiagnosticId = "JavaScriptSerializerUsage";
+        public const string DiagnosticId = "SLC-SC0003";
 
         public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create(
             new DiagnosticDescriptor(
@@ -25,8 +25,8 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.SecureSerialization.Jso
 
         public override void Initialize(AnalysisContext context)
         {
-            context.ConfigureGeneratedCodeAnalysis(GeneratedCodeAnalysisFlags.None);
             context.EnableConcurrentExecution();
+            context.ConfigureGeneratedCodeAnalysis(GeneratedCodeAnalysisFlags.None);
 
             context.RegisterSyntaxNodeAction(AnalyzeInvoccationExpression, SyntaxKind.InvocationExpression);
             context.RegisterSyntaxNodeAction(AnalyzeObjectCreationExpression, SyntaxKind.ObjectCreationExpression);

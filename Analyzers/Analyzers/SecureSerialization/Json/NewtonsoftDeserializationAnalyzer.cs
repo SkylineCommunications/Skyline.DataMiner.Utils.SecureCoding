@@ -9,7 +9,7 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.SecureSerialization.Jso
     [DiagnosticAnalyzer(LanguageNames.CSharp)]
     public class NewtonsoftDeserializationAnalyzer : DiagnosticAnalyzer
     {
-        public const string DiagnosticId = "NewtonsoftDeserializationUsage";
+        public const string DiagnosticId = "SLC-SC0004";
 
         public static DiagnosticDescriptor Rule => new DiagnosticDescriptor(
             DiagnosticId,
@@ -24,9 +24,9 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.SecureSerialization.Jso
 
         public override void Initialize(AnalysisContext context)
         {
-            context.ConfigureGeneratedCodeAnalysis(GeneratedCodeAnalysisFlags.None);
-
             context.EnableConcurrentExecution();
+
+            context.ConfigureGeneratedCodeAnalysis(GeneratedCodeAnalysisFlags.None);
 
             context.RegisterSyntaxNodeAction(Analyze, SyntaxKind.InvocationExpression);
         }

@@ -50,11 +50,11 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.SecureIO
         };
         #endregion
 
-        public const string DiagnosticId = "FileOperationUsage";
+        public const string DiagnosticId = "SLC-SC0001";
 
         private static readonly DiagnosticDescriptor Rule = new DiagnosticDescriptor(
             DiagnosticId,
-            title: "File operation usage detected without secure path construction",
+            title: "File operation usage detected without secure path construction or validation",
             messageFormat: "File operation used with a path '{0}' not constructed by 'SecurePath.ConstructSecurePath' neither validated by 'IsPathValid'",
             "Usage",
             DiagnosticSeverity.Warning,

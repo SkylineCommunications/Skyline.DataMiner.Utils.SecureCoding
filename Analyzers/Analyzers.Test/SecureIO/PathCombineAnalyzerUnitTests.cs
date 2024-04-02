@@ -7,9 +7,6 @@ using System.Threading.Tasks;
 using Skyline.DataMiner.Utils.SecureCoding.Analyzers.SecureIO;
 using Skyline.DataMiner.Utils.SecureCoding.CodeFixProviders.SecureIO;
 using Skyline.DataMiner.Utils.SecureCoding.SecureIO;
-using Microsoft.VisualBasic;
-using System;
-using System.Diagnostics;
 
 
 namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.Tests.SecureIO

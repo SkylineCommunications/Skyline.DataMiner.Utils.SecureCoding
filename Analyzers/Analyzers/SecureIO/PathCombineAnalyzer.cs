@@ -9,7 +9,7 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.SecureIO
     [DiagnosticAnalyzer(LanguageNames.CSharp)]
     public class PathCombineAnalyzer : DiagnosticAnalyzer
     {
-        public const string DiagnosticId = "PathCombineAnalyzerUsage";
+        public const string DiagnosticId = "SLC-SC0002";
 
         public static DiagnosticDescriptor Rule => new DiagnosticDescriptor(
             DiagnosticId,
