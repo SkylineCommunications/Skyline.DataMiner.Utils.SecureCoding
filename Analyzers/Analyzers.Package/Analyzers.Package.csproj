@@ -10,20 +10,24 @@
   <PropertyGroup>
     <PackageId>Skyline.DataMiner.Utils.SecureCoding.Analyzers</PackageId>
     <PackageVersion>1.0.0.0</PackageVersion>
-    <Authors>FlavioJA</Authors>
+    <Authors>Skyline Communications</Authors>
     <PackageLicenseUrl>http://LICENSE_URL_HERE_OR_DELETE_THIS_LINE</PackageLicenseUrl>
-    <PackageProjectUrl>http://PROJECT_URL_HERE_OR_DELETE_THIS_LINE</PackageProjectUrl>
+    <PackageProjectUrl>https://github.com/SkylineCommunications/Skyline.DataMiner.Utils.SecureCoding</PackageProjectUrl>
     <PackageIconUrl>http://ICON_URL_HERE_OR_DELETE_THIS_LINE</PackageIconUrl>
-    <RepositoryUrl>http://REPOSITORY_URL_HERE_OR_DELETE_THIS_LINE</RepositoryUrl>
+    <RepositoryUrl>https://github.com/SkylineCommunications/Skyline.DataMiner.Utils.SecureCoding</RepositoryUrl>
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
-    <Description>Analyzers</Description>
+    <Description>Provides a comprehensive suite of code analysis tools designed to enhance the security posture of your .NET applications.</Description>
     <PackageReleaseNotes>Summary of changes made in this release of the package.</PackageReleaseNotes>
     <Copyright>Copyright</Copyright>
-    <PackageTags>Analyzers, analyzers</PackageTags>
+    <PackageTags>Roslyn, Analyzer, Security, Coding</PackageTags>
     <DevelopmentDependency>true</DevelopmentDependency>
     <NoPackageAnalysis>true</NoPackageAnalysis>
 
     <TargetsForTfmSpecificContentInPackage>$(TargetsForTfmSpecificContentInPackage);_AddAnalyzersToOutput</TargetsForTfmSpecificContentInPackage>
+
+    <Title>Secure Coding Roslyn Analyzers</Title>
+
+    <PackageIcon></PackageIcon>
   </PropertyGroup>
 
   <ItemGroup>

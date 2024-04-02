@@ -2,6 +2,15 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
+    <PackageId>Skyline.DataMiner.Utils.SecureCoding</PackageId>
+    <Title>Secure Coding Helper</Title>
+    <Authors>Skyline Communications</Authors>
+    <PackageIcon></PackageIcon>
+    <PackageProjectUrl>https://github.com/SkylineCommunications/Skyline.DataMiner.Utils.SecureCoding</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/SkylineCommunications/Skyline.DataMiner.Utils.SecureCoding</RepositoryUrl>
+    <PackageTags>Security, Coding</PackageTags>
+    <Description>Provides a comprehensive library offering a set of robust and secure coding methods for .NET development.</Description>
+    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
   </PropertyGroup>
 
   <ItemGroup>
@@ -12,7 +21,6 @@
 
   <ItemGroup>
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
-    <PackageReference Include="System.Text.Json" Version="8.0.3" />
   </ItemGroup>
 
 </Project>
