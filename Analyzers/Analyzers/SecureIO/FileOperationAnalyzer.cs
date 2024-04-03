@@ -225,33 +225,43 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.SecureIO
             {
                 foreach (var pathArgument in fileOperationsPathArguments)
                 {
-                    var pathArgumentLocation = pathArgument.GetLocation();
-
-                    var pathArgumentName = pathArgument.Expression.ToString();
-
-                    if (pathArgumentName != locationToAnalyze.PathArgumentName)
-                    {
-                        continue;
-                    }
-
-                    // Gets the next file operation and checks if there's a secure method in betweeen
-                    if (pathArgumentLocation.IsPosteriorLocation(locationToAnalyze.Location))
-                    {
-                        if (!secureMethodsLocations.Exists(methodLocation => methodLocation.IsBetweenLocations(locationToAnalyze.Location, pathArgumentLocation)))
-                        {
-                            ReportDiagnostic(context, reportedLocations, pathArgumentLocation, pathArgumentName);
-                        }
-
-                        continue;
-                    }
-
-                    // In case there's no next file operation => Gets the previous file operation and checks if there's a secure method in betweeen
-                    if (pathArgumentLocation.IsAnteriorLocation(locationToAnalyze.Location)
-                        && !secureMethodsLocations.Exists(methodLocation => methodLocation.IsBetweenLocations(pathArgumentLocation, locationToAnalyze.Location)))
-                    {
-                        ReportDiagnostic(context, reportedLocations, pathArgumentLocation, pathArgumentName);
-                    }
+                    HandleReportDiagnosticsByPathArgument(context, secureMethodsLocations, reportedLocations, locationToAnalyze, pathArgument);
                 }
+            }
+        }
+
+        private static void HandleReportDiagnosticsByPathArgument(
+            CodeBlockAnalysisContext context, 
+            List<Location> secureMethodsLocations, 
+            HashSet<Location> reportedLocations, 
+            LocationToAnalyze locationToAnalyze, 
+            ArgumentSyntax pathArgument)
+        {
+            var pathArgumentLocation = pathArgument.GetLocation();
+
+            var pathArgumentName = pathArgument.Expression.ToString();
+
+            if (pathArgumentName != locationToAnalyze.PathArgumentName)
+            {
+                return;
+            }
+
+            // Gets the next file operation and checks if there's a secure method in betweeen
+            if (pathArgumentLocation.IsPosteriorLocation(locationToAnalyze.Location))
+            {
+                if (!secureMethodsLocations.Exists(methodLocation => methodLocation.IsBetweenLocations(locationToAnalyze.Location, pathArgumentLocation)))
+                {
+                    ReportDiagnostic(context, reportedLocations, pathArgumentLocation, pathArgumentName);
+                }
+
+                return;
+            }
+
+            // In case there's no next file operation => Gets the previous file operation and checks if there's a secure method in betweeen
+            if (pathArgumentLocation.IsAnteriorLocation(locationToAnalyze.Location)
+                && !secureMethodsLocations.Exists(methodLocation => methodLocation.IsBetweenLocations(pathArgumentLocation, locationToAnalyze.Location)))
+            {
+                ReportDiagnostic(context, reportedLocations, pathArgumentLocation, pathArgumentName);
             }
         }
 
