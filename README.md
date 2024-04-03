@@ -1,3 +1,4 @@
+
 # Skyline.DataMiner.Utils.SecureCoding
 A NuGet library offering a set of robust and **secure coding methods for .NET development**. With a focus on mitigating common security vulnerabilities, this package equips developers with a curated collection of methods to ensure the integrity and resilience of their applications against potential threats. 
 
@@ -10,7 +11,7 @@ Secure Coding is a NuGet library designed to streamline secure development by mi
 - **Customizable Security Components:** While offering predefined secure methods, Secure Coding also allows for customization based on specific project requirements. Developers can tailor security components to fit the unique needs of their applications.
 
 ## Installation
-
+To proceed with the installation of the NuGet packages, simply follow the documentation provided in [docs.dataminer.services.](https://docs.dataminer.services/develop/TOOLS/NuGet/Consuming_NuGet.html#accessing-github-nuget-registry-in-visual-studio)
 
 
 # Skyline.DataMiner.Utils.SecureCoding.Analyzers
