@@ -50,7 +50,7 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.SecureIO
         };
         #endregion
 
-        public const string DiagnosticId = "SLC-SC0001";
+        public const string DiagnosticId = "SLC_SC0001";
 
         private static readonly DiagnosticDescriptor Rule = new DiagnosticDescriptor(
             DiagnosticId,

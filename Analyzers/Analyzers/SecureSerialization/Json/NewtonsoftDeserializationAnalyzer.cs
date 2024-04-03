@@ -9,7 +9,7 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.SecureSerialization.Jso
     [DiagnosticAnalyzer(LanguageNames.CSharp)]
     public class NewtonsoftDeserializationAnalyzer : DiagnosticAnalyzer
     {
-        public const string DiagnosticId = "SLC-SC0004";
+        public const string DiagnosticId = "SLC_SC0004";
 
         public static DiagnosticDescriptor Rule => new DiagnosticDescriptor(
             DiagnosticId,
