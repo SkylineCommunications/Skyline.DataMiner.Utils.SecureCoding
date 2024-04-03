@@ -10,7 +10,7 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.SecureSerialization.Jso
     [DiagnosticAnalyzer(LanguageNames.CSharp)]
     public class JavaScriptSerializerDeserializationAnalyzer : DiagnosticAnalyzer
     {
-        public const string DiagnosticId = "SLC-SC0003";
+        public const string DiagnosticId = "SLC_SC0003";
 
         public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create(
             new DiagnosticDescriptor(
