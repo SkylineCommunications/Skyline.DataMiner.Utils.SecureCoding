@@ -24,9 +24,9 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.SecureIO
 
         public override void Initialize(AnalysisContext context)
         {
-            context.ConfigureGeneratedCodeAnalysis(GeneratedCodeAnalysisFlags.None);
-
             context.EnableConcurrentExecution();
+
+            context.ConfigureGeneratedCodeAnalysis(GeneratedCodeAnalysisFlags.None);
 
             context.RegisterSyntaxNodeAction(AnalyzeUsages, SyntaxKind.InvocationExpression);
         }

@@ -1,4 +1,4 @@
-# SLC-SC0003 - Avoid using the JavaScriptSerializer for (de)serialization.
+# SLC_SC0003 - Avoid using the JavaScriptSerializer for (de)serialization.
 
 The JavaScriptSerializerDeserializationAnalyzer is a C# diagnostic analyzer that identifies and warns against the use of JavaScriptSerializer for serialization and deserialization tasks. 
 It recommends using safer alternatives like **System.Text.Json** or **Newtonsoft.Json**.
