@@ -38,7 +38,7 @@
 
     <ItemGroup>
         <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
-        <PackageReference Include="Skyline.DataMiner.CICD.FileSystem" Version="1.0.3" />
+        <PackageReference Include="Skyline.DataMiner.CICD.FileSystem" Version="1.0.4-alpha1" />
     </ItemGroup>
 
 </Project>
