@@ -1,11 +1,66 @@
-﻿using System;
-using System.IO;
-using System.Linq;
-
-namespace Skyline.DataMiner.Utils.SecureCoding.SecureIO
+﻿namespace Skyline.DataMiner.Utils.SecureCoding.SecureIO
 {
-    public static class SecurePath
+    using System;
+    using System.IO;
+
+    /// <summary>
+    /// Represents a path that is secure.
+    /// </summary>
+    public class SecurePath
     {
+        private readonly string path;
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="SecurePath"/> class.
+        /// </summary>
+        /// <param name="path">The path.</param>
+        private SecurePath(string path)
+        {
+            this.path = path;
+        }
+
+        /// <summary>
+        /// Performs an implicit conversion from <see cref="SecurePath"/> to <see cref="System.String"/>.
+        /// </summary>
+        /// <param name="securePath">The safe path.</param>
+        /// <returns>
+        /// The result of the conversion.
+        /// </returns>
+        public static implicit operator string(SecurePath securePath) => securePath.path;
+
+        /// <summary>
+        /// Performs an explicit conversion from <see cref="System.String"/> to <see cref="SecurePath"/>.
+        /// </summary>
+        /// <param name="path">The path.</param>
+        /// <returns>
+        /// The result of the conversion.
+        /// </returns>
+        public static explicit operator SecurePath(string path) => CreateSecurePath(path);
+
+        /// <summary>
+        /// Creates the secure path.
+        /// </summary>
+        /// <param name="path">The path.</param>
+        /// <returns></returns>
+        /// <exception cref="System.ArgumentNullException">path</exception>
+        /// <exception cref="System.InvalidOperationException">Path '{path}' is insecure!</exception>
+        private static SecurePath CreateSecurePath(string path)
+        {
+            if (path is null)
+            {
+                throw new ArgumentNullException(nameof(path));
+            }
+
+            if (!path.IsPathValid())
+            {
+                throw new InvalidOperationException($"Path '{path}' is insecure!");
+            }
+
+            // TODO: other checks needed?
+
+            return new SecurePath(path);
+        }
+
         /// <summary>
         /// Constructs a secure path by combining a base path and a filename, performing various validations to ensure the resulting path is secure. Note that is only secure as long as the base path cannot be manipulated.
         /// </summary>
@@ -19,14 +74,14 @@ namespace Skyline.DataMiner.Utils.SecureCoding.SecureIO
         /// <exception cref="InvalidOperationException">
         /// Thrown if the constructed full path is not a valid path or if it does not start with the specified base path.
         /// </exception>
-        public static string ConstructSecurePath(string basePath, string filename)
+        public static SecurePath ConstructSecurePath(string basePath, string filename)
         {
-            if (string.IsNullOrWhiteSpace(basePath))
+            if (String.IsNullOrWhiteSpace(basePath))
             {
                 throw new ArgumentException($"'{nameof(basePath)}' cannot be null or whitespace.", nameof(basePath));
             }
 
-            if (string.IsNullOrWhiteSpace(filename))
+            if (String.IsNullOrWhiteSpace(filename))
             {
                 throw new ArgumentException($"'{nameof(filename)}' cannot be null or whitespace.", nameof(filename));
             }
@@ -47,7 +102,7 @@ namespace Skyline.DataMiner.Utils.SecureCoding.SecureIO
 
             DirectoryTraversalValidation(false, basePath, fullPath);
 
-            return fullPath;
+            return new SecurePath(fullPath);
         }
 
         /// <summary>
@@ -60,7 +115,7 @@ namespace Skyline.DataMiner.Utils.SecureCoding.SecureIO
         /// <exception cref="InvalidOperationException">Thrown if the constructed full path is not a valid path, if it does not start with the specified base path,
         /// when any path segment contains invalid characters or when the base path is a rooted path.
         /// </exception>
-        public static string ConstructSecurePath(params string[] paths)
+        public static SecurePath ConstructSecurePath(params string[] paths)
         {
             if (paths.Length < 2)
             {
@@ -99,7 +154,7 @@ namespace Skyline.DataMiner.Utils.SecureCoding.SecureIO
 
             DirectoryTraversalValidation(allowSubDirectories: true, basePath, fullPath);
 
-            return fullPath;
+            return new SecurePath(fullPath);
         }
 
         /// <summary>
@@ -114,14 +169,14 @@ namespace Skyline.DataMiner.Utils.SecureCoding.SecureIO
         /// <exception cref="InvalidOperationException">Thrown if the constructed full path is not a valid path or if it does not start with the specified base path, 
         /// when the base path contains invalid characters, when the relative path is rooted or invalid, or when the relative path contains invalid characters.
         /// </exception>
-        public static string ConstructSecurePathWithSubDirectories(string basePath, string relativePath)
+        public static SecurePath ConstructSecurePathWithSubDirectories(string basePath, string relativePath)
         {
-            if (string.IsNullOrWhiteSpace(basePath))
+            if (String.IsNullOrWhiteSpace(basePath))
             {
                 throw new ArgumentException($"'{nameof(basePath)}' cannot be null or whitespace.", nameof(basePath));
             }
 
-            if (string.IsNullOrWhiteSpace(relativePath))
+            if (String.IsNullOrWhiteSpace(relativePath))
             {
                 throw new ArgumentException($"'{nameof(relativePath)}' cannot be null or whitespace.", nameof(relativePath));
             }
@@ -147,41 +202,18 @@ namespace Skyline.DataMiner.Utils.SecureCoding.SecureIO
 
             DirectoryTraversalValidation(true, basePath, fullPath);
 
-            return fullPath;
+            return new SecurePath(fullPath);
         }
 
         /// <summary>
-        /// Checks whether the specified path is valid by ensuring it is not null, empty, or whitespace,
-        /// and that it does not contain invalid characters for paths or filenames.
+        /// Converts to string. Returns the path.
         /// </summary>
-        /// <param name="path">The path to validate.</param>
-        /// <returns>True if the path is valid; otherwise, false.</returns>
-        /// <exception cref="ArgumentException">
-        /// Thrown if <paramref name="path"/> is null, empty, or whitespace.
-        /// </exception>
-        public static bool IsPathValid(this string path)
+        /// <returns>
+        /// A <see cref="System.String" /> that represents this instance.
+        /// </returns>
+        public override string ToString()
         {
-            if (string.IsNullOrWhiteSpace(path))
-            {
-                throw new ArgumentException($"'{nameof(path)}' cannot be null or whitespace.", nameof(path));
-            }
-
-            var filename = Path.GetFileName(path);
-
-            return !ContainsInvalidPathCharacters(path) && !ContainsInvalidFilenameCharacters(filename);
-        }
-
-        private static bool ContainsInvalidPathCharacters(this string path)
-        {
-            return path.IndexOfAny(GetInvalidPathChars()) != -1
-                || path.IndexOf("..") != -1
-                || path.Count(c => c == '%') > 1;
-        }
-
-        private static bool ContainsInvalidFilenameCharacters(this string filename)
-        {
-            return filename.IndexOfAny(GetInvalidFileNameChars()) != -1
-            || filename.Count(c => c == '%') > 1;
+            return path;
         }
 
         private static void DirectoryTraversalValidation(bool allowSubDirectories, string basePath, string fullPath)
@@ -200,29 +232,6 @@ namespace Skyline.DataMiner.Utils.SecureCoding.SecureIO
             {
                 throw new InvalidOperationException("Sub-directories flag should be set to true in order to construct a path with sub-directories in filename");
             }
-        }
-
-        private static char[] GetInvalidPathChars()
-        {
-            // This method replicates the behavior of Path.GetInvalidPathChars
-            return new char[] {
-                '\u0000', '\u0001', '\u0002', '\u0003', '\u0004', '\u0005', '\u0006', '\u0007', '\u0008', '\u0009',
-                '\u000A', '\u000B', '\u000C', '\u000D', '\u000E', '\u000F', '\u0010', '\u0011', '\u0012', '\u0013',
-                '\u0014', '\u0015', '\u0016', '\u0017', '\u0018', '\u0019', '\u001A', '\u001B', '\u001C', '\u001D',
-                '\u001E', '\u001F', '\u0022', '\u002A', '\u002F', '\u003C', '\u003E', '\u003F', '\u007C',
-            };
-        }
-
-        private static char[] GetInvalidFileNameChars()
-        {
-            // This method replicates the behavior of Path.GetInvalidFileNameChars
-            return new char[] {
-                '\u0000', '\u0001', '\u0002', '\u0003', '\u0004', '\u0005', '\u0006', '\u0007', '\u0008', '\u0009',
-                '\u000A', '\u000B', '\u000C', '\u000D', '\u000E', '\u000F', '\u0010', '\u0011', '\u0012', '\u0013',
-                '\u0014', '\u0015', '\u0016', '\u0017', '\u0018', '\u0019', '\u001A', '\u001B', '\u001C', '\u001D',
-                '\u001E', '\u001F', '\u0022', '\u002A', '\u002F', '\u003A', '\u003C', '\u003E', '\u003F', '\u005C',
-                '\u007C'
-            };
         }
     }
 }
