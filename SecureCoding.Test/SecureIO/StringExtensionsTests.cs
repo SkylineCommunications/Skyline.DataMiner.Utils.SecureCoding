@@ -1,5 +1,7 @@
-﻿namespace Skyline.DataMiner.Utils.SecureCoding.Tests
+﻿namespace SecureCoding.Test.SecureIO
 {
+    using System;
+    using Microsoft.VisualStudio.TestTools.UnitTesting;
     using Skyline.DataMiner.Utils.SecureCoding.SecureIO;
 
     [TestClass]

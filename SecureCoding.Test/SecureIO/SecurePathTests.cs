@@ -1,5 +1,10 @@
 ﻿namespace SecureCoding.Test.SecureIO
 {
+    using System;
+    using System.Linq;
+    using FluentAssertions;
+    using Microsoft.VisualStudio.TestTools.UnitTesting;
+
     using Skyline.DataMiner.Utils.SecureCoding.SecureIO;
 
     [TestClass]
@@ -106,13 +111,8 @@
         [DataRow(@"\\127.0.0.1\c$\skyline dataminer", @"\\127.0.0.1\c$\skyline dataminer\subdir1\test.txt", typeof(InvalidOperationException))]
         public void ConstructSecurePathFailure(string basePath, string filename, Type expectedExceptionType)
         {
-            typeof(Assert)
-                .GetMethods()
-                .Where(m => m.Name == "ThrowsException")
-                .Where(m => m.GetParameters().Length == 1)
-                .First(m => m.GetParameters()[0].ParameterType == typeof(Func<object?>))
-                .MakeGenericMethod(expectedExceptionType)
-                .Invoke(null, new object[] { () => SecurePath.ConstructSecurePath(basePath, filename) });
+            Action action = () => SecurePath.ConstructSecurePath(basePath, filename);
+            action.Should().Throw<Exception>().Which.Should().BeOfType(expectedExceptionType);
         }
 
         [TestMethod]
@@ -162,13 +162,8 @@
         [DataRow(@"\\127.0.0.1\c$\skyline dataminer", @"%programfiles%\test.txt", typeof(InvalidOperationException))]
         public void ConstructSecurePathWithSubDirectoriesFailure(string basePath, string relativePath, Type expectedExceptionType)
         {
-            typeof(Assert)
-                .GetMethods()
-                .Where(m => m.Name == "ThrowsException")
-                .Where(m => m.GetParameters().Length == 1)
-                .First(m => m.GetParameters()[0].ParameterType == typeof(Func<object?>))
-                .MakeGenericMethod(expectedExceptionType)
-                .Invoke(null, new object[] { () => SecurePath.ConstructSecurePathWithSubDirectories(basePath, relativePath) });
+            Action action = () => SecurePath.ConstructSecurePathWithSubDirectories(basePath, relativePath);
+            action.Should().Throw<Exception>().Which.Should().BeOfType(expectedExceptionType);
         }
 
         [TestMethod]
@@ -228,13 +223,7 @@
         [DataRow(typeof(InvalidOperationException), @"\\127.0.0.1\c$\skyline dataminer\", @"%programdata%", @"test.txt")]
         public void ConstructSecurePathWithParamsFailure(Type expectedExceptionType, params string[] paths)
         {
-            typeof(Assert)
-                .GetMethods()
-                .Where(m => m.Name == "ThrowsException")
-                .Where(m => m.GetParameters().Length == 1)
-                .First(m => m.GetParameters()[0].ParameterType == typeof(Func<object?>))
-                .MakeGenericMethod(expectedExceptionType)
-                .Invoke(null, new object[] { () => SecurePath.ConstructSecurePath(paths) });
+            Action action = () => SecurePath.ConstructSecurePath(paths);
         }
     }
 }

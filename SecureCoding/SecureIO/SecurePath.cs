@@ -44,7 +44,7 @@
         /// <returns></returns>
         /// <exception cref="System.ArgumentNullException">path</exception>
         /// <exception cref="System.InvalidOperationException">Path '{path}' is insecure!</exception>
-        private static SecurePath CreateSecurePath(string path)
+        public static SecurePath CreateSecurePath(string path)
         {
             if (path is null)
             {

@@ -1,5 +1,7 @@
-﻿namespace SecureCoding.Test.SecureSerialization.SerializationDummy
+﻿namespace SecureCoding.Test.SecureSerialization
 {
+    using System.Collections.Generic;
+
     public class SimpleDummy : IDummy
     {
         public readonly string HardcodedProperty = "hardcoded";
@@ -14,11 +16,11 @@
 
         public string Content { get; set; }
 
-        public override bool Equals(object? obj)
+        public override bool Equals(object obj)
         {
             if (obj == null) return false;
             if (obj == this) return true;
-            if (obj is not SimpleDummy dummy)
+            if (!(obj is SimpleDummy dummy))
             {
                 return false;
             }
@@ -55,11 +57,11 @@
             ComplexDummyToDummy = dummies;
         }
 
-        public override bool Equals(object? obj)
+        public override bool Equals(object obj)
         {
             if (obj == null) return false;
             if (obj == this) return true;
-            if (obj is not ComplexDummy dummy)
+            if (!(obj is ComplexDummy dummy))
             {
                 return false;
             }

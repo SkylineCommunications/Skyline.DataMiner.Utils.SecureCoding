@@ -25,9 +25,17 @@
                 throw new ArgumentException($"'{nameof(path)}' cannot be null or whitespace.", nameof(path));
             }
 
-            var filename = Path.GetFileName(path);
+            try
+            {
+                // In .NET Framework it can already throw ArgumentException for invalid characters
+                var filename = Path.GetFileName(path);
 
-            return !path.ContainsInvalidPathCharacters() && !filename.ContainsInvalidFilenameCharacters();
+                return !path.ContainsInvalidPathCharacters() && !filename.ContainsInvalidFilenameCharacters();
+            }
+            catch (ArgumentException)
+            {
+                return false;
+            }
         }
 
         internal static bool ContainsInvalidPathCharacters(this string path)

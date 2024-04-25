@@ -1,11 +1,16 @@
-﻿using Newtonsoft.Json;
-using SecureCoding.Test.SecureSerialization.SerializationDummy;
-using Skyline.DataMiner.Utils.SecureCoding.SecureSerialization.Json;
-using Skyline.DataMiner.Utils.SecureCoding.SecureSerialization.Json.Newtonsoft;
-using Skyline.DataMiner.Utils.SecureCoding.SecureIO;
-
-namespace Skyline.DataMiner.Utils.SecureCoding.Tests.SecureSerialization.Json
+﻿namespace SecureCoding.Test.SecureSerialization.Json
 {
+    using System;
+    using System.Collections.Generic;
+
+    using Microsoft.VisualStudio.TestTools.UnitTesting;
+
+    using Newtonsoft.Json;
+
+    using Skyline.DataMiner.Utils.SecureCoding.SecureIO;
+    using Skyline.DataMiner.Utils.SecureCoding.SecureSerialization.Json;
+    using Skyline.DataMiner.Utils.SecureCoding.SecureSerialization.Json.Newtonsoft;
+
     [TestClass]
     public class SecureNewtonsoftDeserializationUnitTests
     {

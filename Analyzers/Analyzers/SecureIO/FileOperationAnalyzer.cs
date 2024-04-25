@@ -237,6 +237,14 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.SecureIO
             LocationToAnalyze locationToAnalyze, 
             ArgumentSyntax pathArgument)
         {
+            string fqnArgument = GetFullyQualifiedName(context.SemanticModel, pathArgument.Expression);
+
+            if (fqnArgument == "Skyline.DataMiner.Utils.SecureCoding.SecureIO.SecurePath")
+            {
+                // Secure path is already checked
+                return;
+            }
+
             var pathArgumentLocation = pathArgument.GetLocation();
 
             var pathArgumentName = pathArgument.Expression.ToString();
@@ -263,6 +271,32 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.SecureIO
             {
                 ReportDiagnostic(context, reportedLocations, pathArgumentLocation, pathArgumentName);
             }
+        }
+
+        /// <summary>
+        /// Gets the fully qualified name of the specified expression.
+        /// </summary>
+        /// <param name="semanticModel">The semantic model.</param>
+        /// <param name="expression">The expression.</param>
+        /// <returns>The fully qualified name.</returns>
+        public static string GetFullyQualifiedName(SemanticModel semanticModel, ExpressionSyntax expression)
+        {
+            SymbolDisplayFormat symbolDisplayFormat = new SymbolDisplayFormat(typeQualificationStyle: SymbolDisplayTypeQualificationStyle.NameAndContainingTypesAndNamespaces);
+
+            if (expression is MemberAccessExpressionSyntax maes)
+            {
+                ITypeSymbol argSymbol = semanticModel.GetTypeInfo(maes.Expression).Type;
+                return argSymbol?.ToDisplayString(symbolDisplayFormat);
+            }
+
+            if (expression is InvocationExpressionSyntax ies)
+            {
+                ITypeSymbol argSymbol = semanticModel.GetTypeInfo(ies.Expression).Type;
+                return argSymbol?.ToDisplayString(symbolDisplayFormat);
+            }
+
+            ITypeSymbol symbol = semanticModel.GetTypeInfo(expression).Type;
+            return symbol?.ToDisplayString(symbolDisplayFormat);
         }
 
         private static void ReportDiagnostic(
