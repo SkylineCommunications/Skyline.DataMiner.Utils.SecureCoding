@@ -186,14 +186,14 @@
                 throw new InvalidOperationException($"Base path '{basePath}' contains invalid characters");
             }
 
-            if (Path.IsPathRooted(relativePath))
-            {
-                throw new InvalidOperationException($"Relative path '{relativePath}' cannot be a rooted path");
-            }
-
             if (!relativePath.IsPathValid())
             {
                 throw new InvalidOperationException($"Relative path '{relativePath}' contains invalid characters");
+            }
+
+            if (Path.IsPathRooted(relativePath))
+            {
+                throw new InvalidOperationException($"Relative path '{relativePath}' cannot be a rooted path");
             }
 
             var combinedPath = Path.Combine(basePath, relativePath);

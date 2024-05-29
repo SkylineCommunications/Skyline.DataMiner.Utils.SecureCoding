@@ -161,7 +161,7 @@
         [DataRow(@"\\127.0.0.1\c$\skyline dataminer", @"..\..\..\test.txt", typeof(InvalidOperationException))]
         [DataRow(@"\\127.0.0.1\c$\skyline dataminer", @"%programfiles%\test.txt", typeof(InvalidOperationException))]
         public void ConstructSecurePathWithSubDirectoriesFailure(string basePath, string relativePath, Type expectedExceptionType)
-        {
+        {           
             Action action = () => SecurePath.ConstructSecurePathWithSubDirectories(basePath, relativePath);
             action.Should().Throw<Exception>().Which.Should().BeOfType(expectedExceptionType);
         }

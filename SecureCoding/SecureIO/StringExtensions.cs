@@ -28,11 +28,18 @@
             try
             {
                 // In .NET Framework it can already throw ArgumentException for invalid characters
-                var filename = Path.GetFileName(path);
+                var filename = path.Split('\\').LastOrDefault();
+
+                var extension = Path.GetExtension(filename);
+
+                if (string.IsNullOrWhiteSpace(extension))
+                {
+                    return !path.ContainsInvalidPathCharacters();
+                }
 
                 return !path.ContainsInvalidPathCharacters() && !filename.ContainsInvalidFilenameCharacters();
             }
-            catch (ArgumentException)
+            catch (Exception)
             {
                 return false;
             }
