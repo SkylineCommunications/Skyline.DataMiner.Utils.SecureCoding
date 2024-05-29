@@ -1,7 +1,7 @@
 ﻿namespace Skyline.DataMiner.Utils.SecureCoding.SecureIO
 {
     using System;
-    using System.IO;
+    using Skyline.DataMiner.CICD.FileSystem;
 
     /// <summary>
     /// Represents a path that is secure.
@@ -43,7 +43,7 @@
         /// <param name="path">The path.</param>
         /// <returns></returns>
         /// <exception cref="System.ArgumentNullException">path</exception>
-        /// <exception cref="System.InvalidOperationException">Path '{path}' is insecure!</exception>
+        /// <exception cref="System.InvalidOperationException">FileSystem.Instance.Path '{path}' is insecure!</exception>
         public static SecurePath CreateSecurePath(string path)
         {
             if (path is null)
@@ -53,7 +53,7 @@
 
             if (!path.IsPathValid())
             {
-                throw new InvalidOperationException($"Path '{path}' is insecure!");
+                throw new InvalidOperationException($"FileSystem.Instance.Path '{path}' is insecure!");
             }
 
             // TODO: other checks needed?
@@ -96,9 +96,9 @@
                 throw new InvalidOperationException($"Filename '{filename}' contains invalid characters");
             }
 
-            var combinedPath = Path.Combine(basePath, filename);
+            var combinedPath = FileSystem.Instance.Path.Combine(basePath, filename);
 
-            var fullPath = Path.GetFullPath(combinedPath);
+            var fullPath = FileSystem.Instance.Path.GetFullPath(combinedPath);
 
             DirectoryTraversalValidation(false, basePath, fullPath);
 
@@ -133,12 +133,12 @@
             {
                 if (paths[i].ContainsInvalidPathCharacters())
                 {
-                    throw new InvalidOperationException($"Path segment '{paths[i]}' contains invalid characters");
+                    throw new InvalidOperationException($"FileSystem.Instance.Path segment '{paths[i]}' contains invalid characters");
                 }
 
-                if (Path.IsPathRooted(paths[i]))
+                if (FileSystem.Instance.Path.IsPathRooted(paths[i]))
                 {
-                    throw new InvalidOperationException($"Path segment '{paths[i]}' cannot be a rooted path");
+                    throw new InvalidOperationException($"FileSystem.Instance.Path segment '{paths[i]}' cannot be a rooted path");
                 }
             }
 
@@ -148,9 +148,9 @@
                 throw new InvalidOperationException($"Filename '{filename}' contains invalid characters");
             }
 
-            var combinedPath = Path.Combine(paths);
+            var combinedPath = FileSystem.Instance.Path.Combine(paths);
 
-            var fullPath = Path.GetFullPath(combinedPath);
+            var fullPath = FileSystem.Instance.Path.GetFullPath(combinedPath);
 
             DirectoryTraversalValidation(allowSubDirectories: true, basePath, fullPath);
 
@@ -191,14 +191,14 @@
                 throw new InvalidOperationException($"Relative path '{relativePath}' contains invalid characters");
             }
 
-            if (Path.IsPathRooted(relativePath))
+            if (FileSystem.Instance.Path.IsPathRooted(relativePath))
             {
                 throw new InvalidOperationException($"Relative path '{relativePath}' cannot be a rooted path");
             }
 
-            var combinedPath = Path.Combine(basePath, relativePath);
+            var combinedPath = FileSystem.Instance.Path.Combine(basePath, relativePath);
 
-            var fullPath = Path.GetFullPath(combinedPath);
+            var fullPath = FileSystem.Instance.Path.GetFullPath(combinedPath);
 
             DirectoryTraversalValidation(true, basePath, fullPath);
 
@@ -223,12 +223,12 @@
                 throw new InvalidOperationException($"Invalid path '{fullPath}'");
             }
 
-            if (!basePath.Equals(Path.GetPathRoot(basePath), StringComparison.OrdinalIgnoreCase))
+            if (!basePath.Equals(FileSystem.Instance.Path.GetPathRoot(basePath), StringComparison.OrdinalIgnoreCase))
             {
                 basePath = basePath.TrimEnd('\\');
             }
 
-            if (!allowSubDirectories && !Path.GetDirectoryName(fullPath).Equals(basePath, StringComparison.OrdinalIgnoreCase))
+            if (!allowSubDirectories && !FileSystem.Instance.Path.GetDirectoryName(fullPath).Equals(basePath, StringComparison.OrdinalIgnoreCase))
             {
                 throw new InvalidOperationException("Sub-directories flag should be set to true in order to construct a path with sub-directories in filename");
             }
