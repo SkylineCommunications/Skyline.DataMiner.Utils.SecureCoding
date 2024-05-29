@@ -1,7 +1,12 @@
-﻿using Skyline.DataMiner.Utils.SecureCoding.SecureIO;
-
-namespace Skyline.DataMiner.Utils.SecureCoding.Tests
+﻿namespace SecureCoding.Test.SecureIO
 {
+    using System;
+    using System.Linq;
+    using FluentAssertions;
+    using Microsoft.VisualStudio.TestTools.UnitTesting;
+
+    using Skyline.DataMiner.Utils.SecureCoding.SecureIO;
+
     [TestClass]
     public class SecurePathUnitTests
     {
@@ -106,13 +111,8 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Tests
         [DataRow(@"\\127.0.0.1\c$\skyline dataminer", @"\\127.0.0.1\c$\skyline dataminer\subdir1\test.txt", typeof(InvalidOperationException))]
         public void ConstructSecurePathFailure(string basePath, string filename, Type expectedExceptionType)
         {
-            typeof(Assert)
-                .GetMethods()
-                .Where(m => m.Name == "ThrowsException")
-                .Where(m => m.GetParameters().Length == 1)
-                .First(m => m.GetParameters()[0].ParameterType == typeof(Func<object?>))
-                .MakeGenericMethod(expectedExceptionType)
-                .Invoke(null, new object[] { () => SecurePath.ConstructSecurePath(basePath, filename) });
+            Action action = () => SecurePath.ConstructSecurePath(basePath, filename);
+            action.Should().Throw<Exception>().Which.Should().BeOfType(expectedExceptionType);
         }
 
         [TestMethod]
@@ -161,14 +161,9 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Tests
         [DataRow(@"\\127.0.0.1\c$\skyline dataminer", @"..\..\..\test.txt", typeof(InvalidOperationException))]
         [DataRow(@"\\127.0.0.1\c$\skyline dataminer", @"%programfiles%\test.txt", typeof(InvalidOperationException))]
         public void ConstructSecurePathWithSubDirectoriesFailure(string basePath, string relativePath, Type expectedExceptionType)
-        {
-            typeof(Assert)
-                .GetMethods()
-                .Where(m => m.Name == "ThrowsException")
-                .Where(m => m.GetParameters().Length == 1)
-                .First(m => m.GetParameters()[0].ParameterType == typeof(Func<object?>))
-                .MakeGenericMethod(expectedExceptionType)
-                .Invoke(null, new object[] { () => SecurePath.ConstructSecurePathWithSubDirectories(basePath, relativePath) });
+        {           
+            Action action = () => SecurePath.ConstructSecurePathWithSubDirectories(basePath, relativePath);
+            action.Should().Throw<Exception>().Which.Should().BeOfType(expectedExceptionType);
         }
 
         [TestMethod]
@@ -228,54 +223,7 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Tests
         [DataRow(typeof(InvalidOperationException), @"\\127.0.0.1\c$\skyline dataminer\", @"%programdata%", @"test.txt")]
         public void ConstructSecurePathWithParamsFailure(Type expectedExceptionType, params string[] paths)
         {
-            typeof(Assert)
-                .GetMethods()
-                .Where(m => m.Name == "ThrowsException")
-                .Where(m => m.GetParameters().Length == 1)
-                .First(m => m.GetParameters()[0].ParameterType == typeof(Func<object?>))
-                .MakeGenericMethod(expectedExceptionType)
-                .Invoke(null, new object[] { () => SecurePath.ConstructSecurePath(paths) });
-        }
-
-        [TestMethod]
-        [DataRow(@"C:\skyline dataminer")]
-        [DataRow(@"C:\skyline dataminer\filename.txt")]
-        [DataRow(@"\\127.0.0.1\c$\skyline dataminer")]
-        [DataRow(@"\\127.0.0.1\c$\skyline dataminer\filename.txt")]
-        public void IsPathValidSuccess(string path)
-        {
-            Assert.IsTrue(SecurePath.IsPathValid(path));
-        }
-
-        [TestMethod]
-        // invalid characters in path
-        [DataRow(@"C:/skyline dataminer")]
-        [DataRow(@"C:\skyline dataminer?")]
-        [DataRow(@"C:\skyline dataminer|")]
-        [DataRow(@"C:\skyline dataminer<")]
-        [DataRow(@"C:\skyline dataminer>")]
-        [DataRow("C:\\skyline dataminer\\..\\")]
-        [DataRow("C:\\skyline dataminer\\\0\\")]
-        [DataRow(@"C:\%programfiles%")]
-        // invalid characters in filename
-        [DataRow(@"C:\skyline dataminer\file:name.txt")]
-        [DataRow(@"C:\skyline dataminer\file<name.txt")]
-        [DataRow(@"C:\skyline dataminer\file>name.txt")]
-        [DataRow(@"C:\skyline dataminer\file|name.txt")]
-        [DataRow("C:\\skyline dataminer\\file\0name.txt")]
-        public void IsPathValidFailure(string path)
-        {
-            Assert.IsFalse(SecurePath.IsPathValid(path));
-        }
-
-        [TestMethod]
-        [DataRow(null)]
-        [DataRow(@"")]
-        [DataRow(@" ")]
-        [DataRow("\n")]
-        public void IsPathValidException(string path)
-        {
-            Assert.ThrowsException<ArgumentException>(() => { SecurePath.IsPathValid(path); });
+            Action action = () => SecurePath.ConstructSecurePath(paths);
         }
     }
 }

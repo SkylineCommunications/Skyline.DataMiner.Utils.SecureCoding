@@ -8,10 +8,14 @@ using Skyline.DataMiner.Utils.SecureCoding.Analyzers.SecureIO;
 
 namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.Tests.SecureIO
 {
+    using System.Collections.Immutable;
+    using Skyline.DataMiner.Utils.SecureCoding.SecureIO;
+
     [TestClass]
     public class FileOperationAnalyzerUnitTests
     {
         private readonly string testCase = File.ReadAllText(@"..\..\..\SecureIO\TestScenarios\FileOperationAnalyzer.test");
+        private readonly string testCaseValid = File.ReadAllText(@"..\..\..\SecureIO\TestScenarios\FileOperationAnalyzerNoDiagnostics.test");
 
         [TestMethod]
         public async Task VerifyUsageDiagnostic()
@@ -85,6 +89,15 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.Tests.SecureIO
             var analyzerVerifier = AnalyzerVerifierHelper.BuildAnalyzerVerifier<FileOperationAnalyzer>(testCase);
 
             analyzerVerifier.TestState.ExpectedDiagnostics.AddRange(expectedDiagnostics);
+
+            await analyzerVerifier.RunAsync();
+        }
+
+        [TestMethod]
+        public async Task VerifyUsageDiagnostic_NoDiagnosticsThrown()
+        {
+            var analyzerVerifier = AnalyzerVerifierHelper.BuildAnalyzerVerifier<FileOperationAnalyzer>(testCaseValid);
+            analyzerVerifier.TestState.AdditionalReferences.Add(typeof(SecurePath).Assembly);
 
             await analyzerVerifier.RunAsync();
         }
