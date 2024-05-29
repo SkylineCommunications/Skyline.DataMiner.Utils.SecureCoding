@@ -3,6 +3,7 @@
     using System;
     using System.IO;
     using System.Linq;
+    using Skyline.DataMiner.CICD.FileSystem;
 
     /// <summary>
     /// Contains extensions specifically for strings that represent paths.
@@ -30,7 +31,7 @@
                 // In .NET Framework it can already throw ArgumentException for invalid characters
                 var filename = path.Split('\\').LastOrDefault();
 
-                var extension = Path.GetExtension(filename);
+                var extension = FileSystem.Instance.Path.GetExtension(filename);
 
                 if (string.IsNullOrWhiteSpace(extension))
                 {
@@ -60,7 +61,7 @@
 
         private static char[] GetInvalidPathChars()
         {
-            // This method replicates the behavior of Path.GetInvalidPathChars
+            // This method replicates the behavior of FileSystem.Instance.Path.GetInvalidPathChars
             return new char[] {
                 '\u0000', '\u0001', '\u0002', '\u0003', '\u0004', '\u0005', '\u0006', '\u0007', '\u0008', '\u0009',
                 '\u000A', '\u000B', '\u000C', '\u000D', '\u000E', '\u000F', '\u0010', '\u0011', '\u0012', '\u0013',
@@ -71,7 +72,7 @@
 
         private static char[] GetInvalidFileNameChars()
         {
-            // This method replicates the behavior of Path.GetInvalidFileNameChars
+            // This method replicates the behavior of FileSystem.Instance.Path.GetInvalidFileNameChars
             return new char[] {
                 '\u0000', '\u0001', '\u0002', '\u0003', '\u0004', '\u0005', '\u0006', '\u0007', '\u0008', '\u0009',
                 '\u000A', '\u000B', '\u000C', '\u000D', '\u000E', '\u000F', '\u0010', '\u0011', '\u0012', '\u0013',
