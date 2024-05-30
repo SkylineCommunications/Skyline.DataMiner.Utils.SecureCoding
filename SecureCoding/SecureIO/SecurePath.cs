@@ -56,8 +56,6 @@
                 throw new InvalidOperationException($"FileSystem.Instance.Path '{path}' is insecure!");
             }
 
-            // TODO: other checks needed?
-
             return new SecurePath(path);
         }
 

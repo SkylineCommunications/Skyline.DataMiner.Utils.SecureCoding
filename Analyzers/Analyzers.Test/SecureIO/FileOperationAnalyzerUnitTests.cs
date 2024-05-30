@@ -6,9 +6,9 @@ using System.IO;
 using System.Threading.Tasks;
 using Skyline.DataMiner.Utils.SecureCoding.Analyzers.SecureIO;
 
+#pragma warning disable S2699 // Tests should include assertions is not valid for Roslyn Analyzers Unit Tests.  
 namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.Tests.SecureIO
 {
-    using System.Collections.Immutable;
     using Skyline.DataMiner.Utils.SecureCoding.SecureIO;
 
     [TestClass]
@@ -103,3 +103,4 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.Tests.SecureIO
         }
     }
 }
+#pragma warning restore S2699 // Tests should include assertions is not valid for Roslyn Analyzers Unit Tests.
