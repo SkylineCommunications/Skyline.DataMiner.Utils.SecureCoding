@@ -224,6 +224,7 @@
         public void ConstructSecurePathWithParamsFailure(Type expectedExceptionType, params string[] paths)
         {
             Action action = () => SecurePath.ConstructSecurePath(paths);
+            action.Should().Throw<Exception>().Which.Should().BeOfType(expectedExceptionType);
         }
     }
 }
