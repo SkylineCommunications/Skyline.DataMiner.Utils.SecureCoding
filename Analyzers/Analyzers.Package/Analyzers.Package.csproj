@@ -37,6 +37,7 @@
             <Pack>True</Pack>
             <PackagePath>\</PackagePath>
         </None>
+	    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
         <None Update="tools\*.ps1" CopyToOutputDirectory="PreserveNewest" Pack="true" PackagePath="" />
     </ItemGroup>
 
