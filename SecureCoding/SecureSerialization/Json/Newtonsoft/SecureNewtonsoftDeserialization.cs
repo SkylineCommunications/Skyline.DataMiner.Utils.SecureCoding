@@ -5,6 +5,9 @@ using Newtonsoft.Json;
 
 namespace Skyline.DataMiner.Utils.SecureCoding.SecureSerialization.Json.Newtonsoft
 {
+    /// <summary>
+    /// Provides methods to securely deserialize JSON.
+    /// </summary>
     public static class SecureNewtonsoftDeserialization
     {
         /// <summary>
@@ -58,7 +61,7 @@ namespace Skyline.DataMiner.Utils.SecureCoding.SecureSerialization.Json.Newtonso
                 settings = new JsonSerializerSettings();
             }
 
-            if(settings.TypeNameHandling != TypeNameHandling.None)
+            if (settings.TypeNameHandling != TypeNameHandling.None)
             {
                 throw new InsecureSerializationSettingsException($"Setting the Typenamehandling to {settings.TypeNameHandling} may result in insecure deserialization.");
             }
@@ -76,6 +79,7 @@ namespace Skyline.DataMiner.Utils.SecureCoding.SecureSerialization.Json.Newtonso
         /// Because of this, this method can handle more complex objects that make use of polymorphism or inheritance.
         /// </summary>
         /// <typeparam name="T">The type of the object that will be deserialized.</typeparam>
+        /// <param name="json">The json string representing the object that will be deserialized.</param>
         /// <param name="knownTypes">The list of types that the deserializer will be able to resolve.</param>
         /// <returns>The deserialized object from the json string.</returns>
         /// <exception cref="ArgumentException">Thrown if the <paramref name="json"/> is null, empty or whitespace or if the <paramref name="knownTypes"/> list is null or empty.</exception>
@@ -112,6 +116,7 @@ namespace Skyline.DataMiner.Utils.SecureCoding.SecureSerialization.Json.Newtonso
         /// Because of this, this method can handle more complex objects that make use of polymorphism or inheritance.
         /// </summary>
         /// <typeparam name="T">The type of the object that will be deserialized.</typeparam>
+        /// <param name="json">The json string representing the object that will be deserialized.</param>
         /// <param name="knownTypes">The list of types that the deserializer will be able to resolve.</param>
         /// <param name="settings">The settings that will be used for deserialization.</param>
         /// <returns>The deserialized object from the json string.</returns>
