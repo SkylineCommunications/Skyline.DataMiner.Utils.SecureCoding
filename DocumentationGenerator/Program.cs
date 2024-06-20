@@ -56,7 +56,7 @@ namespace Skyline.DataMiner.Utils.SecureCoding.DocumentationGenerator
 
             UpdateHomeReadme(outputFolder, diagnosticAnalyzers, codeFixProviders);
 
-            UpdateEditorConfig(outputFolder, sb);
+            UpdateRulesReadmeFile(outputFolder, sb);
 
             UpdateTitleInRulePages(outputFolder, diagnosticAnalyzers);
         }
@@ -72,15 +72,11 @@ namespace Skyline.DataMiner.Utils.SecureCoding.DocumentationGenerator
             File.WriteAllText(readmePath, newContent);
         }
 
-        private static void UpdateEditorConfig(string outputFolder, StringBuilder sb)
+        private static void UpdateRulesReadmeFile(string outputFolder, StringBuilder sb)
         {
-            var rulesPath = Path.GetFullPath(Path.Combine(outputFolder, "docs", "README.md"));
-            Console.WriteLine(rulesPath);
-            File.WriteAllText(rulesPath, sb.ToString());
-
-            var nugetPath = Path.GetFullPath(Path.Combine(outputFolder, "nuget", "README.md"));
-            Console.WriteLine(nugetPath);
-            File.WriteAllText(nugetPath, sb.ToString());
+            var path = Path.GetFullPath(Path.Combine(outputFolder, "docs", "README.md"));
+            Console.WriteLine(path);
+            File.WriteAllText(path, sb.ToString());
         }
 
         private static void UpdateTitleInRulePages(string outputFolder, List<DiagnosticAnalyzer> diagnosticAnalyzers)
