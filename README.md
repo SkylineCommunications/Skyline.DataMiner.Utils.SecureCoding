@@ -28,6 +28,7 @@ This section outlines essential rules for secure coding practices:
 |[SLC_SC0002](https://github.com/SkylineCommunications/Skyline.DataMiner.Utils.SecureCoding/blob/main/docs/Rules/SLC_SC0002.md)|Usage|Avoid using 'System.IO.Path.Combine'|⚠️|✔️|✔️|
 |[SLC_SC0003](https://github.com/SkylineCommunications/Skyline.DataMiner.Utils.SecureCoding/blob/main/docs/Rules/SLC_SC0003.md)|Usage|Avoid using the JavaScriptSerializer for (de)serialization.|⚠️|✔️|❌|
 |[SLC_SC0004](https://github.com/SkylineCommunications/Skyline.DataMiner.Utils.SecureCoding/blob/main/docs/Rules/SLC_SC0004.md)|Usage|Avoid deserializing json strings by using Newtonsoft directly.|⚠️|✔️|✔️|
+|[SLC_SC0005](https://github.com/SkylineCommunications/Skyline.DataMiner.Utils.SecureCoding/blob/main/docs/Rules/SLC_SC0005.md)|Usage|Certificate callbacks should not always evaluate to true|⚠️|✔️|❌|
 
 <!-- rules -->
 
