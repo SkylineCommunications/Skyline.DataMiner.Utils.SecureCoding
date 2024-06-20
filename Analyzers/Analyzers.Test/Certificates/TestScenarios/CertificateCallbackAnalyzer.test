@@ -1,0 +1,34 @@
+using System.Security.Cryptography.X509Certificates;
+using System.Net.Http;
+using System.Net.Security;
+using System.Xml.Linq;
+
+namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.Tests.Certificates.TestScenarios
+{
+	internal class CertificatesCallbackTest
+	{
+		private void InsecureCertificateCallbacks(string insecurePath)
+		{
+			var httpClientHandler = new HttpClientHandler();
+
+			httpClientHandler.ServerCertificateCustomValidationCallback =
+            (HttpRequestMessage request, X509Certificate2 cert, X509Chain chain, SslPolicyErrors errors) =>
+			{
+				if (errors == SslPolicyErrors.None)
+					return true; 
+				return true;
+			};
+			
+			httpClientHandler.ServerCertificateCustomValidationCallback = InsecureCustomValidationCallback;
+		}
+
+		private static bool InsecureCustomValidationCallback(
+            HttpRequestMessage requestMessage,
+            X509Certificate2? certificate,
+            X509Chain? chain,
+            SslPolicyErrors sslErrors)
+		{
+			return true;
+		}
+	}
+}
