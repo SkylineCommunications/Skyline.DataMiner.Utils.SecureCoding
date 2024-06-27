@@ -11,8 +11,24 @@ Secure Coding is a NuGet library designed to streamline secure development by mi
 - **Customizable Security Components:** While offering predefined secure methods, Secure Coding also allows for customization based on specific project requirements. Developers can tailor security components to fit the unique needs of their applications.
 
 ## Installation
-To proceed with the installation of the NuGet packages, simply follow the documentation provided in [docs.dataminer.services.](https://docs.dataminer.services/develop/TOOLS/NuGet/Consuming_NuGet.html#accessing-github-nuget-registry-in-visual-studio)
+To proceed with the installation of the NuGet packages, simply follow the documentation provided below. 
 
+### Package Availability
+This package is available at [nuget.org](https://www.nuget.org/packages/Skyline.DataMiner.Utils.SecureCoding).
+
+### Install via NuGet Package Manager
+You can install the package via the NuGet Package Manager Console:
+```powershell
+Install-Package Skyline.DataMiner.Utils.SecureCoding
+````
+
+### Install via Visual Studio NuGet Package Manager
+You can also install the package using the NuGet Package Manager within Visual Studio:
+
+Open your project in Visual Studio.
+1. Go to Tools > NuGet Package Manager > Manage NuGet Packages for Solution.
+2. In the Browse tab, search for Skyline.DataMiner.Utils.SecureCoding.
+3. Select the package in the list, choose the project you want to install it to, and click Install.
 
 # Skyline.DataMiner.Utils.SecureCoding.Analyzers
 A complementary NuGet package designed to complement your security arsenal by harnessing the powerful capabilities of the **Roslyn compiler platform**. It provides a suite of code analysis tools meticulously crafted to elevate the security posture of your .NET applications.
