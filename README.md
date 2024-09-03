@@ -1,17 +1,17 @@
 
 # Skyline.DataMiner.Utils.SecureCoding
-A NuGet library offering a set of robust and **secure coding methods for .NET development**. With a focus on mitigating common security vulnerabilities, this package equips developers with a curated collection of methods to ensure the integrity and resilience of their applications against potential threats. 
+This NuGet library offers a set of robust and **secure coding methods for .NET development**, with a focus on mitigating common security vulnerabilities. It consists of a curated collection of methods to ensure the integrity and resilience of your applications against potential threats. 
 
 ## Overview
 Secure Coding is a NuGet library designed to streamline secure development by minimizing the need for boilerplate code. This library offers a set of methods and functionalities aimed at enhancing the security of your applications, reducing common vulnerabilities, and promoting secure coding practices.
 
 ## Features
 - **Boilerplate Code Reduction:** Secure Coding simplifies the integration of security measures into your application by providing a set of methods that handle common security concerns. This allows developers to focus on the core functionality of their code without sacrificing security.
-- **Security Best Practices:** The library follows industry-accepted security best practices and incorporates them into its methods. This ensures that developers benefit from proven security measures without having to delve into the intricacies of implementation.
+- **Security Best Practices:** The library follows industry-accepted security best practices and incorporates them into its methods. This ensures that developers benefit from proven security measures without having to delve into the intricacies of their implementation.
 - **Customizable Security Components:** While offering predefined secure methods, Secure Coding also allows for customization based on specific project requirements. Developers can tailor security components to fit the unique needs of their applications.
 
 ## Installation
-To proceed with the installation of the NuGet packages, simply follow the documentation provided below. 
+To proceed with the installation of the NuGet packages, follow the instructions provided below. 
 
 ### Package Availability
 This package is available at [nuget.org](https://www.nuget.org/packages/Skyline.DataMiner.Utils.SecureCoding).
