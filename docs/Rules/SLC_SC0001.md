@@ -14,7 +14,7 @@ File.WriteAllText(securePath,  "content");
 
 // Or properly validated
 string path = @"C:\Folder\Example.txt";
-if(SecurePath.IsPathValid(path))
+if(path.IsPathValid())
 {
 	File.WriteAllText(path,  "content");
 }
