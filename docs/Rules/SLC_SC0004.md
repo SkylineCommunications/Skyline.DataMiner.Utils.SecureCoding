@@ -18,5 +18,5 @@ string json = @"{
 object result = JsonConvert.DeserializeObject(json);
 
 // Should be
-object result = SecurePath.DeserializeObject<object>(json);
+object result = SecureNewtonsoftDeserialization.DeserializeObject<object>(json);
 ````
