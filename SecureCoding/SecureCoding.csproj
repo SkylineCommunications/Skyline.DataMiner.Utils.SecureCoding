@@ -34,6 +34,7 @@
   <ItemGroup>
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
     <PackageReference Include="Skyline.DataMiner.CICD.FileSystem" Version="1.0.5" />
+    <PackageReference Include="System.Security.Cryptography.Pkcs" Version="9.0.1" />
   </ItemGroup>
 
 </Project>
