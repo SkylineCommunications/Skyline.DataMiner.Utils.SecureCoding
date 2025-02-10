@@ -1,0 +1,57 @@
+using System;
+using System.IO;
+using System.Diagnostics;
+using System.Reflection;
+using Skyline.DataMiner.Utils.SecureCoding.SecureIO;
+
+namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.Tests.SecureIO.TestScenarios
+{
+	internal class FileOperationFlowTest
+	{
+        public byte[] CreateSecurePath_FileReadAllBytes_Declarator(string securePath)
+        {
+            securePath = SecurePath.CreateSecurePath(securePath);
+
+            return File.ReadAllBytes(securePath);
+        }
+
+        public byte[] CreateSecurePath_FileReadAllBytes_Assignment(string securePath)
+        {
+            securePath = SecurePath.CreateSecurePath(securePath);
+
+            return File.ReadAllBytes(securePath);
+        }
+
+        public byte[] ConstructSecurePath_FileReadAllBytes_Declarator(string inputPath)
+        {
+            var securePath = SecurePath.ConstructSecurePath(inputPath);
+
+            return File.ReadAllBytes(securePath);
+        }
+
+        public byte[] ConstructSecurePath_FileReadAllBytes_Assignment(string inputPath)
+        {
+            var securePath = string.Empty;
+
+            securePath = SecurePath.ConstructSecurePath(inputPath);
+
+            return File.ReadAllBytes(securePath);
+        }
+
+        public byte[] ConstructSecurePathWithSubDirectories_FileReadAllBytes_Declarator(string basePath, string relativePath)
+        {
+            var securePath = SecurePath.ConstructSecurePathWithSubDirectories(basePath, relativePath);
+
+            return File.ReadAllBytes(securePath);
+        }
+
+        public byte[] ConstructSecurePathWithSubDirectories_FileReadAllBytes_Assignment(string basePath, string relativePath)
+        {
+            var securePath = string.Empty;
+
+            securePath = SecurePath.ConstructSecurePathWithSubDirectories(basePath, relativePath);
+
+            return File.ReadAllBytes(securePath);
+        }
+	}
+}

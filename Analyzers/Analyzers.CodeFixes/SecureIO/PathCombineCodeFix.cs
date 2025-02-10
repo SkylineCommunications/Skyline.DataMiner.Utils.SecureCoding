@@ -35,10 +35,14 @@ namespace Skyline.DataMiner.Utils.SecureCoding.CodeFixProviders.SecureIO
             var diagnosticSpan = diagnostic.Location.SourceSpan;
 
             var invocation = root.FindToken(diagnosticSpan.Start).Parent.AncestorsAndSelf().OfType<InvocationExpressionSyntax>().First();
+            if (invocation == null)
+            {
+                return;
+            }
 
             context.RegisterCodeFix(
                 CodeAction.Create(
-                    title: "Replace Path.Combine into SecurePath.ConstructSecurePath",
+                    title: "Replace Path.Combine with SecurePath.ConstructSecurePath",
                     createChangedDocument: c => ReplacePathCombineWithConstructSecurePath(context.Document, invocation, c),
                     equivalenceKey: nameof(PathCombineCodeFix)),
                 diagnostic);
@@ -52,7 +56,7 @@ namespace Skyline.DataMiner.Utils.SecureCoding.CodeFixProviders.SecureIO
 
             var newRoot = root.ReplaceNode(invocation, newInvocation.WithTriviaFrom(invocation)); // Keep original form
 
-            var compilationUnit = newRoot as CompilationUnitSyntax;
+            var compilationUnit = newRoot as CompilationUnitSyntax ?? (CompilationUnitSyntax)root;
 
             if (!compilationUnit.Usings.Any(@using => @using.Name.ToString() == SECUREPATH_NAMESPACE))
             {
@@ -66,11 +70,13 @@ namespace Skyline.DataMiner.Utils.SecureCoding.CodeFixProviders.SecureIO
 
         private static InvocationExpressionSyntax GetNewInvocation(InvocationExpressionSyntax invocation)
         {
-            if (invocation.ArgumentList.Arguments.Count < 2)
+            var arguments = invocation.ArgumentList.Arguments;
+
+            if (arguments.Count < 2)
             {
                 return invocation;
             }
-            else if (invocation.ArgumentList.Arguments.Count > 2)
+            else if (arguments.Count > 2)
             {
                 return invocation
                     .WithExpression(SyntaxFactory.ParseExpression("SecurePath.ConstructSecurePath"))
@@ -78,7 +84,7 @@ namespace Skyline.DataMiner.Utils.SecureCoding.CodeFixProviders.SecureIO
             }
             else
             {
-                var lastArgument = invocation.ArgumentList.Arguments.Last().ToString();
+                var lastArgument = arguments.Last().ToString();
 
                 if (lastArgument.Contains("/") || lastArgument.Contains("\\"))
                 {
