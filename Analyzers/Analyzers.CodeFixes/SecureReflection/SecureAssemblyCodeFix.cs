@@ -3,7 +3,6 @@ using Microsoft.CodeAnalysis.CodeActions;
 using Microsoft.CodeAnalysis.CodeFixes;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
-using Skyline.DataMiner.Utils.SecureCoding.Analyzers.SecureIO;
 using Skyline.DataMiner.Utils.SecureCoding.Analyzers.SecureReflection;
 using System.Collections.Immutable;
 using System.Composition;
@@ -13,14 +12,14 @@ using System.Threading.Tasks;
 
 namespace Skyline.DataMiner.Utils.SecureCoding.CodeFixProviders.SecureReflection
 {
-    [ExportCodeFixProvider(LanguageNames.CSharp, Name = nameof(SecureAssemblyLoaderCodeFix)), Shared]
-    public class SecureAssemblyLoaderCodeFix : CodeFixProvider
+    [ExportCodeFixProvider(LanguageNames.CSharp, Name = nameof(SecureAssemblyCodeFix)), Shared]
+    public class SecureAssemblyCodeFix : CodeFixProvider
     {
         private const string SECURE_REFLECTION_NAMESPACE = "Skyline.DataMiner.Utils.SecureCoding.SecureReflection";
 
         public sealed override ImmutableArray<string> FixableDiagnosticIds
         {
-            get { return ImmutableArray.Create(SecureAssemblyLoadAnalyzer.DiagnosticId); }
+            get { return ImmutableArray.Create(SecureAssemblyAnalyzer.DiagnosticId); }
         }
 
         public sealed override FixAllProvider GetFixAllProvider()
@@ -45,7 +44,7 @@ namespace Skyline.DataMiner.Utils.SecureCoding.CodeFixProviders.SecureReflection
                 CodeAction.Create(
                     title: "Replace Assembly.Load with SecureAssembly.Load",
                     createChangedDocument: c => ReplaceAssemblyLoadWithSecureAssemblyLoad(context.Document, invocation, c),
-                    equivalenceKey: nameof(SecureAssemblyLoaderCodeFix)),
+                    equivalenceKey: nameof(SecureAssemblyCodeFix)),
                 diagnostic);
         }
 
@@ -74,9 +73,12 @@ namespace Skyline.DataMiner.Utils.SecureCoding.CodeFixProviders.SecureReflection
 
         private static InvocationExpressionSyntax GetNewInvocation(InvocationExpressionSyntax invocation)
         {
+            var arguments = invocation.ArgumentList
+                .AddArguments(SyntaxFactory.Argument(SyntaxFactory.ParseExpression("allowedCertificates"))); 
+
             return invocation
                    .WithExpression(SyntaxFactory.ParseExpression("SecureAssembly.Load"))
-                   .WithArgumentList(invocation.ArgumentList);
+                   .WithArgumentList(arguments);
         }
     }
 }

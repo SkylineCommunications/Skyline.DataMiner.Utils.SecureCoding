@@ -2,13 +2,21 @@
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
+using System.Collections.Generic;
 using System.Collections.Immutable;
 
 namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.SecureReflection
 {
     [DiagnosticAnalyzer(LanguageNames.CSharp)]
-    public class SecureAssemblyLoadAnalyzer : DiagnosticAnalyzer
+    public class SecureAssemblyAnalyzer : DiagnosticAnalyzer
     {
+        private static List<string> loadMethods = new List<string>
+        {
+            nameof(System.Reflection.Assembly.Load),
+            nameof(System.Reflection.Assembly.LoadFile),
+            nameof(System.Reflection.Assembly.LoadFrom),
+        };
+
         public const string DiagnosticId = "SLC_SC0006";
 
         public static DiagnosticDescriptor Rule => new DiagnosticDescriptor(
@@ -45,7 +53,7 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.SecureReflection
                 return;
             }
 
-            if (methodSymbol.Name == nameof(System.Reflection.Assembly.Load))
+            if (loadMethods.Contains(methodSymbol.Name))
             {
                 var diagnostic = Diagnostic.Create(Rule, invocationExpression.GetLocation());
                 context.ReportDiagnostic(diagnostic);

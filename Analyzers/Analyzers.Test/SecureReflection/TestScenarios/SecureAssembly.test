@@ -1,0 +1,49 @@
+using System.Reflection;
+
+namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.Tests.SecureReflection.TestScenarios
+{
+    internal class SecureAssemblyTest
+    {
+        private Assembly loadAssemblyField = Assembly.Load("assemblyName");
+		private Assembly loadFileAssemblyField = Assembly.LoadFile("assemblyPath");
+		private Assembly loadFromAssemblyField = Assembly.LoadFrom("assemblyPath");
+
+        public SecureAssemblyTest()
+        {
+            Assembly.Load("assemblyName");
+			Assembly.LoadFile("assemblyPath");
+			Assembly.LoadFrom("assemblyPath");
+        }
+
+        public void TobeDetected()
+        {
+            Assembly.Load("assemblyName");
+			Assembly.LoadFile("assemblyPath");
+			Assembly.LoadFrom("assemblyPath");
+        }
+
+        public Assembly LoadAssemblyProperty
+        {
+            get
+            {			
+                return Assembly.Load("assemblyName");
+            }
+        }
+		
+		public Assembly LoadFileAssemblyProperty
+        {
+            get
+            {			
+                return Assembly.LoadFile("assemblyPath");
+            }
+        }
+		
+		public Assembly LoadFromAssemblyProperty
+        {
+            get
+            {			
+                return Assembly.LoadFrom("assemblyPath");
+            }
+        }
+    }
+}
