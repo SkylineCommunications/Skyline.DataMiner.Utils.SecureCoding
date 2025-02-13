@@ -99,7 +99,7 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.SecureIO
                     return;
                 }
 
-                var methodSymbol = context.SemanticModel.GetSymbolInfo(invocation).Symbol as IMethodSymbol;
+                var methodSymbol = context.SemanticModel?.GetSymbolInfo(invocation).Symbol as IMethodSymbol;
                 if (methodSymbol == null)
                 {
                     return;
@@ -133,11 +133,15 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.SecureIO
             // Get ConstructSecurePath Results from Variable Declarators
             foreach (var variableDeclarator in variableDeclarators)
             {
-                var initializer = variableDeclarator.Initializer.ToString();
+                var initializer = variableDeclarator.Initializer?.ToString();
 
-                if (constructSecurePathMethods.Any(method => initializer.Contains(method)))
+                if (!string.IsNullOrWhiteSpace(initializer) && constructSecurePathMethods.Any(method => initializer.Contains(method)))
                 {
                     var identifier = variableDeclarator.Identifier.ToString();
+                    if (string.IsNullOrWhiteSpace(identifier))
+                    {
+                        continue;
+                    }
 
                     results.Add(identifier);
                 }
@@ -146,11 +150,15 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.SecureIO
             // Get ConstructSecurePath Results from Assignments
             foreach (var assignment in assignments)
             {
-                var rightAssignment = assignment.Right.ToString();
+                var rightAssignment = assignment.Right?.ToString();
 
-                if (constructSecurePathMethods.Any(method => rightAssignment.Contains(method)))
+                if (!string.IsNullOrWhiteSpace(rightAssignment) && constructSecurePathMethods.Any(method => rightAssignment.Contains(method)))
                 {
                     var leftAssignemnt = assignment.Left.ToString();
+                    if (string.IsNullOrWhiteSpace(leftAssignemnt))
+                    {
+                        continue;
+                    }
 
                     results.Add(leftAssignemnt);
                 }
@@ -196,7 +204,7 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.SecureIO
             InvocationExpressionSyntax invocation,
             IMethodSymbol methodSymbol)
         {
-            var receiverType = methodSymbol.ReceiverType.ToDisplayString();
+            var receiverType = methodSymbol.ReceiverType?.ToDisplayString();
 
             if (invocationReceiverTypes.Contains(receiverType))
             {
@@ -295,15 +303,20 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.SecureIO
             LocationToAnalyze locationToAnalyze,
             ArgumentSyntax pathArgument)
         {
-            string fqnArgument = GetFullyQualifiedName(context.SemanticModel, pathArgument.Expression);
+            var pathArgumentName = pathArgument.Expression.ToString();
 
+            if (constructSecurePathMethods.Any(method => pathArgumentName.Contains(method)))
+            {
+                // ConstructSecurePath method is being invoked as input argument of the file operation.
+                return;
+            }
+
+            var fqnArgument = GetFullyQualifiedName(context.SemanticModel, pathArgument.Expression);
             if (fqnArgument == "Skyline.DataMiner.Utils.SecureCoding.SecureIO.SecurePath")
             {
                 // Secure path is already checked
                 return;
             }
-
-            var pathArgumentName = pathArgument.Expression.ToString();
 
             if (constructSecurePathResults.Contains(pathArgumentName) || pathArgumentName != locationToAnalyze.PathArgumentName)
             {
@@ -393,19 +406,23 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.SecureIO
             foreach (var pathArgument in fileOperationsPathArguments)
             {
                 var pathArgumentName = pathArgument.Expression?.ToString();
+                if (string.IsNullOrWhiteSpace(pathArgumentName))
+                {
+                    continue;
+                }
 
                 // Assignments Locations - Ignore the ConstructSecurePath methods assignments
                 locationsToAnalyze.AddRange(
                     assignments
                     .Where(assignment => assignment != null
                         && assignment.GetAssignmentName() == pathArgumentName
-                        && !constructSecurePathMethods.Contains(assignment.Right.ToString()))
+                        && !constructSecurePathMethods.Contains(assignment.Right?.ToString()))
                     .Select(assignment => new LocationToAnalyze(assignment.GetLocation(), pathArgumentName)));
 
                 // VariableDeclarators Locations - Ignore the ConstructSecurePath methods declarators
                 locationsToAnalyze.AddRange(
                    variableDeclarators
-                   .Where(variableDeclarator => variableDeclarator != null
+                   .Where(variableDeclarator => variableDeclarator != null && variableDeclarator.Identifier != null && variableDeclarator.Initializer != null
                        && (variableDeclarator.Identifier.Text == pathArgumentName || variableDeclarator.Initializer.ToString().Contains(pathArgumentName))
                        && !constructSecurePathMethods.Contains(variableDeclarator.Initializer.ToString()))
                    .Select(variableDeclarator => new LocationToAnalyze(variableDeclarator.GetLocation(), pathArgumentName)));
@@ -413,19 +430,25 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.SecureIO
                 // Method Arguments
                 locationsToAnalyze.AddRange(
                     inputParameters
-                    .Where(inputArgument => inputArgument != null
+                    .Where(inputArgument => inputArgument != null && inputArgument.Identifier != null
                         && inputArgument.Identifier.ToString() == pathArgumentName)
                     .Select(inputArgument => new LocationToAnalyze(inputArgument.GetLocation(), pathArgumentName)));
 
                 // ForEach Nodes
                 locationsToAnalyze.AddRange(
                     forEachNodes
-                    .Where(node => pathArgument.GetLocation().IsLocationOverlapping(node.GetLocation()))
+                    .Where(node => node != null && pathArgument.GetLocation().IsLocationOverlapping(node.GetLocation()))
                     .Select(node => new LocationToAnalyze(node.GetLocation(), pathArgumentName)));
 
                 // Cases where the path argument was not added to the locations to analyze => assume the first position of the block
                 if (!locationsToAnalyze.Exists(locationToAnalyze => locationToAnalyze.PathArgumentName == pathArgumentName))
                 {
+                    var firstPosition = descendantNodes.First();
+                    if (firstPosition == null)
+                    {
+                        continue;
+                    }
+
                     locationsToAnalyze.Add(new LocationToAnalyze(descendantNodes.First().GetLocation(), pathArgumentName));
                 }
             }
