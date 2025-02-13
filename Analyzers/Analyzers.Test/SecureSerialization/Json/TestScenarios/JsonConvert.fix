@@ -1,7 +1,7 @@
 ﻿using Newtonsoft.Json;
 using System;
-using Skyline.DataMiner.Utils.SecureCoding.SecureSerialization.Json.Newtonsoft;
 using System.Collections.Generic;
+using Skyline.DataMiner.Utils.SecureCoding.SecureSerialization.Json.Newtonsoft;
 
 namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.Tests.TestScenarios
 {
