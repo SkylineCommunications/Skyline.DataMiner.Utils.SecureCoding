@@ -25,8 +25,4 @@
     <ProjectReference Include="..\Analyzers\Analyzers.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="SecureReflection\TestScenarios\" />
-  </ItemGroup>
-
 </Project>

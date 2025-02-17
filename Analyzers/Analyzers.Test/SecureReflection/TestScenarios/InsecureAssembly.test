@@ -2,13 +2,13 @@ using System.Reflection;
 
 namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.Tests.SecureReflection.TestScenarios
 {
-    internal class SecureAssemblyTest
+    internal class InsecureAssemblyTest
     {
         private Assembly loadAssemblyField = Assembly.Load("assemblyName");
 		private Assembly loadFileAssemblyField = Assembly.LoadFile("assemblyPath");
 		private Assembly loadFromAssemblyField = Assembly.LoadFrom("assemblyPath");
 
-        public SecureAssemblyTest()
+        public InsecureAssemblyTest()
         {
             Assembly.Load("assemblyName");
 			Assembly.LoadFile("assemblyPath");

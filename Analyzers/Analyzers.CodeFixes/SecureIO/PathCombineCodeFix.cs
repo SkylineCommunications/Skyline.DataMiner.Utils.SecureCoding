@@ -71,6 +71,10 @@ namespace Skyline.DataMiner.Utils.SecureCoding.CodeFixProviders.SecureIO
         private static InvocationExpressionSyntax GetNewInvocation(InvocationExpressionSyntax invocation)
         {
             var arguments = invocation.ArgumentList.Arguments;
+            if (arguments == null)
+            {
+                return invocation;
+            }
 
             if (arguments.Count < 2)
             {

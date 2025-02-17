@@ -19,7 +19,7 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.SecureReflection
 
         public const string DiagnosticId = "SLC_SC0006";
 
-        public static DiagnosticDescriptor Rule => new DiagnosticDescriptor(
+        public static DiagnosticDescriptor RuleInsecureAssembly => new DiagnosticDescriptor(
             DiagnosticId,
             title: "Ensure secure loading of Assemblies",
             messageFormat: "Consider using 'SecureAssembly.Load' instead of 'Assembly.Load'",
@@ -28,7 +28,22 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.SecureReflection
             helpLinkUri: $"https://github.com/SkylineCommunications/Skyline.DataMiner.Utils.SecureCoding/blob/main/docs/Rules/{DiagnosticId}.md",
             isEnabledByDefault: true);
 
-        public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get { return ImmutableArray.Create(Rule); } }
+        public static DiagnosticDescriptor RuleBypassCertificateChain => new DiagnosticDescriptor(
+            DiagnosticId,
+            title: "Ensure secure loading of assemblies with certificate validation",
+            messageFormat: "Caution: Disabling verifyCertificateChain (false) bypasses trust chain certificate validation",
+            "Usage",
+            DiagnosticSeverity.Warning,
+            helpLinkUri: $"https://github.com/SkylineCommunications/Skyline.DataMiner.Utils.SecureCoding/blob/main/docs/Rules/{DiagnosticId}.md",
+            isEnabledByDefault: true);
+
+        public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics
+        {
+            get
+            {
+                return ImmutableArray.Create(RuleInsecureAssembly, RuleBypassCertificateChain);
+            }
+        }
 
         public override void Initialize(AnalysisContext context)
         {
@@ -53,11 +68,16 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.SecureReflection
                 return;
             }
 
-            if (loadMethods.Contains(methodSymbol.Name))
+            if (!loadMethods.Contains(methodSymbol.Name))
             {
-                var diagnostic = Diagnostic.Create(Rule, invocationExpression.GetLocation());
-                context.ReportDiagnostic(diagnostic);
+                return;
             }
+
+            var diagnostic = invocationExpression.ArgumentList.Arguments.Count < 3
+                ? Diagnostic.Create(RuleInsecureAssembly, invocationExpression.GetLocation())
+                : Diagnostic.Create(RuleBypassCertificateChain, invocationExpression.GetLocation());
+
+            context.ReportDiagnostic(diagnostic);
         }
     }
 }
