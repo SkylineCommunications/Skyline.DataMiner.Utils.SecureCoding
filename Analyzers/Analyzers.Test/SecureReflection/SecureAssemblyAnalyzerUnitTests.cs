@@ -54,9 +54,9 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.Tests.SecureReflection
                  AnalyzerVerifierHelper.BuildDiagnosticResult(SecureAssemblyAnalyzer.RuleBypassCertificateChain, 8, 52),
                  AnalyzerVerifierHelper.BuildDiagnosticResult(SecureAssemblyAnalyzer.RuleBypassCertificateChain, 12, 13),
                  AnalyzerVerifierHelper.BuildDiagnosticResult(SecureAssemblyAnalyzer.RuleBypassCertificateChain, 17, 13),
-                 AnalyzerVerifierHelper.BuildDiagnosticResult(SecureAssemblyAnalyzer.RuleBypassCertificateChain, 24, 24),
-                 AnalyzerVerifierHelper.BuildDiagnosticResult(SecureAssemblyAnalyzer.RuleBypassCertificateChain, 32, 24),
-                 AnalyzerVerifierHelper.BuildDiagnosticResult(SecureAssemblyAnalyzer.RuleBypassCertificateChain, 40, 24),
+                 AnalyzerVerifierHelper.BuildDiagnosticResult(SecureAssemblyAnalyzer.RuleBypassCertificateChain, 30, 24),
+                 AnalyzerVerifierHelper.BuildDiagnosticResult(SecureAssemblyAnalyzer.RuleBypassCertificateChain, 38, 24),
+                 AnalyzerVerifierHelper.BuildDiagnosticResult(SecureAssemblyAnalyzer.RuleBypassCertificateChain, 46, 24),
             };
 
             // [NOTE]: SecureAssemblyCodeFix cannot be unit tested since it introduces a compile error on it's own.

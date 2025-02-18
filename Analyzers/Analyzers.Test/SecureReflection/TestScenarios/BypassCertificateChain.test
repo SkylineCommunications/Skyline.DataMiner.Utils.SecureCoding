@@ -17,6 +17,12 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.Tests.SecureReflection.
             SecureAssembly.Load("assemblyPath", "targetDllPath", verifyCertificateChain: false);
         }
 
+        public void NotTobeDetected()
+        {
+            SecureAssembly.Load("assemblyPath", "targetDllPath", verifyCertificateChain: true);
+            SecureAssembly.Load("assemblyPath", "targetDllPath");
+        }
+
         public Assembly SecureLoadAssemblyProperty
         {
             get

@@ -17,12 +17,6 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.SecureReflection
             nameof(System.Reflection.Assembly.LoadFrom),
         };
 
-        private static List<string> receiverTypes = new List<string>
-        {
-            "System.Reflection.Assembly",
-            "Skyline.DataMiner.Utils.SecureCoding.SecureReflection.SecureAssembly",
-        };
-
         public const string DiagnosticId = "SLC_SC0006";
 
         public static DiagnosticDescriptor RuleInsecureAssembly => new DiagnosticDescriptor(
@@ -74,13 +68,25 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.SecureReflection
                 return;
             }
 
-            if (loadMethods.Contains(methodSymbol.Name) && receiverTypes.Contains(methodSymbol.ReceiverType.ToDisplayString()))
+            if (loadMethods.Contains(methodSymbol.Name) && methodSymbol.ReceiverType.ToDisplayString() == "System.Reflection.Assembly")
             {
-                var diagnostic = invocationExpression.ArgumentList.Arguments.Count < 3
-                    ? Diagnostic.Create(RuleInsecureAssembly, invocationExpression.GetLocation())
-                    : Diagnostic.Create(RuleBypassCertificateChain, invocationExpression.GetLocation());
-
+                var diagnostic = Diagnostic.Create(RuleInsecureAssembly, invocationExpression.GetLocation());
                 context.ReportDiagnostic(diagnostic);
+            }
+
+            if (methodSymbol.ReceiverType.ToDisplayString() == "Skyline.DataMiner.Utils.SecureCoding.SecureReflection.SecureAssembly")
+            {
+                if (invocationExpression.ArgumentList.Arguments.Count < 3)
+                {
+                    return;
+                }
+
+                var value = context.SemanticModel.GetConstantValue(invocationExpression.ArgumentList.Arguments.Last()?.Expression);
+                if (value.HasValue && value.Value is bool && value.Value is false)
+                {
+                    var diagnostic = Diagnostic.Create(RuleBypassCertificateChain, invocationExpression.GetLocation());
+                    context.ReportDiagnostic(diagnostic);
+                }
             }
         }
     }
