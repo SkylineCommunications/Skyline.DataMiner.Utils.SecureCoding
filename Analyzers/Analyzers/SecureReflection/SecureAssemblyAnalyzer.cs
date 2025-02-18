@@ -17,6 +17,12 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.SecureReflection
             nameof(System.Reflection.Assembly.LoadFrom),
         };
 
+        private static List<string> receiverTypes = new List<string>
+        {
+            "System.Reflection.Assembly",
+            "Skyline.DataMiner.Utils.SecureCoding.SecureReflection.SecureAssembly",
+        };
+
         public const string DiagnosticId = "SLC_SC0006";
 
         public static DiagnosticDescriptor RuleInsecureAssembly => new DiagnosticDescriptor(
@@ -68,16 +74,14 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.SecureReflection
                 return;
             }
 
-            if (!loadMethods.Contains(methodSymbol.Name))
+            if (loadMethods.Contains(methodSymbol.Name) && receiverTypes.Contains(methodSymbol.ReceiverType.ToDisplayString()))
             {
-                return;
+                var diagnostic = invocationExpression.ArgumentList.Arguments.Count < 3
+                    ? Diagnostic.Create(RuleInsecureAssembly, invocationExpression.GetLocation())
+                    : Diagnostic.Create(RuleBypassCertificateChain, invocationExpression.GetLocation());
+
+                context.ReportDiagnostic(diagnostic);
             }
-
-            var diagnostic = invocationExpression.ArgumentList.Arguments.Count < 3
-                ? Diagnostic.Create(RuleInsecureAssembly, invocationExpression.GetLocation())
-                : Diagnostic.Create(RuleBypassCertificateChain, invocationExpression.GetLocation());
-
-            context.ReportDiagnostic(diagnostic);
         }
     }
 }
