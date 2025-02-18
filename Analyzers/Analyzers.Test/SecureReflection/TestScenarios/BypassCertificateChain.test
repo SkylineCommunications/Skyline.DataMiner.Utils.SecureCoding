@@ -1,0 +1,44 @@
+using System.Reflection;
+using Skyline.DataMiner.Utils.SecureCoding.SecureReflection;
+
+namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.Tests.SecureReflection.TestScenarios
+{
+    internal class BypassCertificateChain
+    {
+        private Assembly secureLoadAssemblyField = SecureAssembly.Load("assemblyPath", "targetDllPath", verifyCertificateChain: false);
+
+        public BypassCertificateChain()
+        {
+            SecureAssembly.Load("assemblyPath", "targetDllPath", verifyCertificateChain: false);
+        }
+
+        public void TobeDetected()
+        {
+            SecureAssembly.Load("assemblyPath", "targetDllPath", verifyCertificateChain: false);
+        }
+
+        public Assembly SecureLoadAssemblyProperty
+        {
+            get
+            {			
+                return SecureAssembly.Load("assemblyPath", "targetDllPath", verifyCertificateChain: false);
+            }
+        }
+		
+		public Assembly SecureLoadFileAssemblyProperty
+        {
+            get
+            {			
+                return SecureAssembly.Load("assemblyPath", "targetDllPath", verifyCertificateChain: false);
+            }
+        }
+		
+		public Assembly SecureLoadFromAssemblyProperty
+        {
+            get
+            {			
+                return SecureAssembly.Load("assemblyPath", "targetDllPath", verifyCertificateChain: false);
+            }
+        }
+    }
+}

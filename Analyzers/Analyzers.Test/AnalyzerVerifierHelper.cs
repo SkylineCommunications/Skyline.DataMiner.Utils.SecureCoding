@@ -127,5 +127,34 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.Tests
 
             return new DiagnosticResult(diagnosticId, severity).WithLocation(line, column);
         }
+
+
+        /// <summary>
+        /// Builds a DiagnosticResult representing a diagnostic with the specified ID, severity, and location.
+        /// </summary>
+        /// <param name="diagnosticId">The ID of the diagnostic.</param>
+        /// <param name="severity">The severity of the diagnostic.</param>
+        /// <param name="line">The line number of the diagnostic location.</param>
+        /// <param name="column">The column number of the diagnostic location.</param>
+        /// <returns>A DiagnosticResult instance representing the specified diagnostic.</returns>
+        public static DiagnosticResult BuildDiagnosticResult(DiagnosticDescriptor diagnosticDescriptor, int line, int column)
+        {
+            if (diagnosticDescriptor is null)
+            {
+                throw new ArgumentNullException(nameof(diagnosticDescriptor));
+            }
+
+            if (line < 0)
+            {
+                throw new ArgumentOutOfRangeException($"'{nameof(line)}' should be greater than 0.");
+            }
+
+            if (column < 0)
+            {
+                throw new ArgumentOutOfRangeException($"'{nameof(column)}' should be greater than 0.");
+            }
+
+            return new DiagnosticResult(diagnosticDescriptor).WithLocation(line, column);
+        }
     }
 }

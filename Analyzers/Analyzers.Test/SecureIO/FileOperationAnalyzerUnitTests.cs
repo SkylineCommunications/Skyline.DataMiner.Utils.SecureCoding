@@ -14,8 +14,9 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.Tests.SecureIO
     [TestClass]
     public class FileOperationAnalyzerUnitTests
     {
-        private readonly string testCase = File.ReadAllText(@"..\..\..\SecureIO\TestScenarios\FileOperationAnalyzer.test");
-        private readonly string testCaseValid = File.ReadAllText(@"..\..\..\SecureIO\TestScenarios\FileOperationAnalyzerNoDiagnostics.test");
+        private readonly string fileOperationAnalyzerTestCase = File.ReadAllText(@"..\..\..\SecureIO\TestScenarios\FileOperationAnalyzer.test");
+        private readonly string fileOperationAnalyzerTestCaseValid = File.ReadAllText(@"..\..\..\SecureIO\TestScenarios\FileOperationAnalyzerNoDiagnostics.test");
+        private readonly string fileOperationFlowsTestCase = File.ReadAllText(@"..\..\..\SecureIO\TestScenarios\FileOperationFlows.test");
 
         [TestMethod]
         public async Task VerifyUsageDiagnostic()
@@ -86,7 +87,7 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.Tests.SecureIO
                 AnalyzerVerifierHelper.BuildDiagnosticResult(FileOperationAnalyzer.DiagnosticId, DiagnosticSeverity.Warning,120,18),
             };
 
-            var analyzerVerifier = AnalyzerVerifierHelper.BuildAnalyzerVerifier<FileOperationAnalyzer>(testCase);
+            var analyzerVerifier = AnalyzerVerifierHelper.BuildAnalyzerVerifier<FileOperationAnalyzer>(fileOperationAnalyzerTestCase);
 
             analyzerVerifier.TestState.ExpectedDiagnostics.AddRange(expectedDiagnostics);
 
@@ -96,7 +97,16 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.Tests.SecureIO
         [TestMethod]
         public async Task VerifyUsageDiagnostic_NoDiagnosticsThrown()
         {
-            var analyzerVerifier = AnalyzerVerifierHelper.BuildAnalyzerVerifier<FileOperationAnalyzer>(testCaseValid);
+            var analyzerVerifier = AnalyzerVerifierHelper.BuildAnalyzerVerifier<FileOperationAnalyzer>(fileOperationAnalyzerTestCaseValid);
+            analyzerVerifier.TestState.AdditionalReferences.Add(typeof(SecurePath).Assembly);
+
+            await analyzerVerifier.RunAsync();
+        }
+
+        [TestMethod]
+        public async Task VerifyFileOperationFlows_NoDiagnosticsThrown()
+        {
+            var analyzerVerifier = AnalyzerVerifierHelper.BuildAnalyzerVerifier<FileOperationAnalyzer>(fileOperationFlowsTestCase);
             analyzerVerifier.TestState.AdditionalReferences.Add(typeof(SecurePath).Assembly);
 
             await analyzerVerifier.RunAsync();

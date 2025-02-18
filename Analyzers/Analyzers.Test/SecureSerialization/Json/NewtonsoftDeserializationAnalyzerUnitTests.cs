@@ -29,11 +29,11 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.Tests.SecureSerializati
 
             var expectedDiagnostics = new List<DiagnosticResult>()
             {
-                AnalyzerVerifierHelper.BuildDiagnosticResult(NewtonsoftDeserializationAnalyzer.DiagnosticId, DiagnosticSeverity.Warning, 10, 20),
-                AnalyzerVerifierHelper.BuildDiagnosticResult(NewtonsoftDeserializationAnalyzer.DiagnosticId, DiagnosticSeverity.Warning, 15, 20),
-                AnalyzerVerifierHelper.BuildDiagnosticResult(NewtonsoftDeserializationAnalyzer.DiagnosticId, DiagnosticSeverity.Warning, 20, 20),
-                AnalyzerVerifierHelper.BuildDiagnosticResult(NewtonsoftDeserializationAnalyzer.DiagnosticId, DiagnosticSeverity.Warning, 25, 20),
-                AnalyzerVerifierHelper.BuildDiagnosticResult(NewtonsoftDeserializationAnalyzer.DiagnosticId, DiagnosticSeverity.Warning, 30, 20),
+                AnalyzerVerifierHelper.BuildDiagnosticResult(NewtonsoftDeserializationAnalyzer.DiagnosticId, DiagnosticSeverity.Warning, 11, 20),
+                AnalyzerVerifierHelper.BuildDiagnosticResult(NewtonsoftDeserializationAnalyzer.DiagnosticId, DiagnosticSeverity.Warning, 16, 20),
+                AnalyzerVerifierHelper.BuildDiagnosticResult(NewtonsoftDeserializationAnalyzer.DiagnosticId, DiagnosticSeverity.Warning, 21, 20),
+                AnalyzerVerifierHelper.BuildDiagnosticResult(NewtonsoftDeserializationAnalyzer.DiagnosticId, DiagnosticSeverity.Warning, 26, 20),
+                AnalyzerVerifierHelper.BuildDiagnosticResult(NewtonsoftDeserializationAnalyzer.DiagnosticId, DiagnosticSeverity.Warning, 31, 20),
             };
 
             var analyzerVerifier = AnalyzerVerifierHelper.
@@ -61,11 +61,11 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.Tests.SecureSerializati
 
             var expectedDiagnostics = new List<DiagnosticResult>()
             {
-                AnalyzerVerifierHelper.BuildDiagnosticResult(NewtonsoftDeserializationAnalyzer.DiagnosticId, DiagnosticSeverity.Warning, 10, 20),
-                AnalyzerVerifierHelper.BuildDiagnosticResult(NewtonsoftDeserializationAnalyzer.DiagnosticId, DiagnosticSeverity.Warning, 15, 20),
-                AnalyzerVerifierHelper.BuildDiagnosticResult(NewtonsoftDeserializationAnalyzer.DiagnosticId, DiagnosticSeverity.Warning, 20, 20),
-                AnalyzerVerifierHelper.BuildDiagnosticResult(NewtonsoftDeserializationAnalyzer.DiagnosticId, DiagnosticSeverity.Warning, 25, 20),
-                AnalyzerVerifierHelper.BuildDiagnosticResult(NewtonsoftDeserializationAnalyzer.DiagnosticId, DiagnosticSeverity.Warning, 30, 20),
+                AnalyzerVerifierHelper.BuildDiagnosticResult(NewtonsoftDeserializationAnalyzer.DiagnosticId, DiagnosticSeverity.Warning, 11, 20),
+                AnalyzerVerifierHelper.BuildDiagnosticResult(NewtonsoftDeserializationAnalyzer.DiagnosticId, DiagnosticSeverity.Warning, 16, 20),
+                AnalyzerVerifierHelper.BuildDiagnosticResult(NewtonsoftDeserializationAnalyzer.DiagnosticId, DiagnosticSeverity.Warning, 21, 20),
+                AnalyzerVerifierHelper.BuildDiagnosticResult(NewtonsoftDeserializationAnalyzer.DiagnosticId, DiagnosticSeverity.Warning, 26, 20),
+                AnalyzerVerifierHelper.BuildDiagnosticResult(NewtonsoftDeserializationAnalyzer.DiagnosticId, DiagnosticSeverity.Warning, 31, 20),
             };
 
             var analyzerVerifier = AnalyzerVerifierHelper.
