@@ -68,16 +68,14 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.SecureReflection
                 return;
             }
 
-            if (!loadMethods.Contains(methodSymbol.Name))
+            if (loadMethods.Contains(methodSymbol.Name) && methodSymbol.ReceiverType.ToDisplayString() == "System.Reflection.Assembly")
             {
-                return;
+                var diagnostic = invocationExpression.ArgumentList.Arguments.Count < 3
+                    ? Diagnostic.Create(RuleInsecureAssembly, invocationExpression.GetLocation())
+                    : Diagnostic.Create(RuleBypassCertificateChain, invocationExpression.GetLocation());
+
+                context.ReportDiagnostic(diagnostic);
             }
-
-            var diagnostic = invocationExpression.ArgumentList.Arguments.Count < 3
-                ? Diagnostic.Create(RuleInsecureAssembly, invocationExpression.GetLocation())
-                : Diagnostic.Create(RuleBypassCertificateChain, invocationExpression.GetLocation());
-
-            context.ReportDiagnostic(diagnostic);
         }
     }
 }
