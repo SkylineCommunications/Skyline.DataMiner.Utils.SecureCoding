@@ -63,7 +63,7 @@
             Assert.ThrowsException<ArgumentException>(() => SecureAssembly.Load(string.Empty, default(X509Certificate2)));
             Assert.ThrowsException<ArgumentException>(() => SecureAssembly.Load("ValidString", new X509Certificate2[0]));
 
-            var selfSignedCertificate = new X509Certificate2(selfSignedCertificatePfxPath, selfSignedCertificatePassword);
+            var selfSignedCertificate = new X509Certificate2(selfSignedCertificateCerPath);
 
             // Signed with different Certificate test
             Assert.ThrowsException<SecurityException>(() => SecureAssembly.Load(signedTestDllPath, selfSignedCertificate));
