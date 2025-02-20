@@ -40,22 +40,77 @@ namespace Skyline.DataMiner.Utils.SecureCoding.CodeFixProviders.SecureReflection
                 return;
             }
 
-            context.RegisterCodeFix(
-                CodeAction.Create(
-                    title: "Replace Assembly.Load with SecureAssembly.Load",
-                    createChangedDocument: c => ReplaceAssemblyLoadWithSecureAssemblyLoad(context.Document, invocation, c),
-                    equivalenceKey: nameof(SecureAssemblyCodeFix)),
-                diagnostic);
+            if (TryGetCodeAction(context, invocation, out CodeAction codeAction))
+            {
+                context.RegisterCodeFix(codeAction, diagnostic);
+            }
         }
 
-        private async Task<Document> ReplaceAssemblyLoadWithSecureAssemblyLoad(
+        private bool TryGetCodeAction(CodeFixContext context, InvocationExpressionSyntax invocation, out CodeAction codeAction)
+        {
+            var methodSymbol = GetAssemblyMethodSymbol(context, invocation);
+            if (methodSymbol == null)
+            {
+                codeAction = default;
+                return false;
+            }
+
+            if (nameof(System.Reflection.Assembly.LoadFrom).Contains(methodSymbol.Name))
+            {
+                codeAction = CodeAction.Create(
+                    title: "Replace 'Assembly.LoadFrom' with 'SecureAssembly.LoadFrom'",
+                    createChangedDocument: c => ReplaceAssemblyLoadSecureAssemblyLoad(context.Document, invocation, "SecureAssembly.LoadFrom", c),
+                    equivalenceKey: nameof(SecureAssemblyCodeFix));
+
+                return true;
+            }
+            else if (nameof(System.Reflection.Assembly.LoadFile).Contains(methodSymbol.Name))
+            {
+                codeAction = CodeAction.Create(
+                    title: "Replace 'Assembly.LoadFile' with 'SecureAssembly.LoadFile'",
+                    createChangedDocument: c => ReplaceAssemblyLoadSecureAssemblyLoad(context.Document, invocation, "SecureAssembly.LoadFile", c),
+                    equivalenceKey: nameof(SecureAssemblyCodeFix));
+
+                return true;
+            }
+            else
+            {
+                codeAction = default;
+                return false;
+            }
+        }
+
+        private static IMethodSymbol GetAssemblyMethodSymbol(CodeFixContext context, InvocationExpressionSyntax invocation)
+        {
+            var semanticModel = context.Document.GetSemanticModelAsync(context.CancellationToken)?.Result;
+            if (semanticModel == null)
+            {
+                return null;
+            }
+
+            var methodSymbol = semanticModel?.GetSymbolInfo(invocation.Expression, context.CancellationToken).Symbol as IMethodSymbol;
+            if (methodSymbol == null)
+            {
+                return null;
+            }
+
+            if (!methodSymbol.ReceiverType.ToDisplayString().Contains("System.Reflection.Assembly"))
+            {
+                return null;
+            }
+
+            return methodSymbol;
+        }
+
+        private async Task<Document> ReplaceAssemblyLoadSecureAssemblyLoad(
             Document document,
             InvocationExpressionSyntax invocation,
+            string secureAssemblyMethod,
             CancellationToken cancellationToken)
         {
             var root = await document.GetSyntaxRootAsync(cancellationToken).ConfigureAwait(false);
 
-            InvocationExpressionSyntax newInvocation = GetNewInvocation(invocation);
+            InvocationExpressionSyntax newInvocation = GetNewInvocation(invocation, secureAssemblyMethod);
 
             var newRoot = root.ReplaceNode(invocation, newInvocation.WithTriviaFrom(invocation)); // Keep original form
 
@@ -71,13 +126,13 @@ namespace Skyline.DataMiner.Utils.SecureCoding.CodeFixProviders.SecureReflection
             return newDocument;
         }
 
-        private static InvocationExpressionSyntax GetNewInvocation(InvocationExpressionSyntax invocation)
+        private static InvocationExpressionSyntax GetNewInvocation(InvocationExpressionSyntax invocation, string secureAssemblyMethod)
         {
             var arguments = invocation.ArgumentList
-                .AddArguments(SyntaxFactory.Argument(SyntaxFactory.ParseExpression("allowedCertificates"))); 
+                .AddArguments(SyntaxFactory.Argument(SyntaxFactory.ParseExpression("allowedCertificates")));
 
             return invocation
-                   .WithExpression(SyntaxFactory.ParseExpression("SecureAssembly.Load"))
+                   .WithExpression(SyntaxFactory.ParseExpression(secureAssemblyMethod))
                    .WithArgumentList(arguments);
         }
     }

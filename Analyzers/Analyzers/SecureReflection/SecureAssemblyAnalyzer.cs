@@ -2,8 +2,10 @@
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
+using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Linq.Expressions;
 
 namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.SecureReflection
 {
@@ -19,10 +21,28 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.SecureReflection
 
         public const string DiagnosticId = "SLC_SC0006";
 
-        public static DiagnosticDescriptor RuleInsecureAssembly => new DiagnosticDescriptor(
+        public static DiagnosticDescriptor RuleInsecureLoadFromAssembly => new DiagnosticDescriptor(
             DiagnosticId,
             title: "Ensure secure loading of Assemblies",
-            messageFormat: "Consider using 'SecureAssembly.Load' instead of 'Assembly.Load'",
+            messageFormat: "Consider using 'SecureAssembly.LoadFrom' instead of 'Assembly.LoadFrom'",
+            "Usage",
+            DiagnosticSeverity.Warning,
+            helpLinkUri: $"https://github.com/SkylineCommunications/Skyline.DataMiner.Utils.SecureCoding/blob/main/docs/Rules/{DiagnosticId}.md",
+            isEnabledByDefault: true);
+
+        public static DiagnosticDescriptor RuleInsecureLoadFileAssembly => new DiagnosticDescriptor(
+            DiagnosticId,
+            title: "Ensure secure loading of Assemblies",
+            messageFormat: "Consider using 'SecureAssembly.LoadFile' instead of 'Assembly.LoadFile'",
+            "Usage",
+            DiagnosticSeverity.Warning,
+            helpLinkUri: $"https://github.com/SkylineCommunications/Skyline.DataMiner.Utils.SecureCoding/blob/main/docs/Rules/{DiagnosticId}.md",
+            isEnabledByDefault: true);
+
+        public static DiagnosticDescriptor RuleInsecureLoadAssembly => new DiagnosticDescriptor(
+            DiagnosticId,
+            title: "Ensure secure loading of Assemblies",
+            messageFormat: "Consider using either 'SecureAssembly.LoadFile' or 'SecureAssembly.LoadFrom' instead of 'Assembly.Load'",
             "Usage",
             DiagnosticSeverity.Warning,
             helpLinkUri: $"https://github.com/SkylineCommunications/Skyline.DataMiner.Utils.SecureCoding/blob/main/docs/Rules/{DiagnosticId}.md",
@@ -41,7 +61,7 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.SecureReflection
         {
             get
             {
-                return ImmutableArray.Create(RuleInsecureAssembly, RuleBypassCertificateChain);
+                return ImmutableArray.Create(RuleInsecureLoadFromAssembly, RuleBypassCertificateChain);
             }
         }
 
@@ -68,25 +88,52 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.SecureReflection
                 return;
             }
 
-            if (loadMethods.Contains(methodSymbol.Name) && methodSymbol.ReceiverType.ToDisplayString() == "System.Reflection.Assembly")
+            if (methodSymbol.ReceiverType.ToDisplayString() == "System.Reflection.Assembly")
             {
-                var diagnostic = Diagnostic.Create(RuleInsecureAssembly, invocationExpression.GetLocation());
-                context.ReportDiagnostic(diagnostic);
+                HandleAssemblyDiagnostics(context, methodSymbol, invocationExpression);
             }
 
             if (methodSymbol.ReceiverType.ToDisplayString() == "Skyline.DataMiner.Utils.SecureCoding.SecureReflection.SecureAssembly")
             {
-                if (invocationExpression.ArgumentList.Arguments.Count < 3)
-                {
-                    return;
-                }
+                HandleSecureAssemblyDiagnostics(context, invocationExpression);
+            }
+        }
 
-                var value = context.SemanticModel.GetConstantValue(invocationExpression.ArgumentList.Arguments.Last()?.Expression);
-                if (value.HasValue && value.Value is bool && value.Value is false)
-                {
-                    var diagnostic = Diagnostic.Create(RuleBypassCertificateChain, invocationExpression.GetLocation());
-                    context.ReportDiagnostic(diagnostic);
-                }
+        private static void HandleSecureAssemblyDiagnostics(SyntaxNodeAnalysisContext context, InvocationExpressionSyntax invocationExpression)
+        {
+            if (invocationExpression.ArgumentList.Arguments.Count < 3)
+            {
+                return;
+            }
+
+            var value = context.SemanticModel.GetConstantValue(invocationExpression.ArgumentList.Arguments.Last()?.Expression);
+            if (value.HasValue && value.Value is bool && value.Value is false)
+            {
+                var diagnostic = Diagnostic.Create(RuleBypassCertificateChain, invocationExpression.GetLocation());
+                context.ReportDiagnostic(diagnostic);
+            }
+        }
+
+        private static void HandleAssemblyDiagnostics(
+            SyntaxNodeAnalysisContext context,
+            IMethodSymbol methodSymbol,
+            InvocationExpressionSyntax invocation)
+        {
+            if (methodSymbol.Name == nameof(System.Reflection.Assembly.Load))
+            {
+                context.ReportDiagnostic(Diagnostic.Create(RuleInsecureLoadAssembly, invocation.GetLocation()));
+            }
+            if (methodSymbol.Name == nameof(System.Reflection.Assembly.LoadFrom))
+            {
+                context.ReportDiagnostic(Diagnostic.Create(RuleInsecureLoadFromAssembly, invocation.GetLocation()));
+            }
+            else if (methodSymbol.Name == nameof(System.Reflection.Assembly.LoadFile))
+            {
+                context.ReportDiagnostic(Diagnostic.Create(RuleInsecureLoadFileAssembly, invocation.GetLocation()));
+            }
+            else
+            {
+                return;
             }
         }
     }
