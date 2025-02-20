@@ -4,6 +4,9 @@ using Microsoft.CodeAnalysis.CodeFixes;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Skyline.DataMiner.Utils.SecureCoding.Analyzers.SecureReflection;
+using Skyline.DataMiner.Utils.SecureCoding.SecureReflection;
+using System;
+using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Composition;
 using System.Linq;
@@ -15,7 +18,22 @@ namespace Skyline.DataMiner.Utils.SecureCoding.CodeFixProviders.SecureReflection
     [ExportCodeFixProvider(LanguageNames.CSharp, Name = nameof(SecureAssemblyCodeFix)), Shared]
     public class SecureAssemblyCodeFix : CodeFixProvider
     {
-        private const string SECURE_REFLECTION_NAMESPACE = "Skyline.DataMiner.Utils.SecureCoding.SecureReflection";
+        private static string[] requiredNamespaces = new string[]
+        {
+            "System.Security.Cryptography.X509Certificates",
+            "Skyline.DataMiner.Utils.SecureCoding.SecureReflection",
+        };
+
+        private static Dictionary<string, string> defaultCertificateArguments = new Dictionary<string, string>
+        {
+            { "X509Certificate2", "default(X509Certificate2)" },
+            { "IEnumerable<X509Certificate2>", "default(IEnumerable<X509Certificate2>)" },
+            { "Certificate path", "default(string)" },
+            { "Certificate paths", "default(string[])" },
+            { "byte[]", "default(byte[])" },
+            { "IEnumerable<byte[]>", "default(IEnumerable<byte[]>)" }
+        };
+
 
         public sealed override ImmutableArray<string> FixableDiagnosticIds
         {
@@ -40,43 +58,61 @@ namespace Skyline.DataMiner.Utils.SecureCoding.CodeFixProviders.SecureReflection
                 return;
             }
 
-            if (TryGetCodeAction(context, invocation, out CodeAction codeAction))
+            if (!TryGetNestedCodeAction(context, invocation, out CodeAction[] nestedCodeActions))
             {
-                context.RegisterCodeFix(codeAction, diagnostic);
+                return;
             }
+
+            var codeAction = CodeActionWithOptions.Create(
+                title: "Replace with secure assembly loading",
+                nestedActions: ImmutableArray.Create<CodeAction>(nestedCodeActions),
+                isInlinable: false);
+
+            context.RegisterCodeFix(codeAction, diagnostic);
         }
 
-        private bool TryGetCodeAction(CodeFixContext context, InvocationExpressionSyntax invocation, out CodeAction codeAction)
+        private bool TryGetNestedCodeAction(CodeFixContext context, InvocationExpressionSyntax invocation, out CodeAction[] nestedCodeActionsArr)
         {
+            var nestedCodeActions = new List<CodeAction>();
+
             var methodSymbol = GetAssemblyMethodSymbol(context, invocation);
             if (methodSymbol == null)
             {
-                codeAction = default;
+                nestedCodeActionsArr = new CodeAction[0];
                 return false;
             }
 
-            if (nameof(System.Reflection.Assembly.LoadFrom).Contains(methodSymbol.Name))
+            if (methodSymbol.Name == nameof(System.Reflection.Assembly.LoadFrom))
             {
-                codeAction = CodeAction.Create(
-                    title: "Replace 'Assembly.LoadFrom' with 'SecureAssembly.LoadFrom'",
-                    createChangedDocument: c => ReplaceAssemblyLoadSecureAssemblyLoad(context.Document, invocation, "SecureAssembly.LoadFrom", c),
-                    equivalenceKey: nameof(SecureAssemblyCodeFix));
-
-                return true;
+                AddNestedLoadFromCodeActions(context, invocation, nameof(SecureAssembly.LoadFrom), nestedCodeActions);
             }
-            else if (nameof(System.Reflection.Assembly.LoadFile).Contains(methodSymbol.Name))
-            {
-                codeAction = CodeAction.Create(
-                    title: "Replace 'Assembly.LoadFile' with 'SecureAssembly.LoadFile'",
-                    createChangedDocument: c => ReplaceAssemblyLoadSecureAssemblyLoad(context.Document, invocation, "SecureAssembly.LoadFile", c),
-                    equivalenceKey: nameof(SecureAssemblyCodeFix));
 
-                return true;
-            }
-            else
+            if (methodSymbol.Name == nameof(System.Reflection.Assembly.LoadFile))
             {
-                codeAction = default;
-                return false;
+                AddNestedLoadFromCodeActions(context, invocation, nameof(SecureAssembly.LoadFile), nestedCodeActions);
+            }
+
+            nestedCodeActionsArr = nestedCodeActions.ToArray();
+            return nestedCodeActionsArr.Length > 0;
+        }
+
+        private void AddNestedLoadFromCodeActions(
+            CodeFixContext context,
+            InvocationExpressionSyntax invocation,
+            string method,
+            List<CodeAction> nestedCodeActions)
+        {
+            var secureAssemblyMethod = $"SecureAssembly.{method}";
+
+            foreach (var defaultCertificateArg in defaultCertificateArguments)
+            {
+                var title = $"'{secureAssemblyMethod}' ({defaultCertificateArg.Key} load option)";
+                var argument = defaultCertificateArg.Value;
+
+                nestedCodeActions.Add(CodeAction.Create(
+                    title,
+                    createChangedDocument: c => ReplaceAssemblyLoadSecureAssemblyLoad(context.Document, invocation, secureAssemblyMethod, argument, c),
+                    equivalenceKey: nameof(SecureAssemblyCodeFix)));
             }
         }
 
@@ -106,19 +142,25 @@ namespace Skyline.DataMiner.Utils.SecureCoding.CodeFixProviders.SecureReflection
             Document document,
             InvocationExpressionSyntax invocation,
             string secureAssemblyMethod,
+            string defaultCertificateArgument,
             CancellationToken cancellationToken)
         {
             var root = await document.GetSyntaxRootAsync(cancellationToken).ConfigureAwait(false);
 
-            InvocationExpressionSyntax newInvocation = GetNewInvocation(invocation, secureAssemblyMethod);
+            InvocationExpressionSyntax newInvocation = GetNewInvocation(invocation, secureAssemblyMethod, defaultCertificateArgument);
 
             var newRoot = root.ReplaceNode(invocation, newInvocation.WithTriviaFrom(invocation)); // Keep original form
 
             var compilationUnit = newRoot as CompilationUnitSyntax ?? (CompilationUnitSyntax)root;
 
-            if (!compilationUnit.Usings.Any(@using => @using.Name.ToString() == SECURE_REFLECTION_NAMESPACE))
+            var missingNamespaces = requiredNamespaces
+                .Where(ns => !compilationUnit.Usings.Any(u => u.Name.ToString() == ns))
+                .Select(ns => SyntaxFactory.UsingDirective(SyntaxFactory.ParseName(ns)))
+                .ToArray();
+
+            if (missingNamespaces.Length > 0)
             {
-                compilationUnit = compilationUnit.AddUsings(SyntaxFactory.UsingDirective(SyntaxFactory.ParseName(SECURE_REFLECTION_NAMESPACE)));
+                compilationUnit = compilationUnit.AddUsings(missingNamespaces);
             }
 
             var newDocument = document.WithSyntaxRoot(compilationUnit);
@@ -126,10 +168,10 @@ namespace Skyline.DataMiner.Utils.SecureCoding.CodeFixProviders.SecureReflection
             return newDocument;
         }
 
-        private static InvocationExpressionSyntax GetNewInvocation(InvocationExpressionSyntax invocation, string secureAssemblyMethod)
+        private static InvocationExpressionSyntax GetNewInvocation(InvocationExpressionSyntax invocation, string secureAssemblyMethod, string defaultCertificateArgument)
         {
             var arguments = invocation.ArgumentList
-                .AddArguments(SyntaxFactory.Argument(SyntaxFactory.ParseExpression("allowedCertificates")));
+                .AddArguments(SyntaxFactory.Argument(SyntaxFactory.ParseExpression(defaultCertificateArgument)));
 
             return invocation
                    .WithExpression(SyntaxFactory.ParseExpression(secureAssemblyMethod))

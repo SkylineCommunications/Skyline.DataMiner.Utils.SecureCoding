@@ -758,7 +758,7 @@
         private static extern uint WinVerifyTrust(IntPtr hwnd, [MarshalAs(UnmanagedType.LPStruct)] Guid pgActionID, WINTRUST_DATA pWVTData);
 
         [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
-        private class WINTRUST_FILE_INFO
+        private class WINTRUST_FILE_INFO : IDisposable
         {
             public uint StructSize = (uint)Marshal.SizeOf(typeof(WINTRUST_FILE_INFO));
             IntPtr pszFilePath;                     // required, file name to be verified
@@ -781,7 +781,7 @@
         }
 
         [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
-        private class WINTRUST_DATA
+        private class WINTRUST_DATA : IDisposable
         {
             UInt32 StructSize = (UInt32)Marshal.SizeOf(typeof(WINTRUST_DATA));
             IntPtr PolicyCallbackData = IntPtr.Zero;

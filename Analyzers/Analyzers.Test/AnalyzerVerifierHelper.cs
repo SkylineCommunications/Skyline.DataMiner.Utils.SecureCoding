@@ -86,7 +86,7 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.Tests
                         )
                     .AddPackages(packageToAdd)
                 },
-
+                
                 FixedState =
                 {
                     Sources = { fixedStateSources },
