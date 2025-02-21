@@ -70,17 +70,11 @@ namespace Skyline.DataMiner.Utils.SecureCoding.CodeFixProviders.SecureIO
 
         private static InvocationExpressionSyntax GetNewInvocation(InvocationExpressionSyntax invocation)
         {
-            var arguments = invocation.ArgumentList.Arguments;
-            if (arguments == null)
+            if (invocation.ArgumentList.Arguments.Count < 2)
             {
                 return invocation;
             }
-
-            if (arguments.Count < 2)
-            {
-                return invocation;
-            }
-            else if (arguments.Count > 2)
+            else if (invocation.ArgumentList.Arguments.Count > 2)
             {
                 return invocation
                     .WithExpression(SyntaxFactory.ParseExpression("SecurePath.ConstructSecurePath"))
@@ -88,7 +82,7 @@ namespace Skyline.DataMiner.Utils.SecureCoding.CodeFixProviders.SecureIO
             }
             else
             {
-                var lastArgument = arguments.Last().ToString();
+                var lastArgument = invocation.ArgumentList.Arguments.Last().ToString();
 
                 if (lastArgument.Contains("/") || lastArgument.Contains("\\"))
                 {

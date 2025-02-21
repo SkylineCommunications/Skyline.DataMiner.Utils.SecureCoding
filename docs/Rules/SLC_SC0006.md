@@ -16,7 +16,7 @@ private void InsecureAssemblyFileLoading(string assemblyPath)
 
 private void InsecureAssemblyLoading(string assemblyName)
 {
-    Assembly.Load(assemblyName);
+    Assembly.Load(assemblyName); // When applicable should be replaced by SecureAssembly.LoadFile or SecureAssembly.LoadFrom
 }
 ````
 
@@ -28,18 +28,24 @@ private void SecureAssemblyLoading_X509Certificate2Argument(string assemblyPath,
         ? new X509Certificate2(certificatePath)
         : new X509Certificate2(certificatePath, password); // Necessary when using certificates that store private keys (e.g. .p12/.pfx)
 
-    SecureAssembly.Load(assemblyPath, allowedCertificate, verifyCertificateChain: true) 
+    SecureAssembly.LoadFrom(assemblyPath, allowedCertificate, verifyCertificateChain: true);
+	
+	SecureAssembly.LoadFrom(assemblyPath, allowedCertificate, verifyCertificateChain: true);
 }
 
 private void SecureAssemblyLoading_CertificatePathArgument(string assemblyPath, string certificatePath)
 {
-    SecureAssembly.Load(assemblyPath, certificatePath, verifyCertificateChain: true)
+    SecureAssembly.LoadFrom(assemblyPath, certificatePath, verifyCertificateChain: true);
+	
+	SecureAssembly.LoadFile(assemblyPath, certificatePath, verifyCertificateChain: true);
 }
 
 private void SecureAssemblyLoading_CertificateInBytesArgument(string assemblyPath, string certificatePath)
 {
     byte[] allowedCertificateInBytes = File.ReadAllBytes(certificatePath);
 
-    SecureAssembly.Load(assemblyPath, allowedCertificateInBytes, verifyCertificateChain: true)
+    SecureAssembly.LoadFrom(assemblyPath, allowedCertificateInBytes, verifyCertificateChain: true);
+	
+	SecureAssembly.LoadFile(assemblyPath, allowedCertificateInBytes, verifyCertificateChain: true);
 }
 ````
