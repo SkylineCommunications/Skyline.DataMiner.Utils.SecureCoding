@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq.Expressions;
+using System.Security.Cryptography.X509Certificates;
 
 namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.SecureReflection
 {
@@ -43,6 +44,15 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.SecureReflection
             DiagnosticId,
             title: "Ensure secure loading of Assemblies",
             messageFormat: "Consider using either 'SecureAssembly.LoadFile' or 'SecureAssembly.LoadFrom' instead of 'Assembly.Load'",
+            "Usage",
+            DiagnosticSeverity.Warning,
+            helpLinkUri: $"https://github.com/SkylineCommunications/Skyline.DataMiner.Utils.SecureCoding/blob/main/docs/Rules/{DiagnosticId}.md",
+            isEnabledByDefault: true);
+
+        public static DiagnosticDescriptor RuleDefaultArgument => new DiagnosticDescriptor(
+            DiagnosticId,
+            title: "Ensure replacement of default code fix arguments",
+            messageFormat: "Use the corresponding target certificate instead",
             "Usage",
             DiagnosticSeverity.Warning,
             helpLinkUri: $"https://github.com/SkylineCommunications/Skyline.DataMiner.Utils.SecureCoding/blob/main/docs/Rules/{DiagnosticId}.md",
@@ -101,16 +111,35 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.SecureReflection
 
         private static void HandleSecureAssemblyDiagnostics(SyntaxNodeAnalysisContext context, InvocationExpressionSyntax invocationExpression)
         {
-            if (invocationExpression.ArgumentList.Arguments.Count < 3)
+            var lastArgument = invocationExpression.ArgumentList.Arguments.Last();
+
+            var value = context.SemanticModel.GetConstantValue(lastArgument?.Expression);
+            if (!value.HasValue)
             {
                 return;
             }
 
-            var value = context.SemanticModel.GetConstantValue(invocationExpression.ArgumentList.Arguments.Last()?.Expression);
-            if (value.HasValue && value.Value is bool && value.Value is false)
+            if (invocationExpression.ArgumentList.Arguments.Count == 3)
             {
-                var diagnostic = Diagnostic.Create(RuleBypassCertificateChain, invocationExpression.GetLocation());
-                context.ReportDiagnostic(diagnostic);
+                if (value.Value is bool && value.Value is false)
+                {
+                    var diagnostic = Diagnostic.Create(RuleBypassCertificateChain, invocationExpression.GetLocation());
+                    context.ReportDiagnostic(diagnostic);
+                }
+            }
+
+            if (invocationExpression.ArgumentList.Arguments.Count == 2)
+            {
+                if (value.Value is default(X509Certificate2)
+                 || value.Value is default(IEnumerable<X509Certificate2>)
+                 || value.Value is default(string)
+                 || value.Value is default(IEnumerable<string>)
+                 || value.Value is default(byte[])
+                 || value.Value is default(IEnumerable<byte[]>))
+                {
+                    var diagnostic = Diagnostic.Create(RuleDefaultArgument, lastArgument.GetLocation());
+                    context.ReportDiagnostic(diagnostic);
+                }
             }
         }
 
