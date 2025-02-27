@@ -1,0 +1,51 @@
+using System.Reflection;
+using System.Security.Cryptography.X509Certificates;
+using Skyline.DataMiner.Utils.SecureCoding.SecureReflection;
+
+namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.Tests.SecureReflection.TestScenarios
+{
+    internal class InsecureAssemblyTest
+    {
+        private Assembly loadAssemblyField = Assembly.Load("assemblyName");
+		private Assembly loadFileAssemblyField = SecureAssembly.LoadFile("assemblyPath", default(X509Certificate2));
+		private Assembly loadFromAssemblyField = SecureAssembly.LoadFrom("assemblyPath", default(X509Certificate2));
+
+        public InsecureAssemblyTest()
+        {
+            Assembly.Load("assemblyName");
+			SecureAssembly.LoadFile("assemblyPath", default(X509Certificate2));
+			SecureAssembly.LoadFrom("assemblyPath", default(X509Certificate2));
+        }
+
+        public void TobeDetected()
+        {
+            Assembly.Load("assemblyName");
+			SecureAssembly.LoadFile("assemblyPath", default(X509Certificate2));
+			SecureAssembly.LoadFrom("assemblyPath", default(X509Certificate2));
+        }
+
+        public Assembly LoadAssemblyProperty
+        {
+            get
+            {			
+                return Assembly.Load("assemblyName");
+            }
+        }
+		
+		public Assembly LoadFileAssemblyProperty
+        {
+            get
+            {			
+                return SecureAssembly.LoadFile("assemblyPath", default(X509Certificate2));
+            }
+        }
+		
+		public Assembly LoadFromAssemblyProperty
+        {
+            get
+            {			
+                return SecureAssembly.LoadFrom("assemblyPath", default(X509Certificate2));
+            }
+        }
+    }
+}

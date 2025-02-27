@@ -5,29 +5,29 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.Tests.SecureReflection.
 {
     internal class BypassCertificateChain
     {
-        private Assembly secureLoadAssemblyField = SecureAssembly.Load("assemblyPath", "targetDllPath", verifyCertificateChain: false);
+        private Assembly secureLoadAssemblyField = SecureAssembly.LoadFrom("assemblyPath", "targetDllPath", verifyCertificateChain: false);
 
         public BypassCertificateChain()
         {
-            SecureAssembly.Load("assemblyPath", "targetDllPath", verifyCertificateChain: false);
+            SecureAssembly.LoadFrom("assemblyPath", "targetDllPath", verifyCertificateChain: false);
         }
 
         public void TobeDetected()
         {
-            SecureAssembly.Load("assemblyPath", "targetDllPath", verifyCertificateChain: false);
+            SecureAssembly.LoadFrom("assemblyPath", "targetDllPath", verifyCertificateChain: false);
         }
 
         public void NotTobeDetected()
         {
-            SecureAssembly.Load("assemblyPath", "targetDllPath", verifyCertificateChain: true);
-            SecureAssembly.Load("assemblyPath", "targetDllPath");
+            SecureAssembly.LoadFrom("assemblyPath", "targetDllPath", verifyCertificateChain: true);
+            SecureAssembly.LoadFrom("assemblyPath", "targetDllPath");
         }
 
         public Assembly SecureLoadAssemblyProperty
         {
             get
             {			
-                return SecureAssembly.Load("assemblyPath", "targetDllPath", verifyCertificateChain: false);
+                return SecureAssembly.LoadFrom("assemblyPath", "targetDllPath", verifyCertificateChain: false);
             }
         }
 		
@@ -35,7 +35,7 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.Tests.SecureReflection.
         {
             get
             {			
-                return SecureAssembly.Load("assemblyPath", "targetDllPath", verifyCertificateChain: false);
+                return SecureAssembly.LoadFrom("assemblyPath", "targetDllPath", verifyCertificateChain: false);
             }
         }
 		
@@ -43,7 +43,7 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.Tests.SecureReflection.
         {
             get
             {			
-                return SecureAssembly.Load("assemblyPath", "targetDllPath", verifyCertificateChain: false);
+                return SecureAssembly.LoadFrom("assemblyPath", "targetDllPath", verifyCertificateChain: false);
             }
         }
     }

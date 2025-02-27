@@ -39,39 +39,58 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.Certificates
             if (assignmentExpression.Left is MemberAccessExpressionSyntax memberAccess
                 && memberAccess.Name.Identifier.Text == "ServerCertificateCustomValidationCallback")
             {
-                if (assignmentExpression.Right is ParenthesizedLambdaExpressionSyntax lambda)
-                {
-                    var alwaysReturnsTrue = lambda.Body is BlockSyntax block
-                        && block.Statements.OfType<ReturnStatementSyntax>()
-                        .All(r => r.Expression is LiteralExpressionSyntax literal && literal.IsKind(SyntaxKind.TrueLiteralExpression));
-
-                    if (alwaysReturnsTrue)
-                    {
-                        var diagnostic = Diagnostic.Create(Rule, memberAccess.Name.GetLocation());
-                        context.ReportDiagnostic(diagnostic);
-                    }
-                }
+                AnalyzeParenthesizedLambdaExpression(context, assignmentExpression, memberAccess);
 
                 if (assignmentExpression.Right is IdentifierNameSyntax identifier)
                 {
-                    var methodSymbol = context.SemanticModel.GetSymbolInfo(identifier).Symbol as IMethodSymbol;
-                    if (methodSymbol != null)
-                    {
-                        var methodSyntax = methodSymbol.DeclaringSyntaxReferences[0].GetSyntax(context.CancellationToken) as MethodDeclarationSyntax;
-                        if (methodSyntax != null)
-                        {
-                            var alwaysReturnsTrue = methodSyntax.Body != null 
-                                && methodSyntax.Body.Statements.OfType<ReturnStatementSyntax>()
-                                .All(r => r.Expression is LiteralExpressionSyntax literal && literal.IsKind(SyntaxKind.TrueLiteralExpression));
-
-                            if (alwaysReturnsTrue)
-                            {
-                                var diagnostic = Diagnostic.Create(Rule, identifier.GetLocation(), methodSymbol.Name);
-                                context.ReportDiagnostic(diagnostic);
-                            }
-                        }
-                    }
+                    AnalyzeIdentifierName(context, identifier);
                 }
+            }
+        }
+
+        private static void AnalyzeIdentifierName(SyntaxNodeAnalysisContext context, IdentifierNameSyntax identifier)
+        {
+            var methodSymbol = context.SemanticModel.GetSymbolInfo(identifier).Symbol as IMethodSymbol;
+            if (methodSymbol == null)
+            {
+                return;
+            }
+
+            var methodSyntax = methodSymbol.DeclaringSyntaxReferences[0].GetSyntax(context.CancellationToken) as MethodDeclarationSyntax;
+            if (methodSyntax == null)
+            {
+                return;
+            }
+
+            var alwaysReturnsTrue = methodSyntax.Body != null
+                && methodSyntax.Body.Statements.OfType<ReturnStatementSyntax>()
+                .All(r => r.Expression is LiteralExpressionSyntax literal && literal.IsKind(SyntaxKind.TrueLiteralExpression));
+
+            if (alwaysReturnsTrue)
+            {
+                var diagnostic = Diagnostic.Create(Rule, identifier.GetLocation(), methodSymbol.Name);
+                context.ReportDiagnostic(diagnostic);
+            }
+        }
+
+        private static void AnalyzeParenthesizedLambdaExpression(
+            SyntaxNodeAnalysisContext context,
+            AssignmentExpressionSyntax assignmentExpression,
+            MemberAccessExpressionSyntax memberAccess)
+        {
+            if (!(assignmentExpression.Right is ParenthesizedLambdaExpressionSyntax lambda))
+            {
+                return;
+            }
+
+            var alwaysReturnsTrue = lambda.Body is BlockSyntax block
+                && block.Statements.OfType<ReturnStatementSyntax>()
+                .All(r => r.Expression is LiteralExpressionSyntax literal && literal.IsKind(SyntaxKind.TrueLiteralExpression));
+
+            if (alwaysReturnsTrue)
+            {
+                var diagnostic = Diagnostic.Create(Rule, memberAccess.Name.GetLocation());
+                context.ReportDiagnostic(diagnostic);
             }
         }
     }
