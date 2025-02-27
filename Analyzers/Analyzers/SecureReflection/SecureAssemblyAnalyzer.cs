@@ -112,8 +112,12 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.SecureReflection
         private static void HandleSecureAssemblyDiagnostics(SyntaxNodeAnalysisContext context, InvocationExpressionSyntax invocationExpression)
         {
             var lastArgument = invocationExpression.ArgumentList.Arguments.Last();
+            if (lastArgument is null)
+            {
+                return;
+            }
 
-            var value = context.SemanticModel.GetConstantValue(lastArgument?.Expression);
+            var value = context.SemanticModel.GetConstantValue(lastArgument.Expression);
             if (!value.HasValue)
             {
                 return;
