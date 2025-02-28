@@ -627,8 +627,9 @@
             return result == 0; // 0 means signature is valid
         }
 
+
         #region WinTrust
-#pragma warning disable IDE0044 // Add readonly modifier
+#pragma warning disable S2933 // Add readonly modifier
 
         /// <summary>
         /// Represents possible results returned by the <c>WinVerifyTrust</c> function, 
@@ -825,7 +826,7 @@
                 }
             }
 
-            #pragma warning restore IDE0044 // Add readonly modifier
+#pragma warning restore S2933 // Add readonly modifier
             #endregion
         }
     }
