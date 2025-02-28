@@ -87,13 +87,15 @@
             Assert.ThrowsException<SecurityException>(() => SecureAssembly.LoadFrom(selfSignedTestDllPath, selfSignedCertificate));
             Assert.ThrowsException<SecurityException>(() => SecureAssembly.LoadFile(selfSignedTestDllPath, selfSignedCertificate));
 
+            var emptyByteArr = Array.Empty<byte>();
+
             // Unsigned Test
-            Assert.ThrowsException<SecurityException>(() => SecureAssembly.LoadFrom(unsignedTestDllPath, new X509Certificate2()));
-            Assert.ThrowsException<SecurityException>(() => SecureAssembly.LoadFile(unsignedTestDllPath, new X509Certificate2()));
+            Assert.ThrowsException<SecurityException>(() => SecureAssembly.LoadFrom(unsignedTestDllPath, new X509Certificate2(emptyByteArr)));
+            Assert.ThrowsException<SecurityException>(() => SecureAssembly.LoadFile(unsignedTestDllPath, new X509Certificate2(emptyByteArr)));
 
             // Tampered Test
-            Assert.ThrowsException<SecurityException>(() => SecureAssembly.LoadFrom(tamperedTestDllPath, new X509Certificate2()));
-            Assert.ThrowsException<SecurityException>(() => SecureAssembly.LoadFile(tamperedTestDllPath, new X509Certificate2()));
+            Assert.ThrowsException<SecurityException>(() => SecureAssembly.LoadFrom(tamperedTestDllPath, new X509Certificate2(emptyByteArr)));
+            Assert.ThrowsException<SecurityException>(() => SecureAssembly.LoadFile(tamperedTestDllPath, new X509Certificate2(emptyByteArr)));
         }
 
         [TestMethod]

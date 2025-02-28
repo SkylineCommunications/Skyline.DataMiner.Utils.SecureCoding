@@ -13,13 +13,6 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.SecureReflection
     [DiagnosticAnalyzer(LanguageNames.CSharp)]
     public class SecureAssemblyAnalyzer : DiagnosticAnalyzer
     {
-        private static List<string> loadMethods = new List<string>
-        {
-            nameof(System.Reflection.Assembly.Load),
-            nameof(System.Reflection.Assembly.LoadFile),
-            nameof(System.Reflection.Assembly.LoadFrom),
-        };
-
         public const string DiagnosticId = "SLC_SC0006";
 
         public static DiagnosticDescriptor RuleInsecureLoadFromAssembly => new DiagnosticDescriptor(
@@ -71,7 +64,7 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.SecureReflection
         {
             get
             {
-                return ImmutableArray.Create(RuleInsecureLoadFromAssembly, RuleBypassCertificateChain);
+                return ImmutableArray.Create(RuleInsecureLoadFromAssembly, RuleInsecureLoadFileAssembly, RuleInsecureLoadAssembly, RuleDefaultArgument, RuleBypassCertificateChain);
             }
         }
 
@@ -123,27 +116,23 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.SecureReflection
                 return;
             }
 
-            if (invocationExpression.ArgumentList.Arguments.Count == 3)
+            if (invocationExpression.ArgumentList.Arguments.Count == 3
+                && value.Value is bool && value.Value is false)
             {
-                if (value.Value is bool && value.Value is false)
-                {
-                    var diagnostic = Diagnostic.Create(RuleBypassCertificateChain, invocationExpression.GetLocation());
-                    context.ReportDiagnostic(diagnostic);
-                }
+                var diagnostic = Diagnostic.Create(RuleBypassCertificateChain, invocationExpression.GetLocation());
+                context.ReportDiagnostic(diagnostic);
             }
 
-            if (invocationExpression.ArgumentList.Arguments.Count == 2)
-            {
-                if (value.Value is default(X509Certificate2)
+            if (invocationExpression.ArgumentList.Arguments.Count == 2
+                && (value.Value is default(X509Certificate2)
                  || value.Value is default(IEnumerable<X509Certificate2>)
                  || value.Value is default(string)
                  || value.Value is default(IEnumerable<string>)
                  || value.Value is default(byte[])
-                 || value.Value is default(IEnumerable<byte[]>))
-                {
-                    var diagnostic = Diagnostic.Create(RuleDefaultArgument, lastArgument.GetLocation());
-                    context.ReportDiagnostic(diagnostic);
-                }
+                 || value.Value is default(IEnumerable<byte[]>)))
+            {
+                var diagnostic = Diagnostic.Create(RuleDefaultArgument, lastArgument.GetLocation());
+                context.ReportDiagnostic(diagnostic);
             }
         }
 

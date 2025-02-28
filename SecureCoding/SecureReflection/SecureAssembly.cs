@@ -628,6 +628,7 @@
         }
 
         #region WinTrust
+#pragma warning disable IDE0044 // Add readonly modifier
 
         /// <summary>
         /// Represents possible results returned by the <c>WinVerifyTrust</c> function, 
@@ -785,6 +786,7 @@
         {
             UInt32 StructSize = (UInt32)Marshal.SizeOf(typeof(WINTRUST_DATA));
             IntPtr PolicyCallbackData = IntPtr.Zero;
+
             IntPtr SIPClientData = IntPtr.Zero;
             // required: UI choice
             WinTrustDataUIChoice UIChoice = WinTrustDataUIChoice.None;
@@ -823,6 +825,7 @@
                 }
             }
 
+            #pragma warning restore IDE0044 // Add readonly modifier
             #endregion
         }
     }

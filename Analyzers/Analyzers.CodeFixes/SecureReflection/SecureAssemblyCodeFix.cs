@@ -124,7 +124,7 @@ namespace Skyline.DataMiner.Utils.SecureCoding.CodeFixProviders.SecureReflection
                 return null;
             }
 
-            var methodSymbol = semanticModel?.GetSymbolInfo(invocation.Expression, context.CancellationToken).Symbol as IMethodSymbol;
+            var methodSymbol = semanticModel.GetSymbolInfo(invocation.Expression, context.CancellationToken).Symbol as IMethodSymbol;
             if (methodSymbol == null)
             {
                 return null;

@@ -110,13 +110,13 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.SecureIO
                     fileOperationsPathArguments.AddRange(pathArguments);
                 }
 
-                if (TryGetIsPathValidLocations(context, invocation, methodSymbol, out var isPathValidLocation))
+                if (TryGetIsPathValidLocations(invocation, methodSymbol, out var isPathValidLocation))
                 {
                     isPathValidLocations.Add(isPathValidLocation);
                 }
             }
 
-            var constructSecurePathResults = GetConstructSecurePathResults(context, variableDeclarators, assignments);
+            var constructSecurePathResults = GetConstructSecurePathResults(variableDeclarators, assignments);
 
             var locationsToAnalyze = GetFileOperationLocationsToAnalyze(context, descendantNodes, variableDeclarators, assignments, forEachNodes, fileOperationsPathArguments);
 
@@ -124,7 +124,6 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.SecureIO
         }
 
         private static List<string> GetConstructSecurePathResults(
-            CodeBlockAnalysisContext context,
             IEnumerable<VariableDeclaratorSyntax> variableDeclarators,
             IEnumerable<AssignmentExpressionSyntax> assignments)
         {
@@ -168,7 +167,6 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.SecureIO
         }
 
         private static bool TryGetIsPathValidLocations(
-            CodeBlockAnalysisContext context,
             InvocationExpressionSyntax invocation,
             IMethodSymbol methodSymbol,
             out Location isPathValidLocation)
@@ -422,7 +420,7 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.SecureIO
                 // VariableDeclarators Locations - Ignore the ConstructSecurePath methods declarators
                 locationsToAnalyze.AddRange(
                    variableDeclarators
-                   .Where(variableDeclarator => variableDeclarator != null && variableDeclarator.Identifier != null && variableDeclarator.Initializer != null
+                   .Where(variableDeclarator => variableDeclarator != null && variableDeclarator.Initializer != null
                        && (variableDeclarator.Identifier.Text == pathArgumentName || variableDeclarator.Initializer.ToString().Contains(pathArgumentName))
                        && !constructSecurePathMethods.Contains(variableDeclarator.Initializer.ToString()))
                    .Select(variableDeclarator => new LocationToAnalyze(variableDeclarator.GetLocation(), pathArgumentName)));
@@ -430,8 +428,7 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.SecureIO
                 // Method Arguments
                 locationsToAnalyze.AddRange(
                     inputParameters
-                    .Where(inputArgument => inputArgument != null && inputArgument.Identifier != null
-                        && inputArgument.Identifier.ToString() == pathArgumentName)
+                    .Where(inputArgument => inputArgument != null && inputArgument.Identifier.ToString() == pathArgumentName)
                     .Select(inputArgument => new LocationToAnalyze(inputArgument.GetLocation(), pathArgumentName)));
 
                 // ForEach Nodes
