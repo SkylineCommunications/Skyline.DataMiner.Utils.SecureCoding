@@ -627,6 +627,7 @@
             return result == 0; // 0 means signature is valid
         }
 
+
         #region WinTrust
 #pragma warning disable S2933 // Add readonly modifier
 
