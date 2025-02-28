@@ -64,7 +64,7 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.SecureIO
         private static readonly DiagnosticDescriptor Rule = new DiagnosticDescriptor(
             DiagnosticId,
             title: "File operation usage detected without secure path construction or validation",
-            messageFormat: "File operation used with a path '{0}' not constructed by 'SecurePath.ConstructSecurePath' neither validated by 'IsPathValid'",
+            messageFormat: "File operation used with a path '{0}' not constructed by 'SecurePath.ConstructSecurePath' neither validated by 'IsPathValid'. These secure methods are available in the Skyline.DataMiner.Utils.SecureCoding NuGet package.",
             "Usage",
             DiagnosticSeverity.Warning,
             helpLinkUri: $"https://github.com/SkylineCommunications/Skyline.DataMiner.Utils.SecureCoding/blob/main/docs/Rules/{DiagnosticId}.md",
