@@ -1,10 +1,8 @@
 ﻿namespace SecureCoding.Test.SecureIO
 {
     using System;
-    using System.Linq;
     using FluentAssertions;
     using Microsoft.VisualStudio.TestTools.UnitTesting;
-
     using Skyline.DataMiner.Utils.SecureCoding.SecureIO;
 
     [TestClass]
@@ -17,7 +15,7 @@
         // network paths
         [DataRow(@"\\127.0.0.1\c$\skyline dataminer\", @"test.txt", @"\\127.0.0.1\c$\skyline dataminer\test.txt")]
         [DataRow(@"\\127.0.0.1\c$\skyline dataminer", @"test.txt", @"\\127.0.0.1\c$\skyline dataminer\test.txt")]
-        public void ConstructSecurePathSuccess(string basePath, string filename, string expectedResult)
+        public void ConstructSecureFilePathSuccess(string basePath, string filename, string expectedResult)
         {
             string result = SecurePath.ConstructSecurePath(basePath, filename);
             Assert.AreEqual(result, expectedResult);
@@ -30,7 +28,7 @@
         // network paths
         [DataRow(@"\\127.0.0.1\c$\skyline dataminer\", @"subdir\test.txt", @"\\127.0.0.1\c$\skyline dataminer\subdir\test.txt")]
         [DataRow(@"\\127.0.0.1\c$\skyline dataminer", @"subdir\test.txt", @"\\127.0.0.1\c$\skyline dataminer\subdir\test.txt")]
-        public void ConstructSecurePathWithSubdirectoriesSuccess(string basePath, string filename, string expectedResult)
+        public void ConstructSecureFilePathWithSubdirectoriesSuccess(string basePath, string filename, string expectedResult)
         {
             string result = SecurePath.ConstructSecurePathWithSubDirectories(basePath, filename);
             Assert.AreEqual(result, expectedResult);
@@ -49,7 +47,7 @@
         [DataRow(@"\\127.0.0.1\c$\skyline dataminer\test.txt", @"\\127.0.0.1\c$\skyline dataminer", @"test.txt")]
         [DataRow(@"\\127.0.0.1\c$\skyline dataminer\subdir1\subdir2\test.txt", @"\\127.0.0.1\c$\skyline dataminer", @"subdir1", @"subdir2", @"test.txt")]
         [DataRow(@"\\127.0.0.1\c$\skyline dataminer\subdir1\test.txt", @"\\127.0.0.1\c$\", @"skyline dataminer", @"subdir1", @"test.txt")]
-        public void ConstructSecurePathWithParamsSuccess(string expectedResult, params string[] paths)
+        public void ConstructSecureFilePathWithParamsSuccess(string expectedResult, params string[] paths)
         {
             string result = SecurePath.ConstructSecurePath(paths);
             Assert.AreEqual(result, expectedResult);
@@ -109,7 +107,7 @@
         [DataRow(@"\\127.0.0.1\c$\skyline dataminer", @"%programfiles%\test.txt", typeof(InvalidOperationException))]
         [DataRow(@"\\127.0.0.1\c$\skyline dataminer\", @"\\127.0.0.1\c$\skyline dataminer\test.txt", typeof(InvalidOperationException))]
         [DataRow(@"\\127.0.0.1\c$\skyline dataminer", @"\\127.0.0.1\c$\skyline dataminer\subdir1\test.txt", typeof(InvalidOperationException))]
-        public void ConstructSecurePathFailure(string basePath, string filename, Type expectedExceptionType)
+        public void ConstructSecureFilePathFailure(string basePath, string filename, Type expectedExceptionType)
         {
             Action action = () => SecurePath.ConstructSecurePath(basePath, filename);
             action.Should().Throw<Exception>().Which.Should().BeOfType(expectedExceptionType);
@@ -160,8 +158,8 @@
         [DataRow(@"\\127.0.0.1\c$\skyline dataminer", @"subdir1/test.txt", typeof(InvalidOperationException))]
         [DataRow(@"\\127.0.0.1\c$\skyline dataminer", @"..\..\..\test.txt", typeof(InvalidOperationException))]
         [DataRow(@"\\127.0.0.1\c$\skyline dataminer", @"%programfiles%\test.txt", typeof(InvalidOperationException))]
-        public void ConstructSecurePathWithSubDirectoriesFailure(string basePath, string relativePath, Type expectedExceptionType)
-        {           
+        public void ConstructSecureFilePathWithSubDirectoriesFailure(string basePath, string relativePath, Type expectedExceptionType)
+        {
             Action action = () => SecurePath.ConstructSecurePathWithSubDirectories(basePath, relativePath);
             action.Should().Throw<Exception>().Which.Should().BeOfType(expectedExceptionType);
         }
@@ -221,10 +219,91 @@
         [DataRow(typeof(InvalidOperationException), @"\\127.0.0.1\c$\skyline dataminer\", @"subdir1", @"\\127.0.0.1\c$\", "test.txt")]
         [DataRow(typeof(InvalidOperationException), @"\\127.0.0.1\c$\skyline dataminer\", @"subdir1", @"\\127.0.0.1\c$\test.txt")]
         [DataRow(typeof(InvalidOperationException), @"\\127.0.0.1\c$\skyline dataminer\", @"%programdata%", @"test.txt")]
-        public void ConstructSecurePathWithParamsFailure(Type expectedExceptionType, params string[] paths)
+        public void ConstructSecureFilePathWithParamsFailure(Type expectedExceptionType, params string[] paths)
         {
             Action action = () => SecurePath.ConstructSecurePath(paths);
             action.Should().Throw<Exception>().Which.Should().BeOfType(expectedExceptionType);
+        }
+
+        [TestMethod]
+        // straightforward cases
+        [DataRow(@"C:\skyline dataminer\folder", @"C:\skyline dataminer", "folder")]
+        [DataRow(@"C:\skyline dataminer\folder", @"C:\skyline dataminer", @"folder\")]
+        [DataRow(@"C:\skyline dataminer\folder", @"C:\skyline dataminer\", "folder")]
+        // straightforward cases with subdirectories
+        [DataRow(@"C:\skyline dataminer\subdir1\subdir2", @"C:\skyline dataminer", @"subdir1", @"subdir2\")]
+        [DataRow(@"C:\skyline dataminer\subdir1\subdir2", @"C:\skyline dataminer\", @"subdir1", @"subdir2")]
+        // edge case where one of the subdirs is absolute but points to the expected location
+        [DataRow(@"C:\skyline dataminer\subdir1", @"C:\", @"skyline dataminer", @"subdir1\")]
+        // network paths
+        [DataRow(@"\\127.0.0.1\c$\skyline dataminer\folder", @"\\127.0.0.1\c$\skyline dataminer", @"folder")]
+        [DataRow(@"\\127.0.0.1\c$\skyline dataminer\subdir1\subdir2", @"\\127.0.0.1\c$\skyline dataminer", @"subdir1", @"subdir2")]
+        [DataRow(@"\\127.0.0.1\c$\skyline dataminer\subdir1", @"\\127.0.0.1\c$\", @"skyline dataminer", @"subdir1\")]
+        public void ConstructSecureDirectoryPathWithParamsSucess(string expectedResult, params string[] paths)
+        {
+            string result = SecurePath.ConstructSecurePath(paths);
+            Assert.AreEqual(result, expectedResult);
+        }
+
+        [TestMethod]
+        ////case with invalid arguments
+        //[DataRow(typeof(ArgumentException), null)]
+        //[DataRow(typeof(ArgumentException), @"C:\skyline dataminer\")]
+        //// case with invalid characters in basepath
+        //[DataRow(typeof(InvalidOperationException), @"C:/skyline dataminer/", @"subdir1", @"subdir2")]
+        //[DataRow(typeof(InvalidOperationException), @"C:\skyline dataminer>\", @"subdir1", @"subdir2")]
+        //[DataRow(typeof(InvalidOperationException), @"C:\skyline dataminer<\", @"subdir1", @"subdir2")]
+        //[DataRow(typeof(InvalidOperationException), @"C:\skyline dataminer|\", @"subdir1", @"subdir2")]
+        //[DataRow(typeof(InvalidOperationException), "C:\\skyline dataminer\0\\", @"subdir1", @"subdir2")]
+        //[DataRow(typeof(InvalidOperationException), @"%programfiles%", @"subdir1", @"subdir2")]
+        //[DataRow(typeof(InvalidOperationException), @"C:\skyline dataminer\..\", @"subdir1", @"subdir2")]
+        //// case with invalid characters in subdirectories
+        //[DataRow(typeof(InvalidOperationException), @"C:\skyline dataminer", @"subdir1/", @"subdir2")]
+        //[DataRow(typeof(InvalidOperationException), @"C:\skyline dataminer\", @"subdir1>", @"subdir2")]
+        //[DataRow(typeof(InvalidOperationException), @"C:\skyline dataminer\", @"subdir1<", @"subdir2")]
+        //[DataRow(typeof(InvalidOperationException), @"C:\skyline dataminer\", @"subdir1|", @"subdir2")]
+        //[DataRow(typeof(InvalidOperationException), @"C:\skyline dataminer\", "subdir1\0", @"subdir2")]
+        //[DataRow(typeof(InvalidOperationException), @"C:\skyline dataminer\", "subdir1\"", @"subdir2")]
+        //// case with invalid characters in last path segment
+        //[DataRow(typeof(InvalidOperationException), @"C:\skyline dataminer", @"subdir1", @"/subdir2")]
+        //[DataRow(typeof(InvalidOperationException), @"C:\skyline dataminer\", @"subdir1", @"<subdir2")]
+        //[DataRow(typeof(InvalidOperationException), @"C:\skyline dataminer\", @"subdir1", @">subdir2")]
+        //[DataRow(typeof(InvalidOperationException), @"C:\skyline dataminer\", @"subdir1", @"|subdir2")]
+        //[DataRow(typeof(InvalidOperationException), @"C:\skyline dataminer\", @"subdir1", "\0subdir2")]
+        //[DataRow(typeof(InvalidOperationException), @"C:\skyline dataminer\", @"subdir1", "\"subdir2")]
+        //// case with directory traversal
+        //[DataRow(typeof(InvalidOperationException), @"C:\skyline dataminer\", @"subdir1", @"..", "subdir2")]
+        //[DataRow(typeof(InvalidOperationException), @"C:\skyline dataminer\", @"subdir1", @"C:\", "subdir2")]
+        //[DataRow(typeof(InvalidOperationException), @"C:\skyline dataminer\", @"subdir1", @"\\127.0.0.1\c$\", "subdir2")]
+        [DataRow(typeof(InvalidOperationException), @"C:\skyline dataminer\", @"subdir1", @"C:\subdir2")]
+        //[DataRow(typeof(InvalidOperationException), @"C:\skyline dataminer\", @"subdir1", @"\\127.0.0.1\c$\subdir2")]
+        //[DataRow(typeof(InvalidOperationException), @"C:\skyline dataminer\", @"%programdata%", @"subdir2")]
+        //// network path
+        //[DataRow(typeof(InvalidOperationException), @"\\127.0.0.1\c$\skyline dataminer>\", @"subdir1", @"subdir2")]
+        //[DataRow(typeof(InvalidOperationException), @"\\127.0.0.1\c$\skyline dataminer<\", @"subdir1", @"subdir2")]
+        //[DataRow(typeof(InvalidOperationException), @"\\127.0.0.1\c$\skyline dataminer|\", @"subdir1", @"subdir2")]
+        //[DataRow(typeof(InvalidOperationException), "\\\\127.0.0.1\\c$\\skyline dataminer\0\\", @"subdir1", @"subdir2")]
+        //[DataRow(typeof(InvalidOperationException), @"\\127.0.0.1\c$\skyline dataminer\..\", @"subdir1", @"subdir2")]
+        //[DataRow(typeof(InvalidOperationException), @"\\127.0.0.1\c$\skyline dataminer", @"subdir1/", @"subdir2", @"subdir2")]
+        //[DataRow(typeof(InvalidOperationException), @"\\127.0.0.1\c$\skyline dataminer\", @"subdir1>", @"subdir2", @"subdir2")]
+        //[DataRow(typeof(InvalidOperationException), @"\\127.0.0.1\c$\skyline dataminer\", @"subdir1<", @"subdir2", @"subdir2")]
+        //[DataRow(typeof(InvalidOperationException), @"\\127.0.0.1\c$\skyline dataminer\", @"subdir1|", @"subdir2", @"subdir2")]
+        //[DataRow(typeof(InvalidOperationException), @"\\127.0.0.1\c$\skyline dataminer\", "subdir1\0", @"subdir2", @"subdir2")]
+        //[DataRow(typeof(InvalidOperationException), @"\\127.0.0.1\c$\skyline dataminer\", "subdir1\"", @"subdir2", @"subdir2")]
+        //[DataRow(typeof(InvalidOperationException), @"\\127.0.0.1\c$\skyline dataminer", @"subdir1", @"/subdir2")]
+        //[DataRow(typeof(InvalidOperationException), @"\\127.0.0.1\c$\skyline dataminer\", @"subdir1", @"<subdir2")]
+        //[DataRow(typeof(InvalidOperationException), @"\\127.0.0.1\c$\skyline dataminer\", @"subdir1", @">subdir2")]
+        //[DataRow(typeof(InvalidOperationException), @"\\127.0.0.1\c$\skyline dataminer\", @"subdir1", @"|subdir2")]
+        //[DataRow(typeof(InvalidOperationException), @"\\127.0.0.1\c$\skyline dataminer\", @"subdir1", "\0subdir2")]
+        //[DataRow(typeof(InvalidOperationException), @"\\127.0.0.1\c$\skyline dataminer\", @"subdir1", "\"subdir2")]
+        //[DataRow(typeof(InvalidOperationException), @"\\127.0.0.1\c$\skyline dataminer\", @"subdir1", @"..", "subdir2")]
+        //[DataRow(typeof(InvalidOperationException), @"\\127.0.0.1\c$\skyline dataminer\", @"subdir1", @"\\127.0.0.1\c$\", "subdir2")]
+        //[DataRow(typeof(InvalidOperationException), @"\\127.0.0.1\c$\skyline dataminer\", @"subdir1", @"\\127.0.0.1\c$\subdir2")]
+        //[DataRow(typeof(InvalidOperationException), @"\\127.0.0.1\c$\skyline dataminer\", @"%programdata%", @"subdir2")]
+        public void ConstructSecureDirectoryPathWithParamsFailure(Type expectedException, params string[] paths)
+        {
+            Action action = () => SecurePath.ConstructSecurePath(paths);
+            action.Should().Throw<Exception>().Which.Should().BeOfType(expectedException);
         }
     }
 }

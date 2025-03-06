@@ -1,7 +1,6 @@
 ﻿namespace Skyline.DataMiner.Utils.SecureCoding.SecureIO
 {
     using System;
-    using System.IO;
     using System.Linq;
     using Skyline.DataMiner.CICD.FileSystem;
 
@@ -39,6 +38,18 @@
                 }
 
                 return !path.ContainsInvalidPathCharacters() && !filename.ContainsInvalidFilenameCharacters();
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+        }
+
+        internal static bool IsFile(this string path)
+        {
+            try
+            {
+                return FileSystem.Instance.Path.HasExtension(path);
             }
             catch (Exception)
             {

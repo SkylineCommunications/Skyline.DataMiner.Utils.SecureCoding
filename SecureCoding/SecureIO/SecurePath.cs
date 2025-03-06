@@ -117,7 +117,7 @@
         {
             if (paths.Length < 2)
             {
-                throw new ArgumentException("Paths array should at least contain the base path and the filename");
+                throw new ArgumentException("Paths array should contain at least 2 path segments");
             }
 
             var basePath = paths[0];
@@ -129,21 +129,20 @@
 
             for (int i = 1; i < paths.Length - 1; i++)
             {
-                if (paths[i].ContainsInvalidPathCharacters())
-                {
-                    throw new InvalidOperationException($"FileSystem.Instance.Path segment '{paths[i]}' contains invalid characters");
-                }
-
-                if (FileSystem.Instance.Path.IsPathRooted(paths[i]))
-                {
-                    throw new InvalidOperationException($"FileSystem.Instance.Path segment '{paths[i]}' cannot be a rooted path");
-                }
+                PathSegmentValidation(paths[i]);
             }
 
-            var filename = paths[paths.Length - 1];
-            if (filename.ContainsInvalidFilenameCharacters())
+            var lastPathSegment = paths[paths.Length - 1];
+            if (lastPathSegment.IsFile())
             {
-                throw new InvalidOperationException($"Filename '{filename}' contains invalid characters");
+                if (lastPathSegment.ContainsInvalidFilenameCharacters())
+                {
+                    throw new InvalidOperationException($"Filename '{lastPathSegment}' contains invalid characters");
+                }
+            }
+            else
+            {
+                PathSegmentValidation(lastPathSegment);
             }
 
             var combinedPath = FileSystem.Instance.Path.Combine(paths);
@@ -229,6 +228,19 @@
             if (!allowSubDirectories && !FileSystem.Instance.Path.GetDirectoryName(fullPath).Equals(basePath, StringComparison.OrdinalIgnoreCase))
             {
                 throw new InvalidOperationException("Sub-directories flag should be set to true in order to construct a path with sub-directories in filename");
+            }
+        }
+
+        private static void PathSegmentValidation(string pathSegment)
+        {
+            if (pathSegment.ContainsInvalidPathCharacters())
+            {
+                throw new InvalidOperationException($"FileSystem.Instance.Path segment '{pathSegment}' contains invalid characters");
+            }
+
+            if (FileSystem.Instance.Path.IsPathRooted(pathSegment))
+            {
+                throw new InvalidOperationException($"FileSystem.Instance.Path segment '{pathSegment}' cannot be a rooted path");
             }
         }
     }
