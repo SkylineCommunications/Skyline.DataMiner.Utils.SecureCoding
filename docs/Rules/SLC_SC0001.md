@@ -8,28 +8,32 @@ It ensures secure path handling practices, enhancing the security of C# codebase
 string path = @"C:\Folder\Example.txt";
 File.WriteAllText(path, "content"); 
 
-// Construct secure path by passing the full file path
+// Construct a secure path by passing the full file path
 SecurePath secureFullPath = SecurePath.CreateSecurePath(@"C:\Folder\Example.txt");
 File.WriteAllText(secureFullPath, "content");
 
-// Construct secure path using multiple path segments, where the last should be the filename
-string securePath = SecurePath.ConstructSecurePath(@"C:\Folder", "SubFolder", "Example.txt");
-File.WriteAllText(securePath, "content");
+// Construct a secure path with multiple path segments, where the last should be the filename
+string securePathWithFilename = SecurePath.ConstructSecurePath(@"C:\Folder", "SubFolder", "Example.txt");
+File.WriteAllText(securePathWithFilename, "content");
+
+// Construct secure path with multiple path segments, where all are directories
+string securePathWithDirectories = SecurePath.ConstructSecurePath(@"C:\Folder", "SubFolder", "SubSubFolder");
+File.WriteAllText(securePathWithDirectories, "content");
 
 // Construct a secure path without a filename by specifying a base path and a relative subdirectory path
-string securePathWithoutFilename1 = SecurePath.ConstructSecurePathWithSubDirectories(@"C:\Folder", @"SubFolder\SubSubFolder");
-Console.WriteLine($"Secure Path 1: {securePathWithoutFilename1}");
+string securePathWithRelativePath = SecurePath.ConstructSecurePathWithSubDirectories(@"C:\Folder", @"SubFolder\SubSubFolder");
 // 'C:\Folder' is the base path, while 'SubFolder\SubSubFolder' is the relative path
+File.WriteAllText(securePathWithRelativePath, "content");
 
 // Alternative way to construct a secure path with a base path and a single subdirectory
-string securePathWithoutFilename2 = SecurePath.ConstructSecurePathWithSubDirectories(@"C:\Folder\SubFolder", "SubSubFolder");
-Console.WriteLine($"Secure Path 2: {securePathWithoutFilename2}");
-// Here, 'C:\Folder\SubFolder' is the base path, and 'SubSubFolder' is the relative path
+string securePathWithRelativePathAlternative = SecurePath.ConstructSecurePathWithSubDirectories(@"C:\Folder\SubFolder", "SubSubFolder");
+// 'C:\Folder\SubFolder' is the base path, and 'SubSubFolder' is the relative path
+File.WriteAllText(securePathWithRelativePathAlternative, "content");
 
 // Path Validation
 string path = @"C:\Folder\Example.txt";
 if(path.IsPathValid())
 {
-	File.WriteAllText(path,  "content");
+   File.WriteAllText(path,  "content");
 }
 ````
