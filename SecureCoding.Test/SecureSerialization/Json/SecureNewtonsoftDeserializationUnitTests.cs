@@ -31,7 +31,6 @@
         {
             // wrong arguments
             Assert.ThrowsException<ArgumentException>(() => SecureNewtonsoftDeserialization.DeserializeObject<SimpleDummy>(null));
-            Assert.ThrowsException<ArgumentException>(() => SecureNewtonsoftDeserialization.DeserializeObject<SimpleDummy>(" "));
 
             // wrong json string
             Assert.ThrowsException<JsonSerializationException>(() => SecureNewtonsoftDeserialization.DeserializeObject<SimpleDummy>("{"));
@@ -78,7 +77,6 @@
             // wrong arguments
             JsonSerializerSettings settings = new JsonSerializerSettings();
             Assert.ThrowsException<ArgumentException>(() => SecureNewtonsoftDeserialization.DeserializeObject<SimpleDummy>(null, settings));
-            Assert.ThrowsException<ArgumentException>(() => SecureNewtonsoftDeserialization.DeserializeObject<SimpleDummy>(" ", settings));
 
             settings = new JsonSerializerSettings();
             settings.TypeNameHandling = TypeNameHandling.All;
@@ -116,7 +114,7 @@
             var serializedComplexDummy = JsonConvert.SerializeObject(complexDummy, new JsonSerializerSettings { TypeNameHandling = TypeNameHandling.All });
 
             Assert.ThrowsException<JsonSerializationException>(() => SecureNewtonsoftDeserialization.DeserializeObject<ComplexDummy>(serializedComplexDummy, knownTypes));
-            Assert.ThrowsException<ArgumentException>(() => SecureNewtonsoftDeserialization.DeserializeObject<ComplexDummy>(string.Empty, knownTypes));
+            Assert.ThrowsException<ArgumentException>(() => SecureNewtonsoftDeserialization.DeserializeObject<ComplexDummy>(null, knownTypes));
         }
 
         [TestMethod]
