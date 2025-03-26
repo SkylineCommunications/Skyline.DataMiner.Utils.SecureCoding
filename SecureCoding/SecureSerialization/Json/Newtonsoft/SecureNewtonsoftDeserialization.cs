@@ -23,9 +23,9 @@ namespace Skyline.DataMiner.Utils.SecureCoding.SecureSerialization.Json.Newtonso
         /// <exception cref="JsonSerializationException">Thrown if the <paramref name="json"/> cannot be deserialized.</exception>
         public static T DeserializeObject<T>(string json)
         {
-            if (string.IsNullOrWhiteSpace(json))
+            if (json is null)
             {
-                throw new ArgumentException($"'{nameof(json)}' cannot be null or whitespace.", nameof(json));
+                throw new ArgumentException($"'{nameof(json)}' cannot be null.", nameof(json));
             }
 
             JsonSerializerSettings settings = new JsonSerializerSettings
@@ -51,9 +51,9 @@ namespace Skyline.DataMiner.Utils.SecureCoding.SecureSerialization.Json.Newtonso
         /// <exception cref="JsonSerializationException">Thrown if the <paramref name="json"/> cannot be deserialized.</exception>
         public static T DeserializeObject<T>(string json, JsonSerializerSettings settings)
         {
-            if (string.IsNullOrWhiteSpace(json))
+            if (json is null)
             {
-                throw new ArgumentException($"'{nameof(json)}' cannot be null or whitespace.", nameof(json));
+                throw new ArgumentException($"'{nameof(json)}' cannot be null.", nameof(json));
             }
 
             if (settings is null)
@@ -63,7 +63,7 @@ namespace Skyline.DataMiner.Utils.SecureCoding.SecureSerialization.Json.Newtonso
 
             if (settings.TypeNameHandling != TypeNameHandling.None)
             {
-                throw new InsecureSerializationSettingsException($"Setting the Typenamehandling to {settings.TypeNameHandling} may result in insecure deserialization.");
+                throw new InsecureSerializationSettingsException($"Setting the TypeNameHandling to {settings.TypeNameHandling} may result in insecure deserialization.");
             }
 
             settings.SerializationBinder = null;
@@ -89,9 +89,9 @@ namespace Skyline.DataMiner.Utils.SecureCoding.SecureSerialization.Json.Newtonso
         /// <exception cref="JsonSerializationException">Thrown if the <paramref name="json"/> cannot be deserialized.</exception>
         public static T DeserializeObject<T>(string json, IEnumerable<Type> knownTypes)
         {
-            if (string.IsNullOrWhiteSpace(json))
+            if (json is null)
             {
-                throw new ArgumentException($"'{nameof(json)}' cannot be null or whitespace.", nameof(json));
+                throw new ArgumentException($"'{nameof(json)}' cannot be null.", nameof(json));
             }
 
             if (knownTypes is null || !knownTypes.Any())
@@ -127,9 +127,9 @@ namespace Skyline.DataMiner.Utils.SecureCoding.SecureSerialization.Json.Newtonso
         /// <exception cref="JsonSerializationException">Thrown if the <paramref name="json"/> cannot be deserialized.</exception>
         public static T DeserializeObject<T>(string json, IEnumerable<Type> knownTypes, JsonSerializerSettings settings)
         {
-            if (string.IsNullOrWhiteSpace(json))
+            if (json is null)
             {
-                throw new ArgumentException($"'{nameof(json)}' cannot be null or whitespace.", nameof(json));
+                throw new ArgumentException($"'{nameof(json)}' cannot be null.", nameof(json));
             }
 
             if (knownTypes is null || !knownTypes.Any())
