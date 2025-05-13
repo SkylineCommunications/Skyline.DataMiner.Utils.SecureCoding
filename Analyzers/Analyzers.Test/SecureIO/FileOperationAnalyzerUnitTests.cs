@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
 using Skyline.DataMiner.Utils.SecureCoding.Analyzers.SecureIO;
+using Skyline.DataMiner.Utils.SecureCoding.SecureIO;
 
 #pragma warning disable S2699 // Tests should include assertions is not valid for Roslyn Analyzers Unit Tests.  
 namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.Tests.SecureIO
@@ -111,6 +112,45 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.Tests.SecureIO
 
             await analyzerVerifier.RunAsync();
         }
+
+        [TestMethod]
+        public async Task VerifyFileOperationDifferentClasses()
+        {
+            // Static part of a class is a different code block than the instanced part of the class.
+            var testCode = @"using System;
+                using System.IO;
+                using Skyline.DataMiner.Utils.SecureCoding.SecureIO;
+
+                namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.Tests.SecureIO.TestScenarios
+                {
+                    internal class OwningSymbolClassFirst
+                    {
+                        public static string securePathFieldFirst = SecurePath.ConstructSecurePath(""LogDirectory"", ""file.txt"");
+
+                        public OwningSymbolClassFirst()
+                        {
+                            File.ReadAllBytes(securePathFieldFirst);
+                        }
+                    }
+
+                    internal class OwningSymbolClassSecond
+                    {
+                        public static string securePathFieldSecond = SecurePath.ConstructSecurePath(""LogDirectory"", ""file.txt"");
+
+                        public OwningSymbolClassSecond()
+                        {
+                            File.ReadAllBytes(securePathFieldSecond);
+                        }
+                    }
+                }";
+
+            var analyzerVerifier = AnalyzerVerifierHelper.BuildAnalyzerVerifier<FileOperationAnalyzer>(testCode);
+            analyzerVerifier.TestState.AdditionalReferences.Add(typeof(SecurePath).Assembly);
+
+            await analyzerVerifier.RunAsync();
+        }
     }
 }
+
+
 #pragma warning restore S2699 // Tests should include assertions is not valid for Roslyn Analyzers Unit Tests.

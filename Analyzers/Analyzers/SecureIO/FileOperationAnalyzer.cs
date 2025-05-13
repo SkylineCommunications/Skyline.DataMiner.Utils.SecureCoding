@@ -78,12 +78,12 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.SecureIO
 
             context.ConfigureGeneratedCodeAnalysis(GeneratedCodeAnalysisFlags.None);
 
-            context.RegisterCodeBlockAction(AnalyzeFileOperationUsages);
+            context.RegisterSyntaxNodeAction(AnalyzeFileOperationUsages, SyntaxKind.ClassDeclaration);
         }
 
-        private static void AnalyzeFileOperationUsages(CodeBlockAnalysisContext context)
+        private static void AnalyzeFileOperationUsages(SyntaxNodeAnalysisContext context)
         {
-            var descendantNodes = context.CodeBlock.DescendantNodes(descendIntoChildren: node => node.ChildNodes().Any());
+            var descendantNodes = context.Node.DescendantNodes(descendIntoChildren: node => node.ChildNodes().Any());
             var invocations = descendantNodes.OfType<InvocationExpressionSyntax>();
             var variableDeclarators = descendantNodes.OfType<VariableDeclaratorSyntax>();
             var assignments = descendantNodes.OfType<AssignmentExpressionSyntax>();
@@ -183,7 +183,7 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.SecureIO
         }
 
         private static bool TryGetFileOperationsPathArguments(
-            CodeBlockAnalysisContext context,
+            SyntaxNodeAnalysisContext context,
             IEnumerable<VariableDeclaratorSyntax> variableDeclarators,
             InvocationExpressionSyntax invocation,
             IMethodSymbol methodSymbol,
@@ -197,7 +197,7 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.SecureIO
         }
 
         private static IEnumerable<ArgumentSyntax> GetPathArguments(
-            CodeBlockAnalysisContext context,
+            SyntaxNodeAnalysisContext context,
             IEnumerable<VariableDeclaratorSyntax> variableDeclarators,
             InvocationExpressionSyntax invocation,
             IMethodSymbol methodSymbol)
@@ -218,7 +218,7 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.SecureIO
         }
 
         private static IEnumerable<ArgumentSyntax> GetPathArgumentsFromObjectCreation(
-            CodeBlockAnalysisContext context,
+            SyntaxNodeAnalysisContext context,
             IEnumerable<VariableDeclaratorSyntax> variableDeclarators,
             InvocationExpressionSyntax invocation)
         {
@@ -276,7 +276,7 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.SecureIO
         }
 
         private static void AnalyzeFileOperationLocations(
-            CodeBlockAnalysisContext context,
+            SyntaxNodeAnalysisContext context,
             List<ArgumentSyntax> fileOperationsPathArguments,
             List<Location> isPathValidLocations,
             List<string> constructSecurePathResults,
@@ -294,7 +294,7 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.SecureIO
         }
 
         private static void AnalyzeLocations(
-            CodeBlockAnalysisContext context,
+            SyntaxNodeAnalysisContext context,
             List<Location> secureMethodsLocations,
             List<string> constructSecurePathResults,
             HashSet<Location> reportedLocations,
@@ -371,7 +371,7 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.SecureIO
         }
 
         private static void ReportDiagnostic(
-            CodeBlockAnalysisContext context,
+            SyntaxNodeAnalysisContext context,
             HashSet<Location> reportedLocations,
             Location location,
             string description)
@@ -387,14 +387,14 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.SecureIO
         }
 
         private static List<LocationToAnalyze> GetFileOperationLocationsToAnalyze(
-            CodeBlockAnalysisContext context,
+            SyntaxNodeAnalysisContext context,
             IEnumerable<SyntaxNode> descendantNodes,
             IEnumerable<VariableDeclaratorSyntax> variableDeclarators,
             IEnumerable<AssignmentExpressionSyntax> assignments,
             IEnumerable<ForEachStatementSyntax> forEachNodes,
             List<ArgumentSyntax> fileOperationsPathArguments)
         {
-            var inputParameters = context.CodeBlock?
+            var inputParameters = context.Node?
                 .FirstAncestorOrSelf<MethodDeclarationSyntax>()?.ParameterList?
                 .ChildNodes()?
                 .OfType<ParameterSyntax>();
@@ -426,10 +426,13 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.SecureIO
                    .Select(variableDeclarator => new LocationToAnalyze(variableDeclarator.GetLocation(), pathArgumentName)));
 
                 // Method Arguments
-                locationsToAnalyze.AddRange(
-                    inputParameters
-                    .Where(inputArgument => inputArgument != null && inputArgument.Identifier.ToString() == pathArgumentName)
-                    .Select(inputArgument => new LocationToAnalyze(inputArgument.GetLocation(), pathArgumentName)));
+                if (inputParameters != null)
+                {
+                    locationsToAnalyze.AddRange(
+                        inputParameters
+                        .Where(inputArgument => inputArgument != null && inputArgument.Identifier.ToString() == pathArgumentName)
+                        .Select(inputArgument => new LocationToAnalyze(inputArgument.GetLocation(), pathArgumentName))); 
+                }
 
                 // ForEach Nodes
                 locationsToAnalyze.AddRange(
