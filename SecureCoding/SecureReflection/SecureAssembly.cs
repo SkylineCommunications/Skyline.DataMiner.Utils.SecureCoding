@@ -48,7 +48,7 @@
                 throw new ArgumentNullException(nameof(allowedCertificate));
             }
 
-            ValidateCertificateAndSignature(assemblyPath, verifyCertificateChain, allowedCertificate);
+            ValidateAssemblySignature(assemblyPath, verifyCertificateChain, allowedCertificate);
 
             return LoadAssembly(assemblyPath, nameof(Assembly.LoadFrom));
         }
@@ -92,7 +92,7 @@
                 throw new ArgumentException($"{nameof(allowedCertificates)} must contain at least one certificate.");
             }
 
-            ValidateCertificateAndSignature(assemblyPath, verifyCertificateChain, allowedCerticatesArr);
+            ValidateAssemblySignature(assemblyPath, verifyCertificateChain, allowedCerticatesArr);
 
             return LoadAssembly(assemblyPath, nameof(Assembly.LoadFrom));
         }
@@ -136,7 +136,7 @@
                    "To securely load these certificates, please use an overload that accepts an X509Certificate2 instance instead.");
             }
 
-            ValidateCertificateAndSignature(assemblyPath, verifyCertificateChain, new X509Certificate2(allowedCertificatePath));
+            ValidateAssemblySignature(assemblyPath, verifyCertificateChain, new X509Certificate2(allowedCertificatePath));
 
             return LoadAssembly(assemblyPath, nameof(Assembly.LoadFrom));
         }
@@ -189,7 +189,7 @@
                 .Select(certificatePath => new X509Certificate2(certificatePath))
                 .ToArray();
 
-            ValidateCertificateAndSignature(assemblyPath, verifyCertificateChain, certificates);
+            ValidateAssemblySignature(assemblyPath, verifyCertificateChain, certificates);
 
             return LoadAssembly(assemblyPath, nameof(Assembly.LoadFrom));
         }
@@ -234,7 +234,7 @@
                 throw new ArgumentException($"{nameof(allowedCertificate)} cannot be empty.");
             }
 
-            ValidateCertificateAndSignature(assemblyPath, verifyCertificateChain, new X509Certificate2(allowedCertificate));
+            ValidateAssemblySignature(assemblyPath, verifyCertificateChain, new X509Certificate2(allowedCertificate));
 
             return LoadAssembly(assemblyPath, nameof(Assembly.LoadFrom));
         }
@@ -283,7 +283,7 @@
                 .Select(certificate => new X509Certificate2(certificate))
                 .ToArray();
 
-            ValidateCertificateAndSignature(assemblyPath, verifyCertificateChain, certificates);
+            ValidateAssemblySignature(assemblyPath, verifyCertificateChain, certificates);
 
             return LoadAssembly(assemblyPath, nameof(Assembly.LoadFrom));
         }
@@ -320,7 +320,7 @@
                 throw new ArgumentNullException(nameof(allowedCertificate));
             }
 
-            ValidateCertificateAndSignature(assemblyPath, verifyCertificateChain, allowedCertificate);
+            ValidateAssemblySignature(assemblyPath, verifyCertificateChain, allowedCertificate);
 
             return LoadAssembly(assemblyPath, nameof(Assembly.LoadFile));
         }
@@ -364,7 +364,7 @@
                 throw new ArgumentException($"{nameof(allowedCertificates)} must contain at least one certificate.");
             }
 
-            ValidateCertificateAndSignature(assemblyPath, verifyCertificateChain, allowedCerticatesArr);
+            ValidateAssemblySignature(assemblyPath, verifyCertificateChain, allowedCerticatesArr);
 
             return LoadAssembly(assemblyPath, nameof(Assembly.LoadFile));
         }
@@ -408,7 +408,7 @@
                    "To securely load these certificates, please use an overload that accepts an X509Certificate2 instance instead.");
             }
 
-            ValidateCertificateAndSignature(assemblyPath, verifyCertificateChain, new X509Certificate2(allowedCertificatePath));
+            ValidateAssemblySignature(assemblyPath, verifyCertificateChain, new X509Certificate2(allowedCertificatePath));
 
             return LoadAssembly(assemblyPath, nameof(Assembly.LoadFile));
         }
@@ -461,7 +461,7 @@
                 .Select(certificatePath => new X509Certificate2(certificatePath))
                 .ToArray();
 
-            ValidateCertificateAndSignature(assemblyPath, verifyCertificateChain, certificates);
+            ValidateAssemblySignature(assemblyPath, verifyCertificateChain, certificates);
 
             return LoadAssembly(assemblyPath, nameof(Assembly.LoadFile));
         }
@@ -506,7 +506,7 @@
                 throw new ArgumentException($"{nameof(allowedCertificate)} cannot be empty.");
             }
 
-            ValidateCertificateAndSignature(assemblyPath, verifyCertificateChain, new X509Certificate2(allowedCertificate));
+            ValidateAssemblySignature(assemblyPath, verifyCertificateChain, new X509Certificate2(allowedCertificate));
 
             return LoadAssembly(assemblyPath, nameof(Assembly.LoadFile));
         }
@@ -555,38 +555,21 @@
                 .Select(certificate => new X509Certificate2(certificate))
                 .ToArray();
 
-            ValidateCertificateAndSignature(assemblyPath, verifyCertificateChain, certificates);
+            ValidateAssemblySignature(assemblyPath, verifyCertificateChain, certificates);
 
             return LoadAssembly(assemblyPath, nameof(Assembly.LoadFile));
         }
 
-        private static Assembly LoadAssembly(string assemblyPath, string loadAssemblyMethod)
-        {
-            if (!File.Exists(assemblyPath))
-            {
-                throw new FileNotFoundException(assemblyPath);
-            }
-
-            if (!assemblyPath.IsPathValid())
-            {
-                throw new InvalidOperationException($"Assembly path '{assemblyPath}' contains invalid characters");
-            }
-
-            if (loadAssemblyMethod == nameof(Assembly.LoadFrom))
-            {
-                return Assembly.LoadFrom(assemblyPath);
-            }
-            else if (loadAssemblyMethod == nameof(Assembly.LoadFile))
-            {
-                return Assembly.LoadFile(assemblyPath);
-            }
-            else
-            {
-                throw new NotSupportedException($"{loadAssemblyMethod} is not supported");
-            }
-        }
-
-        private static void ValidateCertificateAndSignature(string assemblyPath, bool verifyCertificateChain, params X509Certificate2[] allowedCertificates)
+        /// <summary>
+        /// Validates the digital signature of an assembly and ensures it is signed by an allowed certificate.
+        /// </summary>
+        /// <param name="assemblyPath">The full path to the assembly file to validate.</param>
+        /// <param name="verifyCertificateChain">Indicates whether to verify the certificate chain as part of the signature validation.</param>
+        /// <param name="allowedCertificates">A list of certificates that are considered trusted for signing the assembly.</param>
+        /// <exception cref="SecurityException">
+        /// Thrown when the assembly is unsigned, has a tampered or invalid signature, or is not signed with a trusted certificate.
+        /// </exception>
+        public static void ValidateAssemblySignature(string assemblyPath, bool verifyCertificateChain, params X509Certificate2[] allowedCertificates)
         {
             X509Certificate assemblyCertificate;
 
@@ -616,6 +599,32 @@
             }
         }
 
+        private static Assembly LoadAssembly(string assemblyPath, string loadAssemblyMethod)
+        {
+            if (!File.Exists(assemblyPath))
+            {
+                throw new FileNotFoundException(assemblyPath);
+            }
+
+            if (!assemblyPath.IsPathValid())
+            {
+                throw new InvalidOperationException($"Assembly path '{assemblyPath}' contains invalid characters");
+            }
+
+            if (loadAssemblyMethod == nameof(Assembly.LoadFrom))
+            {
+                return Assembly.LoadFrom(assemblyPath);
+            }
+            else if (loadAssemblyMethod == nameof(Assembly.LoadFile))
+            {
+                return Assembly.LoadFile(assemblyPath);
+            }
+            else
+            {
+                throw new NotSupportedException($"{loadAssemblyMethod} is not supported");
+            }
+        }
+
         private static bool TryValidateSignature(string fileName, bool verifyCertificateChain, out WinVerifyTrustResult result)
         {
             var fileInfo = new WINTRUST_FILE_INFO(fileName);
@@ -626,7 +635,6 @@
 
             return result == 0; // 0 means signature is valid
         }
-
 
         #region WinTrust
 #pragma warning disable S2933 // Add readonly modifier
@@ -828,6 +836,7 @@
 
 #pragma warning restore S2933 // Add readonly modifier
             #endregion
+
         }
     }
 }
