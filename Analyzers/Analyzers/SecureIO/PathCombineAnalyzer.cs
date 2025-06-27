@@ -14,7 +14,7 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.SecureIO
         public static DiagnosticDescriptor Rule => new DiagnosticDescriptor(
             DiagnosticId,
             title: "Avoid using 'System.IO.Path.Combine'",
-            messageFormat: "Consider using 'SecureIO.ConstructSecurePath' instead of 'System.IO.Path.Combine'. These secure methods are available in the Skyline.DataMiner.Utils.SecureCoding NuGet package.",
+            messageFormat: "Consider using 'SecureIO.ConstructSecurePath' instead of 'System.IO.Path.Combine'. This secure method is available in the Skyline.DataMiner.Utils.SecureCoding NuGet package.",
             "Usage",
             DiagnosticSeverity.Warning,
             helpLinkUri: $"https://github.com/SkylineCommunications/Skyline.DataMiner.Utils.SecureCoding/blob/main/docs/Rules/{DiagnosticId}.md",

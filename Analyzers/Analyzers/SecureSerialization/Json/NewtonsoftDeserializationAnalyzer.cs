@@ -14,7 +14,7 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.SecureSerialization.Jso
         public static DiagnosticDescriptor Rule => new DiagnosticDescriptor(
             DiagnosticId,
             "Avoid deserializing json strings by using Newtonsoft directly.",
-            "Avoid deserializing json strings by using Newtonsoft directly.\nConsider using SecureJsonDeserialization.DeserializeObject instead.",
+            "Consider using SecureNewtonsoftDeserialization.DeserializeObject instead. These secure methods are available in the Skyline.DataMiner.Utils.SecureCoding NuGet package.",
             "Usage",
             DiagnosticSeverity.Warning,
             helpLinkUri: $"https://github.com/SkylineCommunications/Skyline.DataMiner.Utils.SecureCoding/blob/main/docs/Rules/{DiagnosticId}.md",
