@@ -18,7 +18,7 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.SecureReflection
         public static DiagnosticDescriptor RuleInsecureLoadFromAssembly => new DiagnosticDescriptor(
             DiagnosticId,
             title: "Ensure secure loading of Assemblies",
-            messageFormat: "Consider using 'SecureAssembly.LoadFrom' instead of 'Assembly.LoadFrom'",
+            messageFormat: "Consider using 'SecureAssembly.LoadFrom' instead of 'Assembly.LoadFrom'. These secure methods are available in the Skyline.DataMiner.Utils.SecureCoding NuGet package.",
             "Usage",
             DiagnosticSeverity.Warning,
             helpLinkUri: $"https://github.com/SkylineCommunications/Skyline.DataMiner.Utils.SecureCoding/blob/main/docs/Rules/{DiagnosticId}.md",
@@ -27,7 +27,7 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.SecureReflection
         public static DiagnosticDescriptor RuleInsecureLoadFileAssembly => new DiagnosticDescriptor(
             DiagnosticId,
             title: "Ensure secure loading of Assemblies",
-            messageFormat: "Consider using 'SecureAssembly.LoadFile' instead of 'Assembly.LoadFile'",
+            messageFormat: "Consider using 'SecureAssembly.LoadFile' instead of 'Assembly.LoadFile'. These secure methods are available in the Skyline.DataMiner.Utils.SecureCoding NuGet package.",
             "Usage",
             DiagnosticSeverity.Warning,
             helpLinkUri: $"https://github.com/SkylineCommunications/Skyline.DataMiner.Utils.SecureCoding/blob/main/docs/Rules/{DiagnosticId}.md",
@@ -36,7 +36,7 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.SecureReflection
         public static DiagnosticDescriptor RuleInsecureLoadAssembly => new DiagnosticDescriptor(
             DiagnosticId,
             title: "Ensure secure loading of Assemblies",
-            messageFormat: "Consider using either 'SecureAssembly.LoadFile' or 'SecureAssembly.LoadFrom' instead of 'Assembly.Load'",
+            messageFormat: "Consider using either 'SecureAssembly.LoadFile' or 'SecureAssembly.LoadFrom' instead of 'Assembly.Load'. These secure methods are available in the Skyline.DataMiner.Utils.SecureCoding NuGet package.",
             "Usage",
             DiagnosticSeverity.Warning,
             helpLinkUri: $"https://github.com/SkylineCommunications/Skyline.DataMiner.Utils.SecureCoding/blob/main/docs/Rules/{DiagnosticId}.md",
