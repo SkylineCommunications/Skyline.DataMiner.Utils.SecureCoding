@@ -238,7 +238,7 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.SecureIO
             var objectCreationWitinVariableDeclarator = variableDeclaratorMatchingMemberAccess
                 .DescendantNodes(descendIntoChildren: node => node.ChildNodes().Any())
                 .OfType<ObjectCreationExpressionSyntax>()
-                .First();
+                .FirstOrDefault();
 
             if (objectCreationWitinVariableDeclarator is null)
             {
@@ -443,13 +443,13 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.SecureIO
                 // Cases where the path argument was not added to the locations to analyze => assume the first position of the block
                 if (!locationsToAnalyze.Exists(locationToAnalyze => locationToAnalyze.PathArgumentName == pathArgumentName))
                 {
-                    var firstPosition = descendantNodes.First();
+                    var firstPosition = descendantNodes.FirstOrDefault();
                     if (firstPosition == null)
                     {
                         continue;
                     }
 
-                    locationsToAnalyze.Add(new LocationToAnalyze(descendantNodes.First().GetLocation(), pathArgumentName));
+                    locationsToAnalyze.Add(new LocationToAnalyze(firstPosition.GetLocation(), pathArgumentName));
                 }
             }
 
