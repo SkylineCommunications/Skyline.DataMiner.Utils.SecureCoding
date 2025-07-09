@@ -2,16 +2,24 @@
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
+using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Data;
+using System.Linq;
 
 namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.SecureSerialization.Json
 {
     [DiagnosticAnalyzer(LanguageNames.CSharp)]
     public class NewtonsoftDeserializationAnalyzer : DiagnosticAnalyzer
     {
+        private static readonly HashSet<string> insecureTypeNames = new HashSet<string>()
+        {
+            "All", "Auto", "Objects", "Arrays"
+        };
+
         public const string DiagnosticId = "SLC_SC0004";
 
-        public static DiagnosticDescriptor Rule => new DiagnosticDescriptor(
+        public static DiagnosticDescriptor DeserializationRule => new DiagnosticDescriptor(
             DiagnosticId,
             "Avoid deserializing json strings by using Newtonsoft directly.",
             "Consider using SecureNewtonsoftDeserialization.DeserializeObject instead. These secure methods are available in the Skyline.DataMiner.Utils.SecureCoding NuGet package.",
@@ -21,7 +29,17 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.SecureSerialization.Jso
             isEnabledByDefault: true
          );
 
-        public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get { return ImmutableArray.Create(Rule); } }
+        public static DiagnosticDescriptor DefaultSettingsRule => new DiagnosticDescriptor(
+            DiagnosticId,
+            "Insecure TypeNameHandling Usage Without SerializationBinder",
+            "TypeNameHandling.{0} is insecure without a configured SerializationBinder. This may allow remote code execution during deserialization.",
+            "Usage",
+            DiagnosticSeverity.Warning,
+            helpLinkUri: $"https://github.com/SkylineCommunications/Skyline.DataMiner.Utils.SecureCoding/blob/main/docs/Rules/{DiagnosticId}.md",
+            isEnabledByDefault: true
+         );
+
+        public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get { return ImmutableArray.Create(DeserializationRule); } }
 
         public override void Initialize(AnalysisContext context)
         {
@@ -29,10 +47,55 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.SecureSerialization.Jso
 
             context.ConfigureGeneratedCodeAnalysis(GeneratedCodeAnalysisFlags.None);
 
-            context.RegisterSyntaxNodeAction(Analyze, SyntaxKind.InvocationExpression);
+            context.RegisterSyntaxNodeAction(AnalyzeJsonConvertInvocation, SyntaxKind.InvocationExpression);
+
+            context.RegisterSyntaxNodeAction(AnalyzeJsonConvertAssignment, SyntaxKind.SimpleAssignmentExpression);
         }
 
-        public static void Analyze(SyntaxNodeAnalysisContext context)
+        private static void AnalyzeJsonConvertAssignment(SyntaxNodeAnalysisContext context)
+        {
+            var assignment = (AssignmentExpressionSyntax)context.Node;
+
+            // Match JsonConvert.DefaultSettings = ...
+            if (!assignment.Left.ToString().Contains("JsonConvert.DefaultSettings"))
+            {
+                return;
+            }
+
+            // Look for lambda or method returning JsonSerializerSettings
+            if (!(assignment.Right is ParenthesizedLambdaExpressionSyntax lambda))
+            {
+                return;
+            }
+
+            var defaultSettings = GetDefaultSettings(lambda);
+            if (defaultSettings?.Initializer == null)
+            {
+                return;
+            }
+
+            if (HasSerializationBinder(defaultSettings))
+            {
+                return;
+            }
+
+            foreach (var expr in defaultSettings.Initializer.Expressions.OfType<AssignmentExpressionSyntax>())
+            {
+                if (expr.Left is IdentifierNameSyntax leftName &&
+                    leftName.Identifier.Text == "TypeNameHandling" &&
+                    expr.Right is MemberAccessExpressionSyntax rightMember)
+                {
+                    var typeName = rightMember.Name.Identifier.Text;
+
+                    if (insecureTypeNames.Contains(typeName))
+                    {
+                        context.ReportDiagnostic(Diagnostic.Create(DefaultSettingsRule, expr.GetLocation(), typeName));
+                    }
+                }
+            }
+        }
+
+        private static void AnalyzeJsonConvertInvocation(SyntaxNodeAnalysisContext context)
         {
             if (!(context.Node is InvocationExpressionSyntax node))
             {
@@ -46,10 +109,39 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.SecureSerialization.Jso
 
             context.ReportDiagnostic(
                 Diagnostic.Create(
-                    Rule,
+                    DeserializationRule,
                     node.GetLocation()
                 )
             );
+        }
+
+        private static bool HasSerializationBinder(ObjectCreationExpressionSyntax defaultSettings)
+        {
+            return defaultSettings.Initializer.Expressions
+                .OfType<AssignmentExpressionSyntax>()
+                .Any(expr =>
+                {
+                    var name = expr.Left.ToString();
+                    return name.Contains("Binder") || name.Contains("SerializationBinder");
+                });
+        }
+
+        private static ObjectCreationExpressionSyntax GetDefaultSettings(ParenthesizedLambdaExpressionSyntax lambda)
+        {
+            if (lambda.Body is ObjectCreationExpressionSyntax creation)  // Handle: () => new JsonSerializerSettings { ... }
+            {
+                return creation;
+            }
+            else if (lambda.Body is BlockSyntax block) // Handle: () => { return new JsonSerializerSettings { ... }; }
+            {
+                return block.DescendantNodes()
+                    .OfType<ObjectCreationExpressionSyntax>()
+                    .FirstOrDefault(expr => expr.Type.ToString().Contains("JsonSerializerSettings"));
+            }
+            else
+            {
+                return null;
+            }
         }
 
         private static bool IsJsonConvertDeserialization(InvocationExpressionSyntax node, SyntaxNodeAnalysisContext context)
