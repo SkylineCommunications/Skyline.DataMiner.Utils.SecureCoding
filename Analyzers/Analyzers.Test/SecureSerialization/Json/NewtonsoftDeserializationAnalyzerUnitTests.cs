@@ -8,6 +8,8 @@ using System.Collections.Immutable;
 using System.Collections.Generic;
 using Microsoft.CodeAnalysis;
 using Skyline.DataMiner.Utils.SecureCoding.SecureSerialization.Json.Newtonsoft;
+using Skyline.DataMiner.Utils.SecureCoding.Analyzers.SecureIO;
+using Skyline.DataMiner.Utils.SecureCoding.SecureIO;
 
 namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.Tests.SecureSerialization.Json
 {
@@ -77,6 +79,110 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.Tests.SecureSerializati
             analyzerVerifier.FixedState.AdditionalReferences.Add(typeof(SecureNewtonsoftDeserialization).Assembly);
             analyzerVerifier.CodeActionEquivalenceKey = NewtonsoftDeserializationCodeFixProvider.KnownTypesSecureDeserializationFixEquivalenceKey;
             analyzerVerifier.NumberOfFixAllIterations = 2;
+            analyzerVerifier.TestState.ExpectedDiagnostics.AddRange(expectedDiagnostics);
+
+            await analyzerVerifier.RunAsync();
+        }
+
+        [TestMethod]
+        public async Task VerifyNewtonsoftDeserializationInsecureUsageDefaultSettings()
+        {
+            var packages = new PackageIdentity[]
+            {
+                new PackageIdentity("Newtonsoft.json","13.0.3"),
+            }
+            .ToImmutableArray();
+
+            var testCode = @"using Newtonsoft.Json;
+                using Newtonsoft.Json.Serialization;
+                using System;
+                using System.Collections.Generic;
+
+                namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.Tests.SecureSerialization.TestScenarios
+                {
+                    internal class Insecure_JsonDefaultSettings
+                    {
+                        public void Insecure_TypeNameHandling_All()
+                        {
+                            JsonConvert.DefaultSettings = () => new JsonSerializerSettings
+                            {
+                                TypeNameHandling = TypeNameHandling.All
+                            };
+
+                            JsonConvert.DefaultSettings = () =>
+                            {
+                                return new JsonSerializerSettings
+                                {
+                                    TypeNameHandling = TypeNameHandling.All
+                                };
+                            };
+                        }
+
+                        public void Insecure_TypeNameHandling_Auto()
+                        {
+                            JsonConvert.DefaultSettings = () => new JsonSerializerSettings
+                            {
+                                TypeNameHandling = TypeNameHandling.Auto
+                            };
+
+                            JsonConvert.DefaultSettings = () =>
+                            {
+                                return new JsonSerializerSettings
+                                {
+                                    TypeNameHandling = TypeNameHandling.Auto
+                                };
+                            };
+                        }
+
+
+                        public void Insecure_TypeNameHandling_Objects()
+                        {
+                            JsonConvert.DefaultSettings = () => new JsonSerializerSettings
+                            {
+                                TypeNameHandling = TypeNameHandling.Objects
+                            };
+
+                            JsonConvert.DefaultSettings = () =>
+                            {
+                                return new JsonSerializerSettings
+                                {
+                                    TypeNameHandling = TypeNameHandling.Objects
+                                };
+                            };
+                        }
+
+
+                        public void Insecure_TypeNameHandling_Arrays()
+                        {
+                            JsonConvert.DefaultSettings = () => new JsonSerializerSettings
+                            {
+                                TypeNameHandling = TypeNameHandling.Arrays
+                            };
+
+                            JsonConvert.DefaultSettings = () =>
+                            {
+                                return new JsonSerializerSettings
+                                {
+                                    TypeNameHandling = TypeNameHandling.Arrays
+                                };
+                            };
+                        }
+                    }
+                }";
+
+            var expectedDiagnostics = new List<DiagnosticResult>()
+            {
+                AnalyzerVerifierHelper.BuildDiagnosticResult(NewtonsoftDeserializationAnalyzer.DiagnosticId, DiagnosticSeverity.Warning, 14, 33),
+                AnalyzerVerifierHelper.BuildDiagnosticResult(NewtonsoftDeserializationAnalyzer.DiagnosticId, DiagnosticSeverity.Warning, 21, 37),
+                AnalyzerVerifierHelper.BuildDiagnosticResult(NewtonsoftDeserializationAnalyzer.DiagnosticId, DiagnosticSeverity.Warning, 30, 33),
+                AnalyzerVerifierHelper.BuildDiagnosticResult(NewtonsoftDeserializationAnalyzer.DiagnosticId, DiagnosticSeverity.Warning, 37, 37),
+                AnalyzerVerifierHelper.BuildDiagnosticResult(NewtonsoftDeserializationAnalyzer.DiagnosticId, DiagnosticSeverity.Warning, 47, 33),
+                AnalyzerVerifierHelper.BuildDiagnosticResult(NewtonsoftDeserializationAnalyzer.DiagnosticId, DiagnosticSeverity.Warning, 54, 37),
+                AnalyzerVerifierHelper.BuildDiagnosticResult(NewtonsoftDeserializationAnalyzer.DiagnosticId, DiagnosticSeverity.Warning, 64, 33),
+                AnalyzerVerifierHelper.BuildDiagnosticResult(NewtonsoftDeserializationAnalyzer.DiagnosticId, DiagnosticSeverity.Warning, 71, 37),
+            };
+
+            var analyzerVerifier = AnalyzerVerifierHelper.BuildAnalyzerVerifier<NewtonsoftDeserializationAnalyzer>(testCode, packages);
             analyzerVerifier.TestState.ExpectedDiagnostics.AddRange(expectedDiagnostics);
 
             await analyzerVerifier.RunAsync();
