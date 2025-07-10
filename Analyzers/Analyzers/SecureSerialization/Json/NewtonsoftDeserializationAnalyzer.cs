@@ -4,7 +4,6 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
 using System.Collections.Generic;
 using System.Collections.Immutable;
-using System.Data;
 using System.Linq;
 
 namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.SecureSerialization.Json
@@ -32,7 +31,7 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.SecureSerialization.Jso
         public static DiagnosticDescriptor DefaultSettingsRule => new DiagnosticDescriptor(
             DiagnosticId,
             "Insecure TypeNameHandling Usage Without SerializationBinder",
-            "TypeNameHandling.{0} is insecure without a configured SerializationBinder. This may allow remote code execution during deserialization.",
+            "Setting TypeNameHandling to '{0}' at the global level is insecure and may lead to remote code execution during deserialization",
             "Usage",
             DiagnosticSeverity.Warning,
             helpLinkUri: $"https://github.com/SkylineCommunications/Skyline.DataMiner.Utils.SecureCoding/blob/main/docs/Rules/{DiagnosticId}.md",
@@ -55,6 +54,10 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.SecureSerialization.Jso
         private static void AnalyzeJsonConvertAssignment(SyntaxNodeAnalysisContext context)
         {
             var assignment = (AssignmentExpressionSyntax)context.Node;
+            if (assignment == null)
+            {
+                return;
+            }
 
             // Match JsonConvert.DefaultSettings = ...
             if (!assignment.Left.ToString().Contains("JsonConvert.DefaultSettings"))
@@ -70,11 +73,6 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.SecureSerialization.Jso
 
             var defaultSettings = GetDefaultSettings(lambda);
             if (defaultSettings?.Initializer == null)
-            {
-                return;
-            }
-
-            if (HasSerializationBinder(defaultSettings))
             {
                 return;
             }
@@ -113,17 +111,6 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.SecureSerialization.Jso
                     node.GetLocation()
                 )
             );
-        }
-
-        private static bool HasSerializationBinder(ObjectCreationExpressionSyntax defaultSettings)
-        {
-            return defaultSettings.Initializer.Expressions
-                .OfType<AssignmentExpressionSyntax>()
-                .Any(expr =>
-                {
-                    var name = expr.Left.ToString();
-                    return name.Contains("Binder") || name.Contains("SerializationBinder");
-                });
         }
 
         private static ObjectCreationExpressionSyntax GetDefaultSettings(ParenthesizedLambdaExpressionSyntax lambda)
