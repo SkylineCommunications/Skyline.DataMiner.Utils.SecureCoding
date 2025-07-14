@@ -5,5 +5,14 @@
 
 using System.Diagnostics.CodeAnalysis;
 
-[assembly: SuppressMessage("Major Code Smell", "S3928:Parameter names used into ArgumentException constructors should match an existing one ", Justification = "ThrowIfNegative is not available in .NET Framework", Scope = "member", Target = "~M:Skyline.DataMiner.Utils.SecureCoding.Analyzers.Tests.AnalyzerVerifierHelper.BuildDiagnosticResult(System.String,Microsoft.CodeAnalysis.DiagnosticSeverity,System.Int32,System.Int32)~Microsoft.CodeAnalysis.Testing.DiagnosticResult")]
-[assembly: SuppressMessage("CodeQuality", "IDE0079:Remove unnecessary suppression", Justification = "Tests should include assertions is not a valid remark for Roslyn Analyzers Unit Tests.  ", Scope = "namespace", Target = "~N:Skyline.DataMiner.Utils.SecureCoding.Analyzers.Tests.SecureIO")]
+[assembly: SuppressMessage
+    ("Major Code Smell",
+    "S3928:Parameter names used into ArgumentException constructors should match an existing one ",
+    Justification = "ThrowIfNegative is not available in .NET Framework",
+    Scope = "member",
+    Target = "~M:Skyline.DataMiner.Utils.SecureCoding.Analyzers.Tests.AnalyzerVerifierHelper.BuildDiagnosticResult(System.String,Microsoft.CodeAnalysis.DiagnosticSeverity,System.Int32,System.Int32)~Microsoft.CodeAnalysis.Testing.DiagnosticResult")]
+
+[assembly: SuppressMessage(
+    "SonarQube", 
+    "S2699:Tests should include assertions", 
+    Justification = "Tests should include assertions is not a valid remark for Roslyn Analyzers Unit Tests.")]
