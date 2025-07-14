@@ -73,7 +73,7 @@ dotnet_diagnostic.SLC_SC0005.severity = warning
 dotnet_diagnostic.SLC_SC0006.severity = warning
 
 # SLC_SC0007: Avoid insecure cryptographic algorithms
-dotnet_diagnostic.SLC_SC0006.severity = warning
+dotnet_diagnostic.SLC_SC0007.severity = warning
 ```
 
 # .editorconfig - all rules disabled
@@ -98,5 +98,5 @@ dotnet_diagnostic.SLC_SC0005.severity = none
 dotnet_diagnostic.SLC_SC0006.severity = none
 
 # SLC_SC0007: Avoid insecure cryptographic algorithms
-dotnet_diagnostic.SLC_SC0006.severity = none
+dotnet_diagnostic.SLC_SC0007.severity = none
 ```
