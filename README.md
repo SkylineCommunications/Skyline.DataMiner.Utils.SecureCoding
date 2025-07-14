@@ -46,6 +46,7 @@ This section outlines essential rules for secure coding practices:
 |[SLC_SC0004](https://github.com/SkylineCommunications/Skyline.DataMiner.Utils.SecureCoding/blob/main/docs/Rules/SLC_SC0004.md)|Usage|Avoid deserializing json strings by using Newtonsoft directly.|⚠️|✔️|✔️|
 |[SLC_SC0005](https://github.com/SkylineCommunications/Skyline.DataMiner.Utils.SecureCoding/blob/main/docs/Rules/SLC_SC0005.md)|Usage|Certificate callbacks should not always evaluate to true|⚠️|✔️|❌|
 |[SLC_SC0006](https://github.com/SkylineCommunications/Skyline.DataMiner.Utils.SecureCoding/blob/main/docs/Rules/SLC_SC0006.md)|Usage|Ensure secure loading of Assemblies|⚠️|✔️|✔️|
+|[SLC_SC0007](https://github.com/SkylineCommunications/Skyline.DataMiner.Utils.SecureCoding/blob/main/docs/Rules/SLC_SC0007.md)|Usage|Avoid insecure cryptographic algorithms|⚠️|✔️|❌|
 
 <!-- rules -->
 
@@ -70,6 +71,9 @@ dotnet_diagnostic.SLC_SC0005.severity = warning
 
 # SLC_SC0006: Ensure secure loading of Assemblies
 dotnet_diagnostic.SLC_SC0006.severity = warning
+
+# SLC_SC0007: Avoid insecure cryptographic algorithms
+dotnet_diagnostic.SLC_SC0006.severity = warning
 ```
 
 # .editorconfig - all rules disabled
@@ -91,5 +95,8 @@ dotnet_diagnostic.SLC_SC0004.severity = none
 dotnet_diagnostic.SLC_SC0005.severity = none
 
 # SLC_SC0006: Ensure secure loading of Assemblies
+dotnet_diagnostic.SLC_SC0006.severity = none
+
+# SLC_SC0007: Avoid insecure cryptographic algorithms
 dotnet_diagnostic.SLC_SC0006.severity = none
 ```
