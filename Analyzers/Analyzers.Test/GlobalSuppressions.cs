@@ -13,6 +13,11 @@ using System.Diagnostics.CodeAnalysis;
     Target = "~M:Skyline.DataMiner.Utils.SecureCoding.Analyzers.Tests.AnalyzerVerifierHelper.BuildDiagnosticResult(System.String,Microsoft.CodeAnalysis.DiagnosticSeverity,System.Int32,System.Int32)~Microsoft.CodeAnalysis.Testing.DiagnosticResult")]
 
 [assembly: SuppressMessage(
-    "SonarQube", 
-    "S2699:Tests should include assertions", 
+    "SonarQube",
+    "S2699:Tests should include assertions",
     Justification = "Tests should include assertions is not a valid remark for Roslyn Analyzers Unit Tests.")]
+
+[assembly: SuppressMessage(
+    "Compiler",
+    "CS0618:'MSTestVerifier' is obsolete",
+    Justification = "Legacy test verifier still in use for compatibility.")]
