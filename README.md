@@ -47,6 +47,7 @@ This section outlines essential rules for secure coding practices:
 |[SLC_SC0005](https://github.com/SkylineCommunications/Skyline.DataMiner.Utils.SecureCoding/blob/main/docs/Rules/SLC_SC0005.md)|Usage|Certificate callbacks should not always evaluate to true|⚠️|✔️|❌|
 |[SLC_SC0006](https://github.com/SkylineCommunications/Skyline.DataMiner.Utils.SecureCoding/blob/main/docs/Rules/SLC_SC0006.md)|Usage|Ensure secure loading of Assemblies|⚠️|✔️|✔️|
 |[SLC_SC0007](https://github.com/SkylineCommunications/Skyline.DataMiner.Utils.SecureCoding/blob/main/docs/Rules/SLC_SC0007.md)|Usage|Avoid insecure cryptographic algorithms|⚠️|✔️|❌|
+|[SLC_SC0008](https://github.com/SkylineCommunications/Skyline.DataMiner.Utils.SecureCoding/blob/main/docs/Rules/SLC_SC0008.md)|Usage|Avoid usage of BinaryFormatter for (de)serialization|<span title='Warning'>⚠️</span>|✔️|❌|
 
 <!-- rules -->
 
@@ -74,6 +75,9 @@ dotnet_diagnostic.SLC_SC0006.severity = warning
 
 # SLC_SC0007: Avoid insecure cryptographic algorithms
 dotnet_diagnostic.SLC_SC0007.severity = warning
+
+# SLC_SC0008: Avoid usage of BinaryFormatter for (de)serialization
+dotnet_diagnostic.SLC_SC0008.severity = warning
 ```
 
 # .editorconfig - all rules disabled
@@ -99,4 +103,7 @@ dotnet_diagnostic.SLC_SC0006.severity = none
 
 # SLC_SC0007: Avoid insecure cryptographic algorithms
 dotnet_diagnostic.SLC_SC0007.severity = none
+
+# SLC_SC0008: Avoid usage of BinaryFormatter for (de)serialization
+dotnet_diagnostic.SLC_SC0008.severity = none
 ```
