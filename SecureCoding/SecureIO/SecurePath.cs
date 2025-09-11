@@ -115,12 +115,17 @@
         /// </exception>
         public static SecurePath ConstructSecurePath(params string[] paths)
         {
-            if (paths.Length < 2)
+            if (paths.Length < 1)
             {
-                throw new ArgumentException("Paths array should contain at least 2 path segments");
+                throw new ArgumentException("Paths array should contain at least 1 path segments");
             }
 
             var basePath = paths[0];
+
+            if (paths.Length < 2)
+            {
+                return CreateSecurePath(basePath);
+            }
 
             if (basePath.ContainsInvalidPathCharacters())
             {
