@@ -115,9 +115,14 @@
         /// </exception>
         public static SecurePath ConstructSecurePath(params string[] paths)
         {
+            if (paths is null)
+            {
+                throw new ArgumentNullException(nameof(paths));
+            }
+
             if (paths.Length < 1)
             {
-                throw new ArgumentException("Paths array should contain at least 1 path segments");
+                throw new ArgumentException("Paths array should contain at least 1 path segment");
             }
 
             var basePath = paths[0];
