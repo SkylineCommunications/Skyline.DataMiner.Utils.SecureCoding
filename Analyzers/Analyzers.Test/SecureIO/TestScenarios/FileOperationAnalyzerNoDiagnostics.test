@@ -510,6 +510,14 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.Tests.SecureIO.TestScen
 			};
 			File.WriteAllText(pathHolderPropertyObjInit.PathProperty, string.Empty);
 
+            // Class Field Constructor Case
+            var pathHolderFieldCtor = new PathHolder(securePath: securePath);
+            File.WriteAllText(pathHolderFieldCtor.pathField, string.Empty);
+
+            // Class Property Constructor Case
+            var pathHolderPropertyCtor = new PathHolder(securePath: securePath);
+            File.WriteAllText(pathHolderPropertyCtor.PathProperty, string.Empty);
+
 			// Declaration Case
 			var path = securePath;
 			File.WriteAllText(path, string.Empty);
@@ -664,7 +672,7 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.Tests.SecureIO.TestScen
 	{
 		public string pathField;
 
-		public PathHolder(bool validatePath = false, bool constructSecurePath = false, bool createSecurePath = false)
+		public PathHolder(bool validatePath = false, bool constructSecurePath = false, bool createSecurePath = false, SecurePath securePath = null)
 		{
             if (validatePath)
             {
@@ -691,6 +699,13 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.Tests.SecureIO.TestScen
                 pathField = SecurePath.CreateSecurePath("");
 
                 PathProperty = SecurePath.CreateSecurePath("");
+            }
+
+            if (securePath != null)
+            {
+                pathField = securePath;
+
+                PathProperty = securePath;
             }
 		}
 
