@@ -13,12 +13,12 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.Tests.SecureIO
     [TestClass]
     public class FileOperationAnalyzerUnitTests
     {
-        private readonly string fileOperationAnalyzerTestCase = File.ReadAllText(@"..\..\..\SecureIO\TestScenarios\FileOperationAnalyzer.test");
-        private readonly string fileOperationAnalyzerTestCaseValid = File.ReadAllText(@"..\..\..\SecureIO\TestScenarios\FileOperationAnalyzerNoDiagnostics.test");
-        private readonly string fileOperationFlowsTestCase = File.ReadAllText(@"..\..\..\SecureIO\TestScenarios\FileOperationFlows.test");
+        private readonly string fileOperationAnalyzerTestCaseWithDiagnostics = File.ReadAllText(@"..\..\..\SecureIO\TestScenarios\FileOperationAnalyzer.test");
+        private readonly string fileOperationAnalyzerTestCaseWoDiagnostics = File.ReadAllText(@"..\..\..\SecureIO\TestScenarios\FileOperationAnalyzerNoDiagnostics.test");
+        private readonly string fileOperationFlowsTestCaseWoDiagnostics = File.ReadAllText(@"..\..\..\SecureIO\TestScenarios\FileOperationFlows.test");
 
         [TestMethod]
-        public async Task VerifyUsageDiagnostic()
+        public async Task VerifyUsageDiagnostic_ReportedDiagnostics()
         {
             var expectedDiagnostics = new List<DiagnosticResult>()
             {
@@ -86,7 +86,7 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.Tests.SecureIO
                 AnalyzerVerifierHelper.BuildDiagnosticResult(FileOperationAnalyzer.DiagnosticId, DiagnosticSeverity.Warning,120,18),
             };
 
-            var analyzerVerifier = AnalyzerVerifierHelper.BuildAnalyzerVerifier<FileOperationAnalyzer>(fileOperationAnalyzerTestCase);
+            var analyzerVerifier = AnalyzerVerifierHelper.BuildAnalyzerVerifier<FileOperationAnalyzer>(fileOperationAnalyzerTestCaseWithDiagnostics);
 
             analyzerVerifier.TestState.ExpectedDiagnostics.AddRange(expectedDiagnostics);
 
@@ -96,7 +96,7 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.Tests.SecureIO
         [TestMethod]
         public async Task VerifyUsageDiagnostic_NoDiagnosticsThrown()
         {
-            var analyzerVerifier = AnalyzerVerifierHelper.BuildAnalyzerVerifier<FileOperationAnalyzer>(fileOperationAnalyzerTestCaseValid);
+            var analyzerVerifier = AnalyzerVerifierHelper.BuildAnalyzerVerifier<FileOperationAnalyzer>(fileOperationAnalyzerTestCaseWoDiagnostics);
             analyzerVerifier.TestState.AdditionalReferences.Add(typeof(SecurePath).Assembly);
 
             await analyzerVerifier.RunAsync();
@@ -105,14 +105,14 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.Tests.SecureIO
         [TestMethod]
         public async Task VerifyFileOperationFlows_NoDiagnosticsThrown()
         {
-            var analyzerVerifier = AnalyzerVerifierHelper.BuildAnalyzerVerifier<FileOperationAnalyzer>(fileOperationFlowsTestCase);
+            var analyzerVerifier = AnalyzerVerifierHelper.BuildAnalyzerVerifier<FileOperationAnalyzer>(fileOperationFlowsTestCaseWoDiagnostics);
             analyzerVerifier.TestState.AdditionalReferences.Add(typeof(SecurePath).Assembly);
 
             await analyzerVerifier.RunAsync();
         }
 
         [TestMethod]
-        public async Task VerifyFileOperationDifferentClasses()
+        public async Task VerifyFileOperationDifferentClasses_NoDiagnosticsThrown()
         {
             // Static part of a class is a different code block than the instanced part of the class.
             var testCode = @"using System;
