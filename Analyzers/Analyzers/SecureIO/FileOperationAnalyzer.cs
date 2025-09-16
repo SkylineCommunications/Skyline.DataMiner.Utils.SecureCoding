@@ -329,115 +329,149 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.SecureIO
             var results = new HashSet<string>();
 
             // 1) Handle variable declarators (direct initializer and object initializer members)
+            HandleVariableDeclarators(variableDeclarators, results);
+
+            // 2) Handle regular assignments (skip those inside object initializers — they are handled above)
+            HandleAssignments(assignments, results);
+
+            // 3) Handle extension-call-style invocations like: if (!targetDirectory.IsPathValid())
+            HandleInvocations(invocations, results);
+
+            return results;
+        }
+
+        private static void HandleVariableDeclarators(
+            IEnumerable<VariableDeclaratorSyntax> variableDeclarators,
+            HashSet<string> results)
+        {
             foreach (var variableDeclarator in variableDeclarators)
             {
                 var initValue = variableDeclarator.Initializer?.Value;
-                if (initValue is null)
+                if (initValue == null)
                 {
                     continue;
                 }
 
-                // Case: var x = SecurePath.Create(...);
-                if (initValue is InvocationExpressionSyntax directInvocation)
+                // Case: var x = SecurePath.Create(...)
+                var invocation = initValue as InvocationExpressionSyntax;
+                if (invocation != null)
                 {
-                    var methodName = GetInvokedMethodName(directInvocation);
-                    if (!string.IsNullOrEmpty(methodName) && securePathMethods.Contains(methodName))
-                    {
-                        results.Add(variableDeclarator.Identifier.Text);
-                    }
-
+                    HandleDirectInvocation(invocation, variableDeclarator.Identifier.Text, results);
                     continue;
                 }
 
-                // Case: var x = new T { Field = SecurePath.Create(...) };
-                if (initValue is ObjectCreationExpressionSyntax objCreation && objCreation.Initializer != null)
+                // Case: var x = new T { Field = SecurePath.Create(...) }
+                var objCreation = initValue as ObjectCreationExpressionSyntax;
+                if (objCreation?.Initializer != null)
                 {
-                    foreach (var expr in objCreation.Initializer.Expressions)
-                    {
-                        if (expr is AssignmentExpressionSyntax assign && assign.Right is InvocationExpressionSyntax rightInvocation)
-                        {
-                            var methodName = GetInvokedMethodName(rightInvocation);
-                            if (!string.IsNullOrEmpty(methodName) && securePathMethods.Contains(methodName))
-                            {
-                                var memberName = assign.Left.ToString(); // "pathField" or "PathProperty"
-                                if (!string.IsNullOrWhiteSpace(memberName))
-                                {
-                                    results.Add($"{variableDeclarator.Identifier.Text}.{memberName}");
-                                }
-                            }
-                        }
-                    }
-
+                    HandleObjectInitializer(objCreation.Initializer.Expressions, variableDeclarator.Identifier.Text, results);
                     continue;
                 }
 
-                // Case: C# 9 implicit object creation: var x = new(...) { ... };
-                if (initValue is ImplicitObjectCreationExpressionSyntax implicitObj && implicitObj.Initializer != null)
+                // Case: C# 9 implicit object creation: var x = new(...) { ... }
+                var implicitObj = initValue as ImplicitObjectCreationExpressionSyntax;
+                if (implicitObj?.Initializer != null)
                 {
-                    foreach (var expr in implicitObj.Initializer.Expressions)
+                    HandleObjectInitializer(implicitObj.Initializer.Expressions, variableDeclarator.Identifier.Text, results);
+                }
+            }
+        }
+
+        private static void HandleDirectInvocation(
+            InvocationExpressionSyntax invocation,
+            string variableName,
+            HashSet<string> results)
+        {
+            var methodName = GetInvokedMethodName(invocation);
+            if (!string.IsNullOrEmpty(methodName) && securePathMethods.Contains(methodName))
+            {
+                results.Add(variableName);
+            }
+        }
+
+        private static void HandleObjectInitializer(
+            SeparatedSyntaxList<ExpressionSyntax> expressions,
+            string variableName,
+            HashSet<string> results)
+        {
+            foreach (var expr in expressions)
+            {
+                var assign = expr as AssignmentExpressionSyntax;
+                if (assign == null)
+                {
+                    continue;
+                }
+
+                var invocation = assign.Right as InvocationExpressionSyntax;
+                if (invocation == null)
+                {
+                    continue;
+                }
+
+                var methodName = GetInvokedMethodName(invocation);
+                if (!string.IsNullOrEmpty(methodName) && securePathMethods.Contains(methodName))
+                {
+                    var memberName = assign.Left.ToString();
+                    if (!string.IsNullOrWhiteSpace(memberName))
                     {
-                        if (expr is AssignmentExpressionSyntax assign &&
-                            assign.Right is InvocationExpressionSyntax rightInvocation)
-                        {
-                            var methodName = GetInvokedMethodName(rightInvocation);
-                            if (!string.IsNullOrEmpty(methodName) && securePathMethods.Contains(methodName))
-                            {
-                                var memberName = assign.Left.ToString();
-                                if (!string.IsNullOrWhiteSpace(memberName))
-                                {
-                                    results.Add($"{variableDeclarator.Identifier.Text}.{memberName}");
-                                }
-                            }
-                        }
+                        results.Add($"{variableName}.{memberName}");
                     }
                 }
             }
+        }
 
-            // 2) Handle regular assignments (skip those inside object initializers — they are handled above)
+        private static void HandleAssignments(
+            IEnumerable<AssignmentExpressionSyntax> assignments,
+            HashSet<string> results)
+        {
             foreach (var assignment in assignments)
             {
-                // skip assignments that are part of an object initializer (we handled them already)
                 if (assignment.Parent is InitializerExpressionSyntax)
                 {
                     continue;
                 }
 
-                if (assignment.Right is InvocationExpressionSyntax rightInvocation)
+                var invocation = assignment.Right as InvocationExpressionSyntax;
+                if (invocation == null)
                 {
-                    var methodName = GetInvokedMethodName(rightInvocation);
-                    if (string.IsNullOrEmpty(methodName) || !securePathMethods.Contains(methodName))
-                    {
-                        continue;
-                    }
+                    continue;
+                }
 
-                    // left could be MemberAccessExpression ("obj.field") or IdentifierName ("field")
-                    var leftText = assignment.Left.ToString();
-                    if (!string.IsNullOrWhiteSpace(leftText))
-                    {
-                        results.Add(leftText);
-                    }
+                var methodName = GetInvokedMethodName(invocation);
+                if (string.IsNullOrEmpty(methodName) || !securePathMethods.Contains(methodName))
+                {
+                    continue;
+                }
+
+                var leftText = assignment.Left.ToString();
+                if (!string.IsNullOrWhiteSpace(leftText))
+                {
+                    results.Add(leftText);
                 }
             }
+        }
 
-            // 3) Handle extension-call-style invocations like: if (!targetDirectory.IsPathValid())
-            //    Only treat IsPathValid as a receiver-style invocation (don't treat SecurePath.Create as this case).
+        private static void HandleInvocations(
+            IEnumerable<InvocationExpressionSyntax> invocations,
+            HashSet<string> results)
+        {
             foreach (var invocation in invocations)
             {
-                if (invocation.Expression is MemberAccessExpressionSyntax memberAccess)
+                var memberAccess = invocation.Expression as MemberAccessExpressionSyntax;
+                if (memberAccess == null)
                 {
-                    var invokedName = memberAccess.Name.Identifier.Text;
-                    if (invokedName == nameof(StringExtensions.IsPathValid))
+                    continue;
+                }
+
+                if (memberAccess.Name.Identifier.Text == nameof(StringExtensions.IsPathValid))
+                {
+                    var targetVariable = memberAccess.Expression.ToString();
+                    if (!string.IsNullOrWhiteSpace(targetVariable))
                     {
-                        var targetVariable = memberAccess.Expression.ToString();
-                        if (!string.IsNullOrWhiteSpace(targetVariable))
-                        {
-                            results.Add(targetVariable);
-                        }
+                        results.Add(targetVariable);
                     }
                 }
             }
-
-            return results;
         }
 
         private static string GetInvokedMethodName(InvocationExpressionSyntax invocation)
