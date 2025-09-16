@@ -3,7 +3,6 @@ using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
 using Skyline.DataMiner.Utils.SecureCoding.SecureIO;
-using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
@@ -20,8 +19,9 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.SecureIO
             "Skyline.DataMiner.Utils.SecureCoding.SecureIO.StringExtensions",
         };
 
-        private static List<string> constructSecurePathMethods = new List<string>
+        private static List<string> securePathMethods = new List<string>
         {
+            nameof(StringExtensions.IsPathValid),
             nameof(SecurePath.CreateSecurePath),
             nameof(SecurePath.ConstructSecurePath),
             nameof(SecurePath.ConstructSecurePathWithSubDirectories),
@@ -116,54 +116,11 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.SecureIO
                 }
             }
 
-            var constructSecurePathResults = GetConstructSecurePathResults(variableDeclarators, assignments);
+            var securePathResults = GetSecurePathResults(variableDeclarators, assignments, invocations);
 
             var locationsToAnalyze = GetFileOperationLocationsToAnalyze(context, descendantNodes, variableDeclarators, assignments, forEachNodes, fileOperationsPathArguments);
 
-            AnalyzeFileOperationLocations(context, fileOperationsPathArguments, isPathValidLocations, constructSecurePathResults, locationsToAnalyze);
-        }
-
-        private static List<string> GetConstructSecurePathResults(
-            IEnumerable<VariableDeclaratorSyntax> variableDeclarators,
-            IEnumerable<AssignmentExpressionSyntax> assignments)
-        {
-            var results = new List<string>();
-
-            // Get ConstructSecurePath Results from Variable Declarators
-            foreach (var variableDeclarator in variableDeclarators)
-            {
-                var initializer = variableDeclarator.Initializer?.ToString();
-
-                if (!string.IsNullOrWhiteSpace(initializer) && constructSecurePathMethods.Any(method => initializer.Contains(method)))
-                {
-                    var identifier = variableDeclarator.Identifier.ToString();
-                    if (string.IsNullOrWhiteSpace(identifier))
-                    {
-                        continue;
-                    }
-
-                    results.Add(identifier);
-                }
-            }
-
-            // Get ConstructSecurePath Results from Assignments
-            foreach (var assignment in assignments)
-            {
-                var rightAssignment = assignment.Right?.ToString();
-
-                if (!string.IsNullOrWhiteSpace(rightAssignment) && constructSecurePathMethods.Any(method => rightAssignment.Contains(method)))
-                {
-                    var leftAssignemnt = assignment.Left.ToString();
-                    if (string.IsNullOrWhiteSpace(leftAssignemnt))
-                    {
-                        continue;
-                    }
-
-                    results.Add(leftAssignemnt);
-                }
-            }
-
-            return results;
+            AnalyzeFileOperationLocations(context, fileOperationsPathArguments, isPathValidLocations, securePathResults, locationsToAnalyze);
         }
 
         private static bool TryGetIsPathValidLocations(
@@ -279,7 +236,7 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.SecureIO
             SyntaxNodeAnalysisContext context,
             List<ArgumentSyntax> fileOperationsPathArguments,
             List<Location> isPathValidLocations,
-            List<string> constructSecurePathResults,
+            HashSet<string> securePathResults,
             List<LocationToAnalyze> locationsToAnalyze)
         {
             var reportedLocations = new HashSet<Location>();
@@ -288,7 +245,7 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.SecureIO
             {
                 foreach (var pathArgument in fileOperationsPathArguments)
                 {
-                    AnalyzeLocations(context, isPathValidLocations, constructSecurePathResults, reportedLocations, locationToAnalyze, pathArgument);
+                    AnalyzeLocations(context, isPathValidLocations, securePathResults, reportedLocations, locationToAnalyze, pathArgument);
                 }
             }
         }
@@ -296,14 +253,14 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.SecureIO
         private static void AnalyzeLocations(
             SyntaxNodeAnalysisContext context,
             List<Location> secureMethodsLocations,
-            List<string> constructSecurePathResults,
+            HashSet<string> securePathResults,
             HashSet<Location> reportedLocations,
             LocationToAnalyze locationToAnalyze,
             ArgumentSyntax pathArgument)
         {
             var pathArgumentName = pathArgument.Expression.ToString();
 
-            if (constructSecurePathMethods.Any(method => pathArgumentName.Contains(method)))
+            if (securePathMethods.Any(method => pathArgumentName.Contains(method)))
             {
                 // ConstructSecurePath method is being invoked as input argument of the file operation.
                 return;
@@ -316,7 +273,7 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.SecureIO
                 return;
             }
 
-            if (constructSecurePathResults.Contains(pathArgumentName) || pathArgumentName != locationToAnalyze.PathArgumentName)
+            if (securePathResults.Contains(pathArgumentName) || pathArgumentName != locationToAnalyze.PathArgumentName)
             {
                 return;
             }
@@ -342,13 +299,7 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.SecureIO
             }
         }
 
-        /// <summary>
-        /// Gets the fully qualified name of the specified expression.
-        /// </summary>
-        /// <param name="semanticModel">The semantic model.</param>
-        /// <param name="expression">The expression.</param>
-        /// <returns>The fully qualified name.</returns>
-        public static string GetFullyQualifiedName(
+        private static string GetFullyQualifiedName(
             SemanticModel semanticModel,
             ExpressionSyntax expression)
         {
@@ -368,6 +319,136 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.SecureIO
 
             ITypeSymbol symbol = semanticModel.GetTypeInfo(expression).Type;
             return symbol?.ToDisplayString(symbolDisplayFormat);
+        }
+
+        private static HashSet<string> GetSecurePathResults(
+            IEnumerable<VariableDeclaratorSyntax> variableDeclarators,
+            IEnumerable<AssignmentExpressionSyntax> assignments,
+            IEnumerable<InvocationExpressionSyntax> invocations)
+        {
+            var results = new HashSet<string>();
+
+            // 1) Handle variable declarators (direct initializer and object initializer members)
+            foreach (var variableDeclarator in variableDeclarators)
+            {
+                var initValue = variableDeclarator.Initializer?.Value;
+                if (initValue is null)
+                {
+                    continue;
+                }
+
+                // Case: var x = SecurePath.Create(...);
+                if (initValue is InvocationExpressionSyntax directInvocation)
+                {
+                    var methodName = GetInvokedMethodName(directInvocation);
+                    if (!string.IsNullOrEmpty(methodName) && securePathMethods.Contains(methodName))
+                    {
+                        results.Add(variableDeclarator.Identifier.Text);
+                    }
+
+                    continue;
+                }
+
+                // Case: var x = new T { Field = SecurePath.Create(...) };
+                if (initValue is ObjectCreationExpressionSyntax objCreation && objCreation.Initializer != null)
+                {
+                    foreach (var expr in objCreation.Initializer.Expressions)
+                    {
+                        if (expr is AssignmentExpressionSyntax assign && assign.Right is InvocationExpressionSyntax rightInvocation)
+                        {
+                            var methodName = GetInvokedMethodName(rightInvocation);
+                            if (!string.IsNullOrEmpty(methodName) && securePathMethods.Contains(methodName))
+                            {
+                                var memberName = assign.Left.ToString(); // "pathField" or "PathProperty"
+                                if (!string.IsNullOrWhiteSpace(memberName))
+                                {
+                                    results.Add($"{variableDeclarator.Identifier.Text}.{memberName}");
+                                }
+                            }
+                        }
+                    }
+
+                    continue;
+                }
+
+                // Case: C# 9 implicit object creation: var x = new(...) { ... };
+                if (initValue is ImplicitObjectCreationExpressionSyntax implicitObj && implicitObj.Initializer != null)
+                {
+                    foreach (var expr in implicitObj.Initializer.Expressions)
+                    {
+                        if (expr is AssignmentExpressionSyntax assign &&
+                            assign.Right is InvocationExpressionSyntax rightInvocation)
+                        {
+                            var methodName = GetInvokedMethodName(rightInvocation);
+                            if (!string.IsNullOrEmpty(methodName) && securePathMethods.Contains(methodName))
+                            {
+                                var memberName = assign.Left.ToString();
+                                if (!string.IsNullOrWhiteSpace(memberName))
+                                {
+                                    results.Add($"{variableDeclarator.Identifier.Text}.{memberName}");
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // 2) Handle regular assignments (skip those inside object initializers — they are handled above)
+            foreach (var assignment in assignments)
+            {
+                // skip assignments that are part of an object initializer (we handled them already)
+                if (assignment.Parent is InitializerExpressionSyntax)
+                {
+                    continue;
+                }
+
+                if (assignment.Right is InvocationExpressionSyntax rightInvocation)
+                {
+                    var methodName = GetInvokedMethodName(rightInvocation);
+                    if (string.IsNullOrEmpty(methodName) || !securePathMethods.Contains(methodName))
+                    {
+                        continue;
+                    }
+
+                    // left could be MemberAccessExpression ("obj.field") or IdentifierName ("field")
+                    var leftText = assignment.Left.ToString();
+                    if (!string.IsNullOrWhiteSpace(leftText))
+                    {
+                        results.Add(leftText);
+                    }
+                }
+            }
+
+            // 3) Handle extension-call-style invocations like: if (!targetDirectory.IsPathValid())
+            //    Only treat IsPathValid as a receiver-style invocation (don't treat SecurePath.Create as this case).
+            foreach (var invocation in invocations)
+            {
+                if (invocation.Expression is MemberAccessExpressionSyntax memberAccess)
+                {
+                    var invokedName = memberAccess.Name.Identifier.Text;
+                    if (invokedName == nameof(StringExtensions.IsPathValid))
+                    {
+                        var targetVariable = memberAccess.Expression.ToString();
+                        if (!string.IsNullOrWhiteSpace(targetVariable))
+                        {
+                            results.Add(targetVariable);
+                        }
+                    }
+                }
+            }
+
+            return results;
+        }
+
+        private static string GetInvokedMethodName(InvocationExpressionSyntax invocation)
+        {
+            if (invocation.Expression is MemberAccessExpressionSyntax m)
+                return m.Name.Identifier.Text;
+
+            if (invocation.Expression is IdentifierNameSyntax id)
+                return id.Identifier.Text;
+
+            return null;
         }
 
         private static void ReportDiagnostic(
@@ -414,7 +495,7 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.SecureIO
                     assignments
                     .Where(assignment => assignment != null
                         && assignment.GetAssignmentName() == pathArgumentName
-                        && !constructSecurePathMethods.Contains(assignment.Right?.ToString()))
+                        && !securePathMethods.Contains(assignment.Right?.ToString()))
                     .Select(assignment => new LocationToAnalyze(assignment.GetLocation(), pathArgumentName)));
 
                 // VariableDeclarators Locations - Ignore the ConstructSecurePath methods declarators
@@ -422,7 +503,7 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.SecureIO
                    variableDeclarators
                    .Where(variableDeclarator => variableDeclarator != null && variableDeclarator.Initializer != null
                        && (variableDeclarator.Identifier.Text == pathArgumentName || variableDeclarator.Initializer.ToString().Contains(pathArgumentName))
-                       && !constructSecurePathMethods.Contains(variableDeclarator.Initializer.ToString()))
+                       && !securePathMethods.Contains(variableDeclarator.Initializer.ToString()))
                    .Select(variableDeclarator => new LocationToAnalyze(variableDeclarator.GetLocation(), pathArgumentName)));
 
                 // Method Arguments
@@ -431,7 +512,7 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.SecureIO
                     locationsToAnalyze.AddRange(
                         inputParameters
                         .Where(inputArgument => inputArgument != null && inputArgument.Identifier.ToString() == pathArgumentName)
-                        .Select(inputArgument => new LocationToAnalyze(inputArgument.GetLocation(), pathArgumentName))); 
+                        .Select(inputArgument => new LocationToAnalyze(inputArgument.GetLocation(), pathArgumentName)));
                 }
 
                 // ForEach Nodes

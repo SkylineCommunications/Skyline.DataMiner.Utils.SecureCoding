@@ -73,6 +73,14 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.Tests.SecureIO.TestScen
 			};
 			File.WriteAllText(pathHolderPropertyObjInit.pathField, string.Empty);
 
+            // Class Field Constructor Case
+            var pathHolderFieldCtor = new PathHolder();
+            File.WriteAllText(pathHolderFieldCtor.pathField, string.Empty);
+
+            // Class Property Constructor Case
+            var pathHolderPropertyCtor = new PathHolder();
+            File.WriteAllText(pathHolderPropertyCtor.PathProperty, string.Empty);
+
 			// Declaration Case
 			var path = string.Empty;
 			File.WriteAllText(path, string.Empty);

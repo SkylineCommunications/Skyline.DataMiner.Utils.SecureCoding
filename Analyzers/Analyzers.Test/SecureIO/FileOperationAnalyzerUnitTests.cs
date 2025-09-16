@@ -13,12 +13,12 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.Tests.SecureIO
     [TestClass]
     public class FileOperationAnalyzerUnitTests
     {
-        private readonly string fileOperationAnalyzerTestCase = File.ReadAllText(@"..\..\..\SecureIO\TestScenarios\FileOperationAnalyzer.test");
-        private readonly string fileOperationAnalyzerTestCaseValid = File.ReadAllText(@"..\..\..\SecureIO\TestScenarios\FileOperationAnalyzerNoDiagnostics.test");
-        private readonly string fileOperationFlowsTestCase = File.ReadAllText(@"..\..\..\SecureIO\TestScenarios\FileOperationFlows.test");
+        private readonly string fileOperationAnalyzerTestCaseWithDiagnostics = File.ReadAllText(@"..\..\..\SecureIO\TestScenarios\FileOperationAnalyzer.test");
+        private readonly string fileOperationAnalyzerTestCaseWoDiagnostics = File.ReadAllText(@"..\..\..\SecureIO\TestScenarios\FileOperationAnalyzerNoDiagnostics.test");
+        private readonly string fileOperationFlowsTestCaseWoDiagnostics = File.ReadAllText(@"..\..\..\SecureIO\TestScenarios\FileOperationFlows.test");
 
         [TestMethod]
-        public async Task VerifyUsageDiagnostic()
+        public async Task VerifyUsageDiagnostic_ReportedDiagnostics()
         {
             var expectedDiagnostics = new List<DiagnosticResult>()
             {
@@ -58,36 +58,37 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.Tests.SecureIO
                 AnalyzerVerifierHelper.BuildDiagnosticResult(FileOperationAnalyzer.DiagnosticId, DiagnosticSeverity.Warning,62,22),
                 AnalyzerVerifierHelper.BuildDiagnosticResult(FileOperationAnalyzer.DiagnosticId, DiagnosticSeverity.Warning,67,22),
                 AnalyzerVerifierHelper.BuildDiagnosticResult(FileOperationAnalyzer.DiagnosticId, DiagnosticSeverity.Warning,74,22),
-                AnalyzerVerifierHelper.BuildDiagnosticResult(FileOperationAnalyzer.DiagnosticId, DiagnosticSeverity.Warning,78,22),
-                AnalyzerVerifierHelper.BuildDiagnosticResult(FileOperationAnalyzer.DiagnosticId, DiagnosticSeverity.Warning,82,22),
-                AnalyzerVerifierHelper.BuildDiagnosticResult(FileOperationAnalyzer.DiagnosticId, DiagnosticSeverity.Warning,90,30),
-                AnalyzerVerifierHelper.BuildDiagnosticResult(FileOperationAnalyzer.DiagnosticId, DiagnosticSeverity.Warning,91,21),
-                AnalyzerVerifierHelper.BuildDiagnosticResult(FileOperationAnalyzer.DiagnosticId, DiagnosticSeverity.Warning,92,35),
-                AnalyzerVerifierHelper.BuildDiagnosticResult(FileOperationAnalyzer.DiagnosticId, DiagnosticSeverity.Warning,93,29),
-                AnalyzerVerifierHelper.BuildDiagnosticResult(FileOperationAnalyzer.DiagnosticId, DiagnosticSeverity.Warning,94,41),
-                AnalyzerVerifierHelper.BuildDiagnosticResult(FileOperationAnalyzer.DiagnosticId, DiagnosticSeverity.Warning,95,21),
-                AnalyzerVerifierHelper.BuildDiagnosticResult(FileOperationAnalyzer.DiagnosticId, DiagnosticSeverity.Warning,96,30),
-                AnalyzerVerifierHelper.BuildDiagnosticResult(FileOperationAnalyzer.DiagnosticId, DiagnosticSeverity.Warning,97,33),
-                AnalyzerVerifierHelper.BuildDiagnosticResult(FileOperationAnalyzer.DiagnosticId, DiagnosticSeverity.Warning,98,29),
-                AnalyzerVerifierHelper.BuildDiagnosticResult(FileOperationAnalyzer.DiagnosticId, DiagnosticSeverity.Warning,99,23),
+                AnalyzerVerifierHelper.BuildDiagnosticResult(FileOperationAnalyzer.DiagnosticId, DiagnosticSeverity.Warning,78,31),
+                AnalyzerVerifierHelper.BuildDiagnosticResult(FileOperationAnalyzer.DiagnosticId, DiagnosticSeverity.Warning,82,31),
+                AnalyzerVerifierHelper.BuildDiagnosticResult(FileOperationAnalyzer.DiagnosticId, DiagnosticSeverity.Warning,86,22),
+                AnalyzerVerifierHelper.BuildDiagnosticResult(FileOperationAnalyzer.DiagnosticId, DiagnosticSeverity.Warning,90,22),
+                AnalyzerVerifierHelper.BuildDiagnosticResult(FileOperationAnalyzer.DiagnosticId, DiagnosticSeverity.Warning,98,30),
+                AnalyzerVerifierHelper.BuildDiagnosticResult(FileOperationAnalyzer.DiagnosticId, DiagnosticSeverity.Warning,99,21),
                 AnalyzerVerifierHelper.BuildDiagnosticResult(FileOperationAnalyzer.DiagnosticId, DiagnosticSeverity.Warning,100,35),
-                AnalyzerVerifierHelper.BuildDiagnosticResult(FileOperationAnalyzer.DiagnosticId, DiagnosticSeverity.Warning,101,32),
-                AnalyzerVerifierHelper.BuildDiagnosticResult(FileOperationAnalyzer.DiagnosticId, DiagnosticSeverity.Warning,102,35),
-                AnalyzerVerifierHelper.BuildDiagnosticResult(FileOperationAnalyzer.DiagnosticId, DiagnosticSeverity.Warning,103,24),
+                AnalyzerVerifierHelper.BuildDiagnosticResult(FileOperationAnalyzer.DiagnosticId, DiagnosticSeverity.Warning,101,29),
+                AnalyzerVerifierHelper.BuildDiagnosticResult(FileOperationAnalyzer.DiagnosticId, DiagnosticSeverity.Warning,102,41),
+                AnalyzerVerifierHelper.BuildDiagnosticResult(FileOperationAnalyzer.DiagnosticId, DiagnosticSeverity.Warning,103,21),
                 AnalyzerVerifierHelper.BuildDiagnosticResult(FileOperationAnalyzer.DiagnosticId, DiagnosticSeverity.Warning,104,30),
                 AnalyzerVerifierHelper.BuildDiagnosticResult(FileOperationAnalyzer.DiagnosticId, DiagnosticSeverity.Warning,105,33),
-                AnalyzerVerifierHelper.BuildDiagnosticResult(FileOperationAnalyzer.DiagnosticId, DiagnosticSeverity.Warning,106,34),
-                AnalyzerVerifierHelper.BuildDiagnosticResult(FileOperationAnalyzer.DiagnosticId, DiagnosticSeverity.Warning,107,32),
+                AnalyzerVerifierHelper.BuildDiagnosticResult(FileOperationAnalyzer.DiagnosticId, DiagnosticSeverity.Warning,106,29),
+                AnalyzerVerifierHelper.BuildDiagnosticResult(FileOperationAnalyzer.DiagnosticId, DiagnosticSeverity.Warning,107,23),
                 AnalyzerVerifierHelper.BuildDiagnosticResult(FileOperationAnalyzer.DiagnosticId, DiagnosticSeverity.Warning,108,35),
-                AnalyzerVerifierHelper.BuildDiagnosticResult(FileOperationAnalyzer.DiagnosticId, DiagnosticSeverity.Warning,109,31),
-                AnalyzerVerifierHelper.BuildDiagnosticResult(FileOperationAnalyzer.DiagnosticId, DiagnosticSeverity.Warning,110,34),
-                AnalyzerVerifierHelper.BuildDiagnosticResult(FileOperationAnalyzer.DiagnosticId, DiagnosticSeverity.Warning,115,18),
-                AnalyzerVerifierHelper.BuildDiagnosticResult(FileOperationAnalyzer.DiagnosticId, DiagnosticSeverity.Warning,117,22),
-                AnalyzerVerifierHelper.BuildDiagnosticResult(FileOperationAnalyzer.DiagnosticId, DiagnosticSeverity.Warning,120,18),
+                AnalyzerVerifierHelper.BuildDiagnosticResult(FileOperationAnalyzer.DiagnosticId, DiagnosticSeverity.Warning,109,32),
+                AnalyzerVerifierHelper.BuildDiagnosticResult(FileOperationAnalyzer.DiagnosticId, DiagnosticSeverity.Warning,110,35),
+                AnalyzerVerifierHelper.BuildDiagnosticResult(FileOperationAnalyzer.DiagnosticId, DiagnosticSeverity.Warning,111,24),
+                AnalyzerVerifierHelper.BuildDiagnosticResult(FileOperationAnalyzer.DiagnosticId, DiagnosticSeverity.Warning,112,30),
+                AnalyzerVerifierHelper.BuildDiagnosticResult(FileOperationAnalyzer.DiagnosticId, DiagnosticSeverity.Warning,113,33),
+                AnalyzerVerifierHelper.BuildDiagnosticResult(FileOperationAnalyzer.DiagnosticId, DiagnosticSeverity.Warning,114,34),
+                AnalyzerVerifierHelper.BuildDiagnosticResult(FileOperationAnalyzer.DiagnosticId, DiagnosticSeverity.Warning,115,32),
+                AnalyzerVerifierHelper.BuildDiagnosticResult(FileOperationAnalyzer.DiagnosticId, DiagnosticSeverity.Warning,116,35),
+                AnalyzerVerifierHelper.BuildDiagnosticResult(FileOperationAnalyzer.DiagnosticId, DiagnosticSeverity.Warning,117,31),
+                AnalyzerVerifierHelper.BuildDiagnosticResult(FileOperationAnalyzer.DiagnosticId, DiagnosticSeverity.Warning,118,34),
+                AnalyzerVerifierHelper.BuildDiagnosticResult(FileOperationAnalyzer.DiagnosticId, DiagnosticSeverity.Warning,123,18),
+                AnalyzerVerifierHelper.BuildDiagnosticResult(FileOperationAnalyzer.DiagnosticId, DiagnosticSeverity.Warning,125,22),
+                AnalyzerVerifierHelper.BuildDiagnosticResult(FileOperationAnalyzer.DiagnosticId, DiagnosticSeverity.Warning,128,18),
             };
 
-            var analyzerVerifier = AnalyzerVerifierHelper.BuildAnalyzerVerifier<FileOperationAnalyzer>(fileOperationAnalyzerTestCase);
-
+            var analyzerVerifier = AnalyzerVerifierHelper.BuildAnalyzerVerifier<FileOperationAnalyzer>(fileOperationAnalyzerTestCaseWithDiagnostics);
             analyzerVerifier.TestState.ExpectedDiagnostics.AddRange(expectedDiagnostics);
 
             await analyzerVerifier.RunAsync();
@@ -96,7 +97,7 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.Tests.SecureIO
         [TestMethod]
         public async Task VerifyUsageDiagnostic_NoDiagnosticsThrown()
         {
-            var analyzerVerifier = AnalyzerVerifierHelper.BuildAnalyzerVerifier<FileOperationAnalyzer>(fileOperationAnalyzerTestCaseValid);
+            var analyzerVerifier = AnalyzerVerifierHelper.BuildAnalyzerVerifier<FileOperationAnalyzer>(fileOperationAnalyzerTestCaseWoDiagnostics);
             analyzerVerifier.TestState.AdditionalReferences.Add(typeof(SecurePath).Assembly);
 
             await analyzerVerifier.RunAsync();
@@ -105,14 +106,14 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.Tests.SecureIO
         [TestMethod]
         public async Task VerifyFileOperationFlows_NoDiagnosticsThrown()
         {
-            var analyzerVerifier = AnalyzerVerifierHelper.BuildAnalyzerVerifier<FileOperationAnalyzer>(fileOperationFlowsTestCase);
+            var analyzerVerifier = AnalyzerVerifierHelper.BuildAnalyzerVerifier<FileOperationAnalyzer>(fileOperationFlowsTestCaseWoDiagnostics);
             analyzerVerifier.TestState.AdditionalReferences.Add(typeof(SecurePath).Assembly);
 
             await analyzerVerifier.RunAsync();
         }
 
         [TestMethod]
-        public async Task VerifyFileOperationDifferentClasses()
+        public async Task VerifyFileOperationDifferentClasses_NoDiagnosticsThrown()
         {
             // Static part of a class is a different code block than the instanced part of the class.
             var testCode = @"using System;

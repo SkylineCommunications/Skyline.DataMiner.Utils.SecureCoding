@@ -8,149 +8,414 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.Tests.SecureIO.TestScen
 {
 	internal class FileOperationTest
 	{
-		public void ToDetectFileMethods(SecurePath securePath)
+		public void FileMethods_SecurePathArgumentTest(SecurePath securePath, SecurePath destinationPath, SecurePath backupPath)
 		{
-			var destinationPath = string.Empty;
-
-			File.AppendAllLines(securePath, new string[] { });
-			File.AppendAllLines(SecurePath.ConstructSecurePath(securePath), new string[] { });
+            File.AppendAllLines(securePath, new string[] { });
 			File.AppendAllLinesAsync(securePath, new string[] { });
-			File.AppendAllLinesAsync(SecurePath.ConstructSecurePath(securePath), new string[] { });
-			//File.AppendAllText(securePath, string.Empty);
-			//File.AppendAllTextAsync(securePath, string.Empty);
+			File.AppendAllText(securePath, string.Empty);
+			File.AppendAllTextAsync(securePath, string.Empty);
 			File.AppendText(securePath);
-			File.AppendText(SecurePath.ConstructSecurePath(securePath));
-			//File.Copy(securePath, destinationPath);
+			File.Copy(securePath, destinationPath);
 			File.Create(securePath);
-			File.Create(SecurePath.ConstructSecurePath(securePath));
 			File.Decrypt(securePath);
-			File.Decrypt(SecurePath.ConstructSecurePath(securePath));
 			File.Delete(securePath);
-			File.Delete(SecurePath.ConstructSecurePath(securePath));
 			File.Encrypt(securePath);
-			File.Encrypt(SecurePath.ConstructSecurePath(securePath));
 			File.Exists(securePath);
-			File.Exists(SecurePath.ConstructSecurePath(securePath));
-			//File.Move(securePath, destinationPath);
+			File.Move(securePath, destinationPath);
 			File.Open(securePath, FileMode.Open);
-			File.Open(SecurePath.ConstructSecurePath(securePath), FileMode.Open);
 			File.OpenRead(securePath);
-			File.OpenRead(SecurePath.ConstructSecurePath(securePath));
 			File.OpenText(securePath);
-			File.OpenText(SecurePath.ConstructSecurePath(securePath));
 			File.OpenWrite(securePath);
-			File.OpenWrite(SecurePath.ConstructSecurePath(securePath));
-			//File.Replace(securePath, destinationPath, null);
+			File.Replace(securePath, destinationPath, backupPath);
 			File.ReadAllBytes(securePath);
-			File.ReadAllBytes(SecurePath.ConstructSecurePath(securePath));
 			File.ReadAllBytesAsync(securePath);
-			File.ReadAllBytesAsync(SecurePath.ConstructSecurePath(securePath));
 			File.ReadAllText(securePath);
-			File.ReadAllText(SecurePath.ConstructSecurePath(securePath));
 			File.WriteAllBytes(securePath, new byte[4096]);
-			File.WriteAllBytes(SecurePath.ConstructSecurePath(securePath), new byte[4096]);
 			File.WriteAllBytesAsync(securePath, new byte[4096]);
-			File.WriteAllBytesAsync(SecurePath.ConstructSecurePath(securePath), new byte[4096]);
 			File.WriteAllLines(securePath, new string[] { });
-			File.WriteAllLines(SecurePath.ConstructSecurePath(securePath), new string[] { });
 			File.WriteAllLinesAsync(securePath, new string[] { });
-			File.WriteAllLinesAsync(SecurePath.ConstructSecurePath(securePath), new string[] { });
 			File.WriteAllText(securePath, string.Empty);
-			File.WriteAllText(SecurePath.ConstructSecurePath(securePath), string.Empty);
 			File.WriteAllTextAsync(securePath, string.Empty);
-            File.WriteAllTextAsync(SecurePath.ConstructSecurePath(securePath), string.Empty);
 
 			var swWithVariable = new StreamWriter(securePath);
 			swWithVariable.Write(string.Empty);
-
-            var swWithInvocation = new StreamWriter(SecurePath.ConstructSecurePath(securePath));
-			swWithInvocation.Write(string.Empty);
 
 			using (var sr = new StreamReader(securePath))
 			{
 				sr.Read();
 			}
+		}
 
-            using (var sr = new StreamReader(SecurePath.ConstructSecurePath(securePath)))
+        public void FileMethods_InLine_ConstructSecurePathTest(string insecurePath)
+        {
+			File.AppendAllLines(SecurePath.ConstructSecurePath(insecurePath), new string[] { });
+			File.AppendAllLinesAsync(SecurePath.ConstructSecurePath(insecurePath), new string[] { });
+			File.AppendText(SecurePath.ConstructSecurePath(insecurePath));
+			File.Copy(SecurePath.ConstructSecurePath(insecurePath), SecurePath.ConstructSecurePath(insecurePath));
+			File.Create(SecurePath.ConstructSecurePath(insecurePath));
+			File.Decrypt(SecurePath.ConstructSecurePath(insecurePath));
+			File.Delete(SecurePath.ConstructSecurePath(insecurePath));
+			File.Encrypt(SecurePath.ConstructSecurePath(insecurePath));
+			File.Exists(SecurePath.ConstructSecurePath(insecurePath));
+			File.Move(SecurePath.ConstructSecurePath(insecurePath), SecurePath.ConstructSecurePath(insecurePath));
+			File.Open(SecurePath.ConstructSecurePath(insecurePath), FileMode.Open);
+			File.OpenRead(SecurePath.ConstructSecurePath(insecurePath));
+			File.OpenText(SecurePath.ConstructSecurePath(insecurePath));
+			File.OpenWrite(SecurePath.ConstructSecurePath(insecurePath));
+			File.Replace(SecurePath.ConstructSecurePath(insecurePath), SecurePath.ConstructSecurePath(insecurePath), SecurePath.ConstructSecurePath(insecurePath));
+			File.ReadAllBytes(SecurePath.ConstructSecurePath(insecurePath));
+			File.ReadAllBytesAsync(SecurePath.ConstructSecurePath(insecurePath));
+			File.ReadAllText(SecurePath.ConstructSecurePath(insecurePath));
+			File.WriteAllBytes(SecurePath.ConstructSecurePath(insecurePath), new byte[4096]);
+			File.WriteAllBytesAsync(SecurePath.ConstructSecurePath(insecurePath), new byte[4096]);
+			File.WriteAllLines(SecurePath.ConstructSecurePath(insecurePath), new string[] { });
+			File.WriteAllLinesAsync(SecurePath.ConstructSecurePath(insecurePath), new string[] { });
+			File.WriteAllText(SecurePath.ConstructSecurePath(insecurePath), string.Empty);
+            File.WriteAllTextAsync(SecurePath.ConstructSecurePath(insecurePath), string.Empty);
+
+            var swWithInvocation = new StreamWriter(SecurePath.ConstructSecurePath(insecurePath));
+			swWithInvocation.Write(string.Empty);
+
+            using (var sr = new StreamReader(SecurePath.ConstructSecurePath(insecurePath)))
 			{
 				sr.Read();
 			}
-		}
-
-        public void CreatingSecurePath(string insecurePath)
-        {
-            SecurePath securePath = SecurePath.CreateSecurePath(insecurePath);
-
-            File.Exists(securePath);
         }
 
-        /*
-        TODO
-		public void ToDetectDeclarationsAndAssignments()
+        public void FileMethods_InLine_CreateSecurePathTest(string insecurePath)
+        {
+			File.AppendAllLines(SecurePath.CreateSecurePath(insecurePath), new string[] { });
+			File.AppendAllLinesAsync(SecurePath.CreateSecurePath(insecurePath), new string[] { });
+			File.AppendText(SecurePath.CreateSecurePath(insecurePath));
+			File.Copy(SecurePath.CreateSecurePath(insecurePath), SecurePath.CreateSecurePath(insecurePath));
+			File.Create(SecurePath.CreateSecurePath(insecurePath));
+			File.Decrypt(SecurePath.CreateSecurePath(insecurePath));
+			File.Delete(SecurePath.CreateSecurePath(insecurePath));
+			File.Encrypt(SecurePath.CreateSecurePath(insecurePath));
+			File.Exists(SecurePath.CreateSecurePath(insecurePath));
+			File.Move(SecurePath.CreateSecurePath(insecurePath), SecurePath.CreateSecurePath(insecurePath));
+			File.Open(SecurePath.CreateSecurePath(insecurePath), FileMode.Open);
+			File.OpenRead(SecurePath.CreateSecurePath(insecurePath));
+			File.OpenText(SecurePath.CreateSecurePath(insecurePath));
+			File.OpenWrite(SecurePath.CreateSecurePath(insecurePath));
+			File.Replace(SecurePath.CreateSecurePath(insecurePath), SecurePath.CreateSecurePath(insecurePath), SecurePath.CreateSecurePath(insecurePath));
+			File.ReadAllBytes(SecurePath.CreateSecurePath(insecurePath));
+			File.ReadAllBytesAsync(SecurePath.CreateSecurePath(insecurePath));
+			File.ReadAllText(SecurePath.CreateSecurePath(insecurePath));
+			File.WriteAllBytes(SecurePath.CreateSecurePath(insecurePath), new byte[4096]);
+			File.WriteAllBytesAsync(SecurePath.CreateSecurePath(insecurePath), new byte[4096]);
+			File.WriteAllLines(SecurePath.CreateSecurePath(insecurePath), new string[] { });
+			File.WriteAllLinesAsync(SecurePath.CreateSecurePath(insecurePath), new string[] { });
+			File.WriteAllText(SecurePath.CreateSecurePath(insecurePath), string.Empty);
+            File.WriteAllTextAsync(SecurePath.CreateSecurePath(insecurePath), string.Empty);
+
+            var swWithInvocation = new StreamWriter(SecurePath.CreateSecurePath(insecurePath));
+			swWithInvocation.Write(string.Empty);
+
+            using (var sr = new StreamReader(SecurePath.CreateSecurePath(insecurePath)))
+			{
+				sr.Read();
+			}
+        }
+
+        public void FileMethods_IsPathValidTest(string path, string destinationPath, string backupPath)
+        {
+            if (!path.IsPathValid())
+            {
+                throw new InvalidOperationException();
+            }
+
+            if (!destinationPath.IsPathValid())
+            {
+                throw new InvalidOperationException();
+            }
+
+            if (!backupPath.IsPathValid())
+            {
+                throw new InvalidOperationException();
+            }
+
+            File.AppendAllLines(path, new string[] { });
+			File.AppendAllLinesAsync(path, new string[] { });
+			File.AppendAllText(path, string.Empty);
+			File.AppendAllTextAsync(path, string.Empty);
+			File.AppendText(path);
+			File.Copy(path, destinationPath);
+			File.Create(path);
+			File.Decrypt(path);
+			File.Delete(path);
+			File.Encrypt(path);
+			File.Exists(path);
+			File.Move(path, destinationPath);
+			File.Open(path, FileMode.Open);
+			File.OpenRead(path);
+			File.OpenText(path);
+			File.OpenWrite(path);
+			File.Replace(path, destinationPath, backupPath);
+			File.ReadAllBytes(path);
+			File.ReadAllBytesAsync(path);
+			File.ReadAllText(path);
+			File.WriteAllBytes(path, new byte[4096]);
+			File.WriteAllBytesAsync(path, new byte[4096]);
+			File.WriteAllLines(path, new string[] { });
+			File.WriteAllLinesAsync(path, new string[] { });
+			File.WriteAllText(path, string.Empty);
+			File.WriteAllTextAsync(path, string.Empty);
+
+			var swWithVariable = new StreamWriter(path);
+			swWithVariable.Write(string.Empty);
+
+			using (var sr = new StreamReader(path))
+			{
+				sr.Read();
+			}
+        }
+
+        public void FileMethods_ConstructSecurePathTest(string insecurePath)
+        {
+            var securePath = SecurePath.ConstructSecurePath(insecurePath);
+            var destinationPath = SecurePath.ConstructSecurePath(insecurePath);
+            var backupPath = SecurePath.ConstructSecurePath(insecurePath);
+
+            File.AppendAllLines(securePath, new string[] { });
+			File.AppendAllLinesAsync(securePath, new string[] { });
+			File.AppendAllText(securePath, string.Empty);
+			File.AppendAllTextAsync(securePath, string.Empty);
+			File.AppendText(securePath);
+			File.Copy(securePath, destinationPath);
+			File.Create(securePath);
+			File.Decrypt(securePath);
+			File.Delete(securePath);
+			File.Encrypt(securePath);
+			File.Exists(securePath);
+			File.Move(securePath, destinationPath);
+			File.Open(securePath, FileMode.Open);
+			File.OpenRead(securePath);
+			File.OpenText(securePath);
+			File.OpenWrite(securePath);
+			File.Replace(securePath, destinationPath, backupPath);
+			File.ReadAllBytes(securePath);
+			File.ReadAllBytesAsync(securePath);
+			File.ReadAllText(securePath);
+			File.WriteAllBytes(securePath, new byte[4096]);
+			File.WriteAllBytesAsync(securePath, new byte[4096]);
+			File.WriteAllLines(securePath, new string[] { });
+			File.WriteAllLinesAsync(securePath, new string[] { });
+			File.WriteAllText(securePath, string.Empty);
+			File.WriteAllTextAsync(securePath, string.Empty);
+
+			var swWithVariable = new StreamWriter(securePath);
+			swWithVariable.Write(string.Empty);
+
+			using (var sr = new StreamReader(securePath))
+			{
+				sr.Read();
+			}
+        }
+
+        public void FileMethods_CreateSecurePathTest(string insecurePath)
+        {
+            var securePath = SecurePath.CreateSecurePath(insecurePath);
+            var destinationPath = SecurePath.CreateSecurePath(insecurePath);
+            var backupPath = SecurePath.CreateSecurePath(insecurePath);
+
+            File.AppendAllLines(securePath, new string[] { });
+			File.AppendAllLinesAsync(securePath, new string[] { });
+			File.AppendAllText(securePath, string.Empty);
+			File.AppendAllTextAsync(securePath, string.Empty);
+			File.AppendText(securePath);
+			File.Copy(securePath, destinationPath);
+			File.Create(securePath);
+			File.Decrypt(securePath);
+			File.Delete(securePath);
+			File.Encrypt(securePath);
+			File.Exists(securePath);
+			File.Move(securePath, destinationPath);
+			File.Open(securePath, FileMode.Open);
+			File.OpenRead(securePath);
+			File.OpenText(securePath);
+			File.OpenWrite(securePath);
+			File.Replace(securePath, destinationPath, backupPath);
+			File.ReadAllBytes(securePath);
+			File.ReadAllBytesAsync(securePath);
+			File.ReadAllText(securePath);
+			File.WriteAllBytes(securePath, new byte[4096]);
+			File.WriteAllBytesAsync(securePath, new byte[4096]);
+			File.WriteAllLines(securePath, new string[] { });
+			File.WriteAllLinesAsync(securePath, new string[] { });
+			File.WriteAllText(securePath, string.Empty);
+			File.WriteAllTextAsync(securePath, string.Empty);
+
+			var swWithVariable = new StreamWriter(securePath);
+			swWithVariable.Write(string.Empty);
+
+			using (var sr = new StreamReader(securePath))
+			{
+				sr.Read();
+			}
+        }
+
+        public void DirectoryMethods_SecurePathArgumentTest(SecurePath securePath)
 		{
-			// Class Field Case
-			var pathHolderField = new PathHolder();
-			pathHolderField.pathField = "securePath";
-			File.WriteAllText(pathHolderField.pathField, string.Empty);
-
-			// Class Field Object Initialization
-			var pathHolderFieldObjInit = new PathHolder
-			{
-				pathField = "InsecurePath"
-			};
-			File.WriteAllText(pathHolderFieldObjInit.pathField, string.Empty);
-
-			// Class Property Case
-			var pathHolderProperty = new PathHolder();
-			pathHolderProperty.PathProperty = "InsecurePath";
-			File.WriteAllText(pathHolderProperty.pathField, string.Empty);
-
-			// Class Field Property Initialization
-			var pathHolderPropertyObjInit = new PathHolder
-			{
-				PathProperty = "InsecurePath"
-			};
-			File.WriteAllText(pathHolderPropertyObjInit.pathField, string.Empty);
-
-			// Declaration Case
-			var path = string.Empty;
-			File.WriteAllText(path, string.Empty);
-
-			// Assignment Case
-			path = string.Empty;
-			File.WriteAllText(path, string.Empty);
+			Directory.CreateDirectory(securePath);
+			Directory.Delete(securePath);
+			Directory.EnumerateDirectories(securePath);
+			Directory.EnumerateFiles(securePath);
+			Directory.EnumerateFileSystemEntries(securePath);
+			Directory.Exists(securePath);
+			Directory.GetCreationTime(securePath);
+			Directory.GetCreationTimeUtc(securePath);
+			Directory.GetDirectories(securePath);
+			Directory.GetFiles(securePath);
+			Directory.GetFileSystemEntries(securePath);
+			Directory.GetLastAccessTime(securePath);
+			Directory.GetLastAccessTimeUtc(securePath);
+			Directory.GetParent(securePath);
+			Directory.SetCreationTime(securePath, DateTime.MinValue);
+			Directory.SetCreationTimeUtc(securePath, DateTime.MinValue);
+			Directory.SetCurrentDirectory(securePath);
+			Directory.SetLastAccessTime(securePath, DateTime.MinValue);
+			Directory.SetLastAccessTimeUtc(securePath, DateTime.MinValue);
+			Directory.SetLastWriteTime(securePath, DateTime.MinValue);
+			Directory.SetLastWriteTimeUtc(securePath, DateTime.MinValue);
 		}
 
-		public void ToDetectDirectoryMethods()
+		public void DirectoryMethods_ConstructSecurePathTest()
 		{
-			var insecurePath = string.Empty;
-			var targetPath = string.Empty;
+			var securePath = SecurePath.ConstructSecurePath();
 
-			Directory.CreateDirectory(insecurePath);
-			Directory.Delete(insecurePath);
-			Directory.EnumerateDirectories(insecurePath);
-			Directory.EnumerateFiles(insecurePath);
-			Directory.EnumerateFileSystemEntries(insecurePath);
-			Directory.Exists(insecurePath);
-			Directory.GetCreationTime(insecurePath);
-			Directory.GetCreationTimeUtc(insecurePath);
-			Directory.GetDirectories(insecurePath);
-			Directory.GetFiles(insecurePath);
-			Directory.GetFileSystemEntries(insecurePath);
-			Directory.GetLastAccessTime(insecurePath);
-			Directory.GetLastAccessTimeUtc(insecurePath);
-			Directory.GetParent(insecurePath);
-			Directory.SetCreationTime(insecurePath, DateTime.MinValue);
-			Directory.SetCreationTimeUtc(insecurePath, DateTime.MinValue);
-			Directory.SetCurrentDirectory(insecurePath);
-			Directory.SetLastAccessTime(insecurePath, DateTime.MinValue);
-			Directory.SetLastAccessTimeUtc(insecurePath, DateTime.MinValue);
-			Directory.SetLastWriteTime(insecurePath, DateTime.MinValue);
-			Directory.SetLastWriteTimeUtc(insecurePath, DateTime.MinValue);
+			Directory.CreateDirectory(securePath);
+			Directory.Delete(securePath);
+			Directory.EnumerateDirectories(securePath);
+			Directory.EnumerateFiles(securePath);
+			Directory.EnumerateFileSystemEntries(securePath);
+			Directory.Exists(securePath);
+			Directory.GetCreationTime(securePath);
+			Directory.GetCreationTimeUtc(securePath);
+			Directory.GetDirectories(securePath);
+			Directory.GetFiles(securePath);
+			Directory.GetFileSystemEntries(securePath);
+			Directory.GetLastAccessTime(securePath);
+			Directory.GetLastAccessTimeUtc(securePath);
+			Directory.GetParent(securePath);
+			Directory.SetCreationTime(securePath, DateTime.MinValue);
+			Directory.SetCreationTimeUtc(securePath, DateTime.MinValue);
+			Directory.SetCurrentDirectory(securePath);
+			Directory.SetLastAccessTime(securePath, DateTime.MinValue);
+			Directory.SetLastAccessTimeUtc(securePath, DateTime.MinValue);
+			Directory.SetLastWriteTime(securePath, DateTime.MinValue);
+			Directory.SetLastWriteTimeUtc(securePath, DateTime.MinValue);
 		}
-        */
 
-		public void ToDetectOtherMethods(SecurePath securePath)
+        public void DirectoryMethods_CreateSecurePathTest()
+		{
+			var securePath = SecurePath.CreateSecurePath(string.Empty);
+
+			Directory.CreateDirectory(securePath);
+			Directory.Delete(securePath);
+			Directory.EnumerateDirectories(securePath);
+			Directory.EnumerateFiles(securePath);
+			Directory.EnumerateFileSystemEntries(securePath);
+			Directory.Exists(securePath);
+			Directory.GetCreationTime(securePath);
+			Directory.GetCreationTimeUtc(securePath);
+			Directory.GetDirectories(securePath);
+			Directory.GetFiles(securePath);
+			Directory.GetFileSystemEntries(securePath);
+			Directory.GetLastAccessTime(securePath);
+			Directory.GetLastAccessTimeUtc(securePath);
+			Directory.GetParent(securePath);
+			Directory.SetCreationTime(securePath, DateTime.MinValue);
+			Directory.SetCreationTimeUtc(securePath, DateTime.MinValue);
+			Directory.SetCurrentDirectory(securePath);
+			Directory.SetLastAccessTime(securePath, DateTime.MinValue);
+			Directory.SetLastAccessTimeUtc(securePath, DateTime.MinValue);
+			Directory.SetLastWriteTime(securePath, DateTime.MinValue);
+			Directory.SetLastWriteTimeUtc(securePath, DateTime.MinValue);
+		}
+
+        public void DirectoryMethods_IsPathValidTest(string path)
+		{
+			if (!path.IsPathValid())
+            {
+                throw new InvalidOperationException();
+            }
+
+			Directory.CreateDirectory(path);
+			Directory.Delete(path);
+			Directory.EnumerateDirectories(path);
+			Directory.EnumerateFiles(path);
+			Directory.EnumerateFileSystemEntries(path);
+			Directory.Exists(path);
+			Directory.GetCreationTime(path);
+			Directory.GetCreationTimeUtc(path);
+			Directory.GetDirectories(path);
+			Directory.GetFiles(path);
+			Directory.GetFileSystemEntries(path);
+			Directory.GetLastAccessTime(path);
+			Directory.GetLastAccessTimeUtc(path);
+			Directory.GetParent(path);
+			Directory.SetCreationTime(path, DateTime.MinValue);
+			Directory.SetCreationTimeUtc(path, DateTime.MinValue);
+			Directory.SetCurrentDirectory(path);
+			Directory.SetLastAccessTime(path, DateTime.MinValue);
+			Directory.SetLastAccessTimeUtc(path, DateTime.MinValue);
+			Directory.SetLastWriteTime(path, DateTime.MinValue);
+			Directory.SetLastWriteTimeUtc(path, DateTime.MinValue);
+		}
+
+        public void DirectoryMethods_InLine_ConstructSecurePathTest(string insecurePath)
+		{
+			Directory.CreateDirectory(SecurePath.ConstructSecurePath(insecurePath));
+			Directory.Delete(SecurePath.ConstructSecurePath(insecurePath));
+			Directory.EnumerateDirectories(SecurePath.ConstructSecurePath(insecurePath));
+			Directory.EnumerateFiles(SecurePath.ConstructSecurePath(insecurePath));
+			Directory.EnumerateFileSystemEntries(SecurePath.ConstructSecurePath(insecurePath));
+			Directory.Exists(SecurePath.ConstructSecurePath(insecurePath));
+			Directory.GetCreationTime(SecurePath.ConstructSecurePath(insecurePath));
+			Directory.GetCreationTimeUtc(SecurePath.ConstructSecurePath(insecurePath));
+			Directory.GetDirectories(SecurePath.ConstructSecurePath(insecurePath));
+			Directory.GetFiles(SecurePath.ConstructSecurePath(insecurePath));
+			Directory.GetFileSystemEntries(SecurePath.ConstructSecurePath(insecurePath));
+			Directory.GetLastAccessTime(SecurePath.ConstructSecurePath(insecurePath));
+			Directory.GetLastAccessTimeUtc(SecurePath.ConstructSecurePath(insecurePath));
+			Directory.GetParent(SecurePath.ConstructSecurePath(insecurePath));
+			Directory.SetCreationTime(SecurePath.ConstructSecurePath(insecurePath), DateTime.MinValue);
+			Directory.SetCreationTimeUtc(SecurePath.ConstructSecurePath(insecurePath), DateTime.MinValue);
+			Directory.SetCurrentDirectory(SecurePath.ConstructSecurePath(insecurePath));
+			Directory.SetLastAccessTime(SecurePath.ConstructSecurePath(insecurePath), DateTime.MinValue);
+			Directory.SetLastAccessTimeUtc(SecurePath.ConstructSecurePath(insecurePath), DateTime.MinValue);
+			Directory.SetLastWriteTime(SecurePath.ConstructSecurePath(insecurePath), DateTime.MinValue);
+			Directory.SetLastWriteTimeUtc(SecurePath.ConstructSecurePath(insecurePath), DateTime.MinValue);
+		}
+
+        
+        public void DirectoryMethods_InLine_CreateSecurePathTest(string insecurePath)
+		{
+			Directory.CreateDirectory(SecurePath.CreateSecurePath(insecurePath));
+			Directory.Delete(SecurePath.CreateSecurePath(insecurePath));
+			Directory.EnumerateDirectories(SecurePath.CreateSecurePath(insecurePath));
+			Directory.EnumerateFiles(SecurePath.CreateSecurePath(insecurePath));
+			Directory.EnumerateFileSystemEntries(SecurePath.CreateSecurePath(insecurePath));
+			Directory.Exists(SecurePath.CreateSecurePath(insecurePath));
+			Directory.GetCreationTime(SecurePath.CreateSecurePath(insecurePath));
+			Directory.GetCreationTimeUtc(SecurePath.CreateSecurePath(insecurePath));
+			Directory.GetDirectories(SecurePath.CreateSecurePath(insecurePath));
+			Directory.GetFiles(SecurePath.CreateSecurePath(insecurePath));
+			Directory.GetFileSystemEntries(SecurePath.CreateSecurePath(insecurePath));
+			Directory.GetLastAccessTime(SecurePath.CreateSecurePath(insecurePath));
+			Directory.GetLastAccessTimeUtc(SecurePath.CreateSecurePath(insecurePath));
+			Directory.GetParent(SecurePath.CreateSecurePath(insecurePath));
+			Directory.SetCreationTime(SecurePath.CreateSecurePath(insecurePath), DateTime.MinValue);
+			Directory.SetCreationTimeUtc(SecurePath.CreateSecurePath(insecurePath), DateTime.MinValue);
+			Directory.SetCurrentDirectory(SecurePath.CreateSecurePath(insecurePath));
+			Directory.SetLastAccessTime(SecurePath.CreateSecurePath(insecurePath), DateTime.MinValue);
+			Directory.SetLastAccessTimeUtc(SecurePath.CreateSecurePath(insecurePath), DateTime.MinValue);
+			Directory.SetLastWriteTime(SecurePath.CreateSecurePath(insecurePath), DateTime.MinValue);
+			Directory.SetLastWriteTimeUtc(SecurePath.CreateSecurePath(insecurePath), DateTime.MinValue);
+		}
+
+		public void OtherMethods_SecurePathArgumentTest(SecurePath securePath)
 		{
 			Assembly.Load(securePath);
 			Assembly.LoadFrom(securePath);
@@ -160,15 +425,288 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.Tests.SecureIO.TestScen
 			Process.Start(securePath);
 		}
 
+        public void OtherMethods_ConstructSecurePathTest(string insecurePath)
+		{
+            var securePath = SecurePath.ConstructSecurePath(insecurePath);
+
+			Assembly.Load(securePath);
+			Assembly.LoadFrom(securePath);
+			Assembly.LoadFile(securePath);
+			Assembly.UnsafeLoadFrom(securePath);
+
+			Process.Start(securePath);
+		}
+
+        public void OtherMethods_CreateSecurePathTest(string insecurePath)
+		{
+            var securePath = SecurePath.CreateSecurePath(insecurePath);
+
+			Assembly.Load(securePath);
+			Assembly.LoadFrom(securePath);
+			Assembly.LoadFile(securePath);
+			Assembly.UnsafeLoadFrom(securePath);
+
+			Process.Start(securePath);
+		}
+
+        public void OtherMethods_IsPathValidTest(string path)
+		{
+            if (!path.IsPathValid())
+            {
+                throw new InvalidOperationException();
+            }
+
+			Assembly.Load(path);
+			Assembly.LoadFrom(path);
+			Assembly.LoadFile(path);
+			Assembly.UnsafeLoadFrom(path);
+
+			Process.Start(path);
+		}
+
+        public void OtherMethods_InLineCreateSecurePathTest(string insecurePath)
+		{
+			Assembly.Load(SecurePath.CreateSecurePath(insecurePath));
+			Assembly.LoadFrom(SecurePath.CreateSecurePath(insecurePath));
+			Assembly.LoadFile(SecurePath.CreateSecurePath(insecurePath));
+			Assembly.UnsafeLoadFrom(SecurePath.CreateSecurePath(insecurePath));
+
+			Process.Start(SecurePath.CreateSecurePath(insecurePath));
+		}
+
+        public void OtherMethods_InLineConstructSecurePathTest(string insecurePath)
+		{
+			Assembly.Load(SecurePath.ConstructSecurePath(insecurePath));
+			Assembly.LoadFrom(SecurePath.ConstructSecurePath(insecurePath));
+			Assembly.LoadFile(SecurePath.ConstructSecurePath(insecurePath));
+			Assembly.UnsafeLoadFrom(SecurePath.ConstructSecurePath(insecurePath));
+
+			Process.Start(SecurePath.ConstructSecurePath(insecurePath));
+		}
+
+        public void DeclarationsAndAssignments_SecurePathArgumentTest(SecurePath securePath)
+		{
+			// Class Field Case
+			var pathHolderField = new PathHolder();
+			pathHolderField.pathField = securePath;
+			File.WriteAllText(pathHolderField.pathField, string.Empty);
+
+			// Class Field Object Initialization
+			var pathHolderFieldObjInit = new PathHolder
+			{
+				pathField = securePath,
+			};
+			File.WriteAllText(pathHolderFieldObjInit.pathField, string.Empty);
+
+			// Class Property Case
+			var pathHolderProperty = new PathHolder();
+			pathHolderProperty.PathProperty = securePath;
+			File.WriteAllText(pathHolderProperty.PathProperty, string.Empty);
+
+			// Class Field Property Initialization
+			var pathHolderPropertyObjInit = new PathHolder
+			{
+				PathProperty = securePath,
+			};
+			File.WriteAllText(pathHolderPropertyObjInit.PathProperty, string.Empty);
+
+            // Class Field Constructor Case
+            var pathHolderFieldCtor = new PathHolder(securePath: securePath);
+            File.WriteAllText(pathHolderFieldCtor.pathField, string.Empty);
+
+            // Class Property Constructor Case
+            var pathHolderPropertyCtor = new PathHolder(securePath: securePath);
+            File.WriteAllText(pathHolderPropertyCtor.PathProperty, string.Empty);
+
+			// Declaration Case
+			var path = securePath;
+			File.WriteAllText(path, string.Empty);
+
+			// Assignment Case
+			path = securePath;
+			File.WriteAllText(path, string.Empty);
+		}
+
+		public void DeclarationsAndAssignments_ConstructSecurePathTest(string insecurePath)
+		{
+			// Class Field Case
+			var pathHolderField = new PathHolder();
+			pathHolderField.pathField = SecurePath.ConstructSecurePath(insecurePath);
+			File.WriteAllText(pathHolderField.pathField, string.Empty);
+
+			// Class Field Object Initialization
+			var pathHolderFieldObjInit = new PathHolder
+			{
+				pathField = SecurePath.ConstructSecurePath(insecurePath),
+			};
+			File.WriteAllText(pathHolderFieldObjInit.pathField, string.Empty);
+
+			// Class Property Case
+			var pathHolderProperty = new PathHolder();
+			pathHolderProperty.PathProperty = SecurePath.ConstructSecurePath(insecurePath);
+			File.WriteAllText(pathHolderProperty.PathProperty, string.Empty);
+
+			// Class Property Initialization
+			var pathHolderPropertyObjInit = new PathHolder
+			{
+				PathProperty = SecurePath.ConstructSecurePath(insecurePath),
+			};
+			File.WriteAllText(pathHolderPropertyObjInit.PathProperty, string.Empty);
+
+            // Class Field Constructor Case
+            var pathHolderFieldCtor = new PathHolder(constructSecurePath: true);
+            File.WriteAllText(pathHolderFieldCtor.pathField, string.Empty);
+
+            // Class Property Constructor Case
+            var pathHolderPropertyCtor = new PathHolder(constructSecurePath: true);
+            File.WriteAllText(pathHolderPropertyCtor.PathProperty, string.Empty);
+
+			// Declaration Case
+			var path = SecurePath.ConstructSecurePath(insecurePath);
+			File.WriteAllText(path, string.Empty);
+
+			// Assignment Case
+			path = SecurePath.ConstructSecurePath(insecurePath);
+			File.WriteAllText(path, string.Empty);
+		}
+
+        public void DeclarationsAndAssignments_CreateSecurePathTest(string insecurePath)
+		{
+			// Class Field Case
+			var pathHolderField = new PathHolder();
+			pathHolderField.pathField = SecurePath.CreateSecurePath(insecurePath);
+			File.WriteAllText(pathHolderField.pathField, string.Empty);
+
+			// Class Field Object Initialization
+			var pathHolderFieldObjInit = new PathHolder
+			{
+				pathField = SecurePath.CreateSecurePath(insecurePath),
+			};
+			File.WriteAllText(pathHolderFieldObjInit.pathField, string.Empty);
+
+			// Class Property Case
+			var pathHolderProperty = new PathHolder();
+			pathHolderProperty.PathProperty = SecurePath.CreateSecurePath(insecurePath);
+			File.WriteAllText(pathHolderProperty.PathProperty, string.Empty);
+
+			// Class Property Initialization
+			var pathHolderPropertyObjInit = new PathHolder
+			{
+				PathProperty = SecurePath.CreateSecurePath(insecurePath),
+			};
+			File.WriteAllText(pathHolderPropertyObjInit.PathProperty, string.Empty);
+
+            // Class Field Constructor Case
+            var pathHolderFieldCtor = new PathHolder(createSecurePath: true);
+            File.WriteAllText(pathHolderFieldCtor.pathField, string.Empty);
+
+            // Class Property Constructor Case
+            var pathHolderPropertyCtor = new PathHolder(createSecurePath: true);
+            File.WriteAllText(pathHolderPropertyCtor.PathProperty, string.Empty);
+
+			// Declaration Case
+			var path = SecurePath.CreateSecurePath(insecurePath);
+			File.WriteAllText(path, string.Empty);
+
+			// Assignment Case
+			path = SecurePath.CreateSecurePath(insecurePath);
+			File.WriteAllText(path, string.Empty);
+		}
+
+        public void DeclarationsAndAssignments_IsPathValidTest(string path)
+		{
+			// Class Field Case
+			var pathHolderField = new PathHolder();
+			pathHolderField.pathField = path;
+            if (!pathHolderField.pathField.IsPathValid())
+            {
+                throw new InvalidOperationException();
+            }
+			File.WriteAllText(pathHolderField.pathField, string.Empty);
+
+
+			// Class Field Object Initialization
+			var pathHolderFieldObjInit = new PathHolder
+			{
+				pathField = path,
+			};
+            if (!pathHolderFieldObjInit.pathField.IsPathValid())
+            {
+                throw new InvalidOperationException();
+            }
+			File.WriteAllText(pathHolderFieldObjInit.pathField, string.Empty);
+
+
+			// Class Property Case
+			var pathHolderProperty = new PathHolder();
+			pathHolderProperty.PathProperty = path;
+            if (!pathHolderProperty.pathField.IsPathValid())
+            {
+                throw new InvalidOperationException();
+            }
+			File.WriteAllText(pathHolderProperty.PathProperty, string.Empty);
+
+
+			// Class Property Initialization
+			var pathHolderPropertyObjInit = new PathHolder
+			{
+				PathProperty = path,
+			};
+            if (!pathHolderProperty.PathProperty.IsPathValid())
+            {
+                throw new InvalidOperationException();
+            }
+			File.WriteAllText(pathHolderPropertyObjInit.PathProperty, string.Empty);
+
+            // Class Field Constructor Case
+            var pathHolderFieldCtor = new PathHolder(validatePath: true);
+            File.WriteAllText(pathHolderFieldCtor.pathField, string.Empty);
+
+            // Class Property Constructor Case
+            var pathHolderPropertyCtor = new PathHolder(validatePath: true);
+            File.WriteAllText(pathHolderPropertyCtor.PathProperty, string.Empty);
+		}
 	}
 
 	internal class PathHolder
 	{
 		public string pathField;
 
-		public PathHolder()
+		public PathHolder(bool validatePath = false, bool constructSecurePath = false, bool createSecurePath = false, SecurePath securePath = null)
 		{
+            if (validatePath)
+            {
+                if (!pathField.IsPathValid())
+                {
+                    throw new InvalidOperationException();
+                }
 
+                if (!PathProperty.IsPathValid())
+                {
+                    throw new InvalidOperationException();
+                }
+            }
+
+            if (constructSecurePath)
+            {
+                pathField = SecurePath.ConstructSecurePath();
+
+                PathProperty = SecurePath.ConstructSecurePath();
+            }
+
+            if (createSecurePath)
+            {
+                pathField = SecurePath.CreateSecurePath("");
+
+                PathProperty = SecurePath.CreateSecurePath("");
+            }
+
+            if (securePath != null)
+            {
+                pathField = securePath;
+
+                PathProperty = securePath;
+            }
 		}
 
 		public string PathProperty { get; set; }
