@@ -239,7 +239,7 @@
         [DataRow(@"\\127.0.0.1\c$\skyline dataminer\folder", @"\\127.0.0.1\c$\skyline dataminer", @"folder")]
         [DataRow(@"\\127.0.0.1\c$\skyline dataminer\subdir1\subdir2", @"\\127.0.0.1\c$\skyline dataminer", @"subdir1", @"subdir2")]
         [DataRow(@"\\127.0.0.1\c$\skyline dataminer\subdir1", @"\\127.0.0.1\c$\", @"skyline dataminer", @"subdir1\")]
-        public void ConstructSecureDirectoryPathWithParamsSucess(string expectedResult, params string[] paths)
+        public void ConstructSecureDirectoryPathWithParamsSuccess(string expectedResult, params string[] paths)
         {
             string result = SecurePath.ConstructSecurePath(paths);
             Assert.AreEqual(result, expectedResult);
