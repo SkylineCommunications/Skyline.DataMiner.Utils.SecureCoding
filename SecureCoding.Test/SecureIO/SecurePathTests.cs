@@ -18,7 +18,7 @@
         public void ConstructSecureFilePathSuccess(string basePath, string filename, string expectedResult)
         {
             string result = SecurePath.ConstructSecurePath(basePath, filename);
-            Assert.AreEqual(result, expectedResult);
+            Assert.AreEqual(expectedResult, result);
         }
 
         [TestMethod]
@@ -31,7 +31,7 @@
         public void ConstructSecureFilePathWithSubdirectoriesSuccess(string basePath, string filename, string expectedResult)
         {
             string result = SecurePath.ConstructSecurePathWithSubDirectories(basePath, filename);
-            Assert.AreEqual(result, expectedResult);
+            Assert.AreEqual(expectedResult, result);
         }
 
         [TestMethod]
@@ -50,7 +50,7 @@
         public void ConstructSecureFilePathWithParamsSuccess(string expectedResult, params string[] paths)
         {
             string result = SecurePath.ConstructSecurePath(paths);
-            Assert.AreEqual(result, expectedResult);
+            Assert.AreEqual(expectedResult, result);
         }
 
         [TestMethod]
@@ -239,10 +239,10 @@
         [DataRow(@"\\127.0.0.1\c$\skyline dataminer\folder", @"\\127.0.0.1\c$\skyline dataminer", @"folder")]
         [DataRow(@"\\127.0.0.1\c$\skyline dataminer\subdir1\subdir2", @"\\127.0.0.1\c$\skyline dataminer", @"subdir1", @"subdir2")]
         [DataRow(@"\\127.0.0.1\c$\skyline dataminer\subdir1", @"\\127.0.0.1\c$\", @"skyline dataminer", @"subdir1\")]
-        public void ConstructSecureDirectoryPathWithParamsSucess(string expectedResult, params string[] paths)
+        public void ConstructSecureDirectoryPathWithParamsSuccess(string expectedResult, params string[] paths)
         {
             string result = SecurePath.ConstructSecurePath(paths);
-            Assert.AreEqual(result, expectedResult);
+            Assert.AreEqual(expectedResult, result);
         }
 
         [TestMethod]
