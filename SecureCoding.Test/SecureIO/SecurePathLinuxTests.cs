@@ -18,13 +18,13 @@ namespace SecureCoding.Test.SecureIO
         [DataRow("/tmp", "2a302e5a2c4d4fdcb22de4c038277b67", "/tmp/2a302e5a2c4d4fdcb22de4c038277b67")]
         [DataRow("/tmp/", "2a302e5a2c4d4fdcb22de4c038277b67", "/tmp/2a302e5a2c4d4fdcb22de4c038277b67")]
         // characters that are invalid on Windows but valid on Linux
-        [DataRow("/opt/skyline dataminer", "te:st.txt", "/opt/skyline dataminer/te:st.txt")]
+        // NOTE: ':' and '\' are intentionally excluded here. The FileSystem abstraction (Skyline.DataMiner.CICD.FileSystem)
+        // treats ':' as a drive separator and '\' as a directory separator on every OS, so they are rejected (see failure cases).
         [DataRow("/opt/skyline dataminer", "test?.txt", "/opt/skyline dataminer/test?.txt")]
         [DataRow("/opt/skyline dataminer", "te<st>.txt", "/opt/skyline dataminer/te<st>.txt")]
         [DataRow("/opt/skyline dataminer", "test|.txt", "/opt/skyline dataminer/test|.txt")]
         [DataRow("/opt/skyline dataminer", "test*.txt", "/opt/skyline dataminer/test*.txt")]
         [DataRow("/opt/skyline dataminer", "te\"st.txt", "/opt/skyline dataminer/te\"st.txt")]
-        [DataRow("/opt/skyline dataminer", @"te\st.txt", @"/opt/skyline dataminer/te\st.txt")]
         public void ConstructSecureFilePathSuccess(string basePath, string filename, string expectedResult)
         {
             string result = SecurePath.ConstructSecurePath(basePath, filename);
@@ -53,6 +53,9 @@ namespace SecureCoding.Test.SecureIO
         [DataRow("/opt/skyline dataminer", "..", typeof(InvalidOperationException))]
         [DataRow("/opt/skyline dataminer", ".", typeof(InvalidOperationException))]
         [DataRow("/opt/skyline dataminer", "/etc/passwd", typeof(InvalidOperationException))]
+        // ':' and '\' are normalized as drive/directory separators by the FileSystem abstraction, so they are rejected
+        [DataRow("/opt/skyline dataminer", "te:st.txt", typeof(InvalidOperationException))]
+        [DataRow("/opt/skyline dataminer", @"te\st.txt", typeof(InvalidOperationException))]
         public void ConstructSecureFilePathFailure(string basePath, string filename, Type expectedExceptionType)
         {
             Action action = () => SecurePath.ConstructSecurePath(basePath, filename);
@@ -64,7 +67,7 @@ namespace SecureCoding.Test.SecureIO
         [DataRow("/opt/skyline dataminer", "subdir/test.txt", "/opt/skyline dataminer/subdir/test.txt")]
         [DataRow("/opt/skyline dataminer", "subdir1/subdir2/test.txt", "/opt/skyline dataminer/subdir1/subdir2/test.txt")]
         [DataRow("/opt/skyline dataminer", "subdir", "/opt/skyline dataminer/subdir")]
-        [DataRow("/opt/skyline dataminer", "subdir/te:st.txt", "/opt/skyline dataminer/subdir/te:st.txt")]
+        [DataRow("/opt/skyline dataminer", "subdir/te|st.txt", "/opt/skyline dataminer/subdir/te|st.txt")]
         [DataRow("/tmp", "2a302e5a2c4d4fdcb22de4c038277b67", "/tmp/2a302e5a2c4d4fdcb22de4c038277b67")]
         public void ConstructSecureFilePathWithSubdirectoriesSuccess(string basePath, string relativePath, string expectedResult)
         {
@@ -91,6 +94,8 @@ namespace SecureCoding.Test.SecureIO
         [DataRow("/opt/skyline dataminer", "subdir/../../test.txt", typeof(InvalidOperationException))]
         [DataRow("/opt/skyline dataminer", "/etc/passwd", typeof(InvalidOperationException))]
         [DataRow("/opt/skyline dataminer/..", "subdir/test.txt", typeof(InvalidOperationException))]
+        // ':' is treated as a drive separator by the FileSystem abstraction, making the relative path rooted
+        [DataRow("/opt/skyline dataminer", "subdir/te:st.txt", typeof(InvalidOperationException))]
         public void ConstructSecureFilePathWithSubDirectoriesFailure(string basePath, string relativePath, Type expectedExceptionType)
         {
             Action action = () => SecurePath.ConstructSecurePathWithSubDirectories(basePath, relativePath);
@@ -109,7 +114,7 @@ namespace SecureCoding.Test.SecureIO
         // directory paths
         [DataRow("/opt/skyline dataminer/subdir1/subdir2", "/opt/skyline dataminer", "subdir1", "subdir2")]
         // characters that are invalid on Windows but valid on Linux
-        [DataRow("/opt/skyline dataminer/sub:dir/te|st.txt", "/opt/skyline dataminer", "sub:dir", "te|st.txt")]
+        [DataRow("/opt/skyline dataminer/sub<dir>/te|st.txt", "/opt/skyline dataminer", "sub<dir>", "te|st.txt")]
         public void ConstructSecurePathWithParamsSuccess(string expectedResult, params string[] paths)
         {
             string result = SecurePath.ConstructSecurePath(paths);
@@ -137,6 +142,8 @@ namespace SecureCoding.Test.SecureIO
         [DataRow(typeof(InvalidOperationException), "/opt/skyline dataminer", "subdir1", "/etc", "test.txt")]
         [DataRow(typeof(InvalidOperationException), "/opt/skyline dataminer", "subdir1", "/etc/passwd")]
         [DataRow(typeof(InvalidOperationException), "/opt/skyline dataminer", "subdir1", "/", "test.txt")]
+        // ':' is treated as a drive separator by the FileSystem abstraction, making the segment rooted
+        [DataRow(typeof(InvalidOperationException), "/opt/skyline dataminer", "sub:dir", "test.txt")]
         public void ConstructSecurePathWithParamsFailure(Type expectedExceptionType, params string[] paths)
         {
             Action action = () => SecurePath.ConstructSecurePath(paths);

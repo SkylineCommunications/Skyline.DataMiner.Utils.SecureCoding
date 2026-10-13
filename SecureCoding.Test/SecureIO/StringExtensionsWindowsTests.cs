@@ -6,7 +6,7 @@
     using Skyline.DataMiner.Utils.SecureCoding.SecureIO;
 
     [TestClass]
-    public class StringExtensionsTests
+    public class StringExtensionsWindowsTests
     {
         [TestMethod]
         [DataRow(@"C:\skyline dataminer")]
