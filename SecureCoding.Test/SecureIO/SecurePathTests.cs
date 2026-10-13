@@ -6,6 +6,7 @@
     using Skyline.DataMiner.Utils.SecureCoding.SecureIO;
 
     [TestClass]
+    [OSCondition(OperatingSystems.Windows)]
     public class SecurePathUnitTests
     {
         [TestMethod]
