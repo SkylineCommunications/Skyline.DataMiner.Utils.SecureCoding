@@ -23,7 +23,7 @@ jobs:
           dotnet-version: 8.0.x
 
       - name: Restore
-        run: dotnet restore SecureCoding.Test/SecureCoding.Test.csproj -p:TargetFramework=net8.0
+        run: dotnet restore SecureCoding.Test/SecureCoding.Test.csproj
 
       - name: Test (net8.0)
         run: dotnet test SecureCoding.Test/SecureCoding.Test.csproj -f net8.0 --no-restore --logger "trx;LogFileName=linux-net8.0.trx" --results-directory TestResults
