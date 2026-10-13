@@ -9,6 +9,7 @@
     using Skyline.DataMiner.Utils.SecureCoding.SecureReflection;
 
     [TestClass]
+    [OSCondition(OperatingSystems.Windows)]
     public class SecureAssemblyLoaderTests
     {
         private static string testItemsPath = FileSystem.Instance.Path.GetFullPath($@"{Environment.CurrentDirectory}..\..\..\..\SecureReflection\TestItems");
