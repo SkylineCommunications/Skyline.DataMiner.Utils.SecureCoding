@@ -836,7 +836,6 @@
 
 #pragma warning restore S2933 // Add readonly modifier
             #endregion
-
         }
     }
 }
