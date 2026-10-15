@@ -23,7 +23,7 @@ function Assert-LinuxResults([string]$Directory) {
             'SecureCoding.Test.SecureReflection.AuthenticodeHardeningTests.',
             'SecureCoding.Test.SecureReflection.AuthenticodeHardeningTests.LinuxLoadsVerifiedBytesWithoutPathLocation'
         )
-        analyzers = @('Skyline.DataMiner.Utils.SecureCoding.Analyzers.Tests.')
+        analyzers = @()
     }
     $failures = @()
     foreach ($suite in $required.Keys) {
@@ -35,6 +35,27 @@ function Assert-LinuxResults([string]$Directory) {
         [xml]$document = Get-Content -LiteralPath $report -Raw
         $ns = New-Object System.Xml.XmlNamespaceManager($document.NameTable)
         $ns.AddNamespace('t', 'http://microsoft.com/schemas/VisualStudio/TeamTest/2010')
+        if ($suite -eq 'analyzers') {
+            $counters = $document.SelectSingleNode('/t:TestRun/t:ResultSummary/t:Counters', $ns)
+            if ($null -eq $counters) {
+                $failures += "${suite}: missing ResultSummary/Counters"
+                continue
+            }
+            $counts = @{}
+            foreach ($attribute in @('total', 'executed', 'passed', 'failed', 'error', 'timeout', 'aborted')) {
+                $count = 0
+                if (-not [int]::TryParse($counters.GetAttribute($attribute), [ref]$count) -or $count -lt 0) {
+                    $failures += "${suite}: invalid or missing $attribute counter"
+                }
+                $counts[$attribute] = $count
+            }
+            if ($counts.total -eq 0 -or $counts.executed -eq 0 -or $counts.passed -eq 0 -or
+                $counts.failed -gt 0 -or $counts.error -gt 0 -or $counts.timeout -gt 0 -or $counts.aborted -gt 0) {
+                $failures += "${suite}: unsuccessful test counters (total=$($counts.total), executed=$($counts.executed), passed=$($counts.passed), failed=$($counts.failed), error=$($counts.error), timeout=$($counts.timeout), aborted=$($counts.aborted))"
+            }
+            Write-Host "${suite}: $($counts.passed) passed, $($counts.total) total"
+            continue
+        }
         $definitions = @{}
         foreach ($test in $document.SelectNodes('/t:TestRun/t:TestDefinitions/t:UnitTest', $ns)) {
             $method = $test.SelectSingleNode('t:TestMethod', $ns)
@@ -100,7 +121,9 @@ $failed = $false
 Push-Location $root
 try {
     foreach ($suite in $projects.Keys) {
-        & dotnet test $projects[$suite] -f net8.0 -c Release --filter $testFilter --logger "trx;LogFileName=$suite.trx" --results-directory $results -- RunConfiguration.TreatNoTestsAsError=true
+        $filterArguments = @()
+        if ($suite -eq 'library') { $filterArguments = @('--filter', $testFilter) }
+        & dotnet test $projects[$suite] -f net8.0 -c Release @filterArguments --logger "trx;LogFileName=$suite.trx" --results-directory $results -- RunConfiguration.TreatNoTestsAsError=true
         if ($LASTEXITCODE -ne 0) { $failed = $true }
     }
     Assert-LinuxResults $results

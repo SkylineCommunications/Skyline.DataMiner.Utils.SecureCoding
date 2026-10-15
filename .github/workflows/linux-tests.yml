@@ -32,5 +32,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: test-results-linux-net8.0
-          path: TestResults/linux/library.trx
+          path: TestResults/linux/*.trx
           if-no-files-found: error
