@@ -9,18 +9,17 @@
     using Skyline.DataMiner.Utils.SecureCoding.SecureReflection;
 
     [TestClass]
-    [OSCondition(OperatingSystems.Windows)]
     public class SecureAssemblyLoaderTests
     {
-        private static string testItemsPath = FileSystem.Instance.Path.GetFullPath($@"{Environment.CurrentDirectory}..\..\..\..\SecureReflection\TestItems");
-        private static string signedTestDllPath = $"{testItemsPath}\\Signed.dll";
-        private static string selfSignedTestDllPath = $"{testItemsPath}\\SelfSigned.dll";
-        private static string unsignedTestDllPath = $"{testItemsPath}\\Unsigned.dll";
-        private static string tamperedTestDllPath = $"{testItemsPath}\\Tampered.dll";
+        private static string testItemsPath = FileSystem.Instance.Path.GetFullPath(System.IO.Path.Combine(Environment.CurrentDirectory, "..", "..", "..", "SecureReflection", "TestItems"));
+        private static string signedTestDllPath = System.IO.Path.Combine(testItemsPath, "Signed.dll");
+        private static string selfSignedTestDllPath = System.IO.Path.Combine(testItemsPath, "SelfSigned.dll");
+        private static string unsignedTestDllPath = System.IO.Path.Combine(testItemsPath, "Unsigned.dll");
+        private static string tamperedTestDllPath = System.IO.Path.Combine(testItemsPath, "Tampered.dll");
 
-        private static string signedCertificatePath = $"{testItemsPath}\\Signed.cer";
-        private static string selfSignedCertificateCerPath = $"{testItemsPath}\\SelfSigned.cer";
-        private static string selfSignedCertificatePfxPath = $"{testItemsPath}\\SelfSigned.pfx";
+        private static string signedCertificatePath = System.IO.Path.Combine(testItemsPath, "Signed.cer");
+        private static string selfSignedCertificateCerPath = System.IO.Path.Combine(testItemsPath, "SelfSigned.cer");
+        private static string selfSignedCertificatePfxPath = System.IO.Path.Combine(testItemsPath, "SelfSigned.pfx");
         private static string selfSignedCertificatePassword = "SecureCodingNugetTest";
 
         [TestMethod]
