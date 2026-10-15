@@ -23,6 +23,7 @@ function Assert-LinuxResults([string]$Directory) {
             'SecureCoding.Test.SecureReflection.AuthenticodeHardeningTests.',
             'SecureCoding.Test.SecureReflection.AuthenticodeHardeningTests.LinuxLoadsVerifiedBytesWithoutPathLocation'
         )
+        analyzers = @('Skyline.DataMiner.Utils.SecureCoding.Analyzers.Tests.')
     }
     $failures = @()
     foreach ($suite in $required.Keys) {
@@ -89,6 +90,7 @@ if (-not $IsLinux) { throw 'This runner requires Linux or Windows with Linux con
 Get-Command dotnet -ErrorAction Stop | Out-Null
 $projects = [ordered]@{
     library = 'SecureCoding.Test/SecureCoding.Test.csproj'
+    analyzers = 'Analyzers/Analyzers.Test/Analyzers.Test.csproj'
 }
 $testFilter = 'FullyQualifiedName~SecureCoding.Test.SecureIO.|FullyQualifiedName~SecureCoding.Test.SecureReflection.'
 foreach ($suite in $projects.Keys) {

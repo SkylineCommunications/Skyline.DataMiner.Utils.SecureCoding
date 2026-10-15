@@ -31,6 +31,7 @@ The script rejects zero-test runs and checks the fresh `library.trx` report. It 
 - Successful construction datasets assert both the expected path and extension validity. `PathContractTests` adds missing-segment, single-array, double-dot-name, rooted-sibling and filename-shape regressions.
 - Linux lexical validation allows `:` and `\`. The filesystem abstraction can interpret them as drive/directory separators during construction, so lexical acceptance does **not** imply that every construction overload accepts the same input.
 - Existing policy rejects any `..` substring and multiple `%` characters, not just literal traversal segments. Constructors now apply this policy to filename branches too. Multi-segment construction now rejects null/empty/whitespace elements consistently.
+- Analyzer fixtures are copied beside the test assembly; .NET Framework scenario references come from NuGet rather than a hard-coded Windows installation path.
 
 This is regression evidence, not proof of 100% correctness or filesystem security. Lexical path checks do not resolve symlinks, prevent filesystem races, or establish ownership/access permissions. Existing certificate-chain tests can depend on trust stores and network/revocation availability. Review the actual passed/skipped counts in the retained TRX reports rather than treating a green build or explicit-platform string test as proof of real Linux execution.
 
