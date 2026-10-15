@@ -1,17 +1,27 @@
 name: Linux Tests
 
-# Runs the test suite on Linux so that tests marked with [OSCondition(OperatingSystems.Linux)]
-# (real Linux path construction/normalization) are executed. Windows coverage is provided by the
-# main CICD workflow.
+# Runs SecureAssembly validation, loading and Authenticode hardening on real Linux,
+# alongside the remaining suite (including Linux SecurePath tests).
+# Windows coverage is provided by the main CICD workflow.
 on:
   push:
-    branches: '**'
+    branches: ['**']
   pull_request:
   workflow_dispatch:
 
 jobs:
   linux-tests:
+    name: Linux tests (${{ matrix.suite }})
     runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - suite: secure-assembly
+            filter: FullyQualifiedName~SecureCoding.Test.SecureReflection.
+          - suite: remaining
+            filter: FullyQualifiedName!~SecureCoding.Test.SecureReflection.
 
     steps:
       - name: Checkout
@@ -26,11 +36,19 @@ jobs:
         run: dotnet restore SecureCoding.Test/SecureCoding.Test.csproj
 
       - name: Test (net8.0)
-        run: dotnet test SecureCoding.Test/SecureCoding.Test.csproj -f net8.0 --no-restore --logger "trx;LogFileName=linux-net8.0.trx" --results-directory TestResults
+        env:
+          TEST_FILTER: ${{ matrix.filter }}
+        run: >-
+          dotnet test SecureCoding.Test/SecureCoding.Test.csproj
+          -f net8.0 --no-restore
+          --filter "$TEST_FILTER"
+          --logger "trx;LogFileName=linux-net8.0.trx"
+          --results-directory TestResults
+          -- RunConfiguration.TreatNoTestsAsError=true
 
       - name: Upload test results
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: test-results-linux-net8.0
+          name: test-results-linux-net8.0-${{ matrix.suite }}
           path: TestResults/*.trx
