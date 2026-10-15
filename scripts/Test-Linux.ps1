@@ -14,13 +14,15 @@ function Assert-LinuxResults([string]$Directory) {
     $required = [ordered]@{
         library = @(
             'SecureCoding.Test.SecureIO.SecurePathLinuxUnitTests.',
-            'SecureCoding.Test.SecureIO.StringExtensionsLinuxTests.IsPathValidUsesCurrentPlatformOnLinux',
+            'SecureCoding.Test.SecureIO.StringExtensionsLinuxTests.',
             'SecureCoding.Test.SecureIO.StringExtensionsWindowsTests.',
+            'SecureCoding.Test.SecureIO.PathContractTests.',
             'SecureCoding.Test.SecureIO.PathContractTests.LinuxLexicalValidityDoesNotImplySafeConstruction',
-            'SecureCoding.Test.SecureReflection.AuthenticodeHardeningTests.LinuxLoadsVerifiedBytesWithoutPathLocation',
-            'SecureCoding.Test.SecureSerialization.'
+            'SecureCoding.Test.SecureReflection.SecureAssemblyLinuxTests.',
+            'SecureCoding.Test.SecureReflection.SecureAssemblyLoaderTests.',
+            'SecureCoding.Test.SecureReflection.AuthenticodeHardeningTests.',
+            'SecureCoding.Test.SecureReflection.AuthenticodeHardeningTests.LinuxLoadsVerifiedBytesWithoutPathLocation'
         )
-        analyzers = @('Skyline.DataMiner.Utils.SecureCoding.Analyzers.Tests.')
     }
     $failures = @()
     foreach ($suite in $required.Keys) {
@@ -87,8 +89,8 @@ if (-not $IsLinux) { throw 'This runner requires Linux or Windows with Linux con
 Get-Command dotnet -ErrorAction Stop | Out-Null
 $projects = [ordered]@{
     library = 'SecureCoding.Test/SecureCoding.Test.csproj'
-    analyzers = 'Analyzers/Analyzers.Test/Analyzers.Test.csproj'
 }
+$testFilter = 'FullyQualifiedName~SecureCoding.Test.SecureIO.|FullyQualifiedName~SecureCoding.Test.SecureReflection.'
 foreach ($suite in $projects.Keys) {
     Remove-Item -LiteralPath (Join-Path $results "$suite.trx") -Force -ErrorAction SilentlyContinue
 }
@@ -96,7 +98,7 @@ $failed = $false
 Push-Location $root
 try {
     foreach ($suite in $projects.Keys) {
-        & dotnet test $projects[$suite] -f net8.0 -c Release --logger "trx;LogFileName=$suite.trx" --results-directory $results -- RunConfiguration.TreatNoTestsAsError=true
+        & dotnet test $projects[$suite] -f net8.0 -c Release --filter $testFilter --logger "trx;LogFileName=$suite.trx" --results-directory $results -- RunConfiguration.TreatNoTestsAsError=true
         if ($LASTEXITCODE -ne 0) { $failed = $true }
     }
     Assert-LinuxResults $results

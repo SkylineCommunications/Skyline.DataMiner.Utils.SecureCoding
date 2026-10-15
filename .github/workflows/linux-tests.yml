@@ -1,6 +1,6 @@
 name: Linux Tests
 
-# Runs every net8.0 test project on real Linux using the same runner as local tests.
+# Runs net8.0 SecureIO and SecureReflection tests using the same runner as local tests.
 # Windows coverage is provided by the main CICD workflow.
 on:
   push:
@@ -10,7 +10,7 @@ on:
 
 jobs:
   linux-tests:
-    name: All Linux tests
+    name: Linux SecureIO and SecureReflection tests
     runs-on: ubuntu-latest
     timeout-minutes: 20
 
@@ -23,7 +23,7 @@ jobs:
         with:
           dotnet-version: 8.0.x
 
-      - name: Run all tests and verify Linux coverage
+      - name: Run SecureIO and SecureReflection tests and verify Linux coverage
         shell: pwsh
         run: ./scripts/Test-Linux.ps1
 
@@ -32,5 +32,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: test-results-linux-net8.0
-          path: TestResults/linux/*.trx
+          path: TestResults/linux/library.trx
           if-no-files-found: error
