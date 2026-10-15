@@ -120,6 +120,14 @@
                 return CreateSecurePath(basePath);
             }
 
+            foreach (var segment in paths)
+            {
+                if (String.IsNullOrWhiteSpace(segment))
+                {
+                    throw new ArgumentException("Path segments cannot be null or whitespace.", nameof(paths));
+                }
+            }
+
             return new SecurePath(GetValidatedFullPath(paths, PlatformHelper.CurrentPlatform));
         }
 
@@ -202,7 +210,7 @@
                 throw new InvalidOperationException($"Base path '{basePath}' contains invalid characters");
             }
 
-            if (filename.ContainsInvalidFilenameCharacters(platform))
+            if (filename.ContainsInvalidFilenameCharacters(platform) || filename.ContainsInvalidPathCharacters(platform))
             {
                 throw new InvalidOperationException($"Filename '{filename}' contains invalid characters");
             }
@@ -233,7 +241,7 @@
             var lastPathSegment = paths[paths.Length - 1];
             if (lastPathSegment.IsFile())
             {
-                if (lastPathSegment.ContainsInvalidFilenameCharacters(platform))
+                if (lastPathSegment.ContainsInvalidFilenameCharacters(platform) || lastPathSegment.ContainsInvalidPathCharacters(platform))
                 {
                     throw new InvalidOperationException($"Filename '{lastPathSegment}' contains invalid characters");
                 }

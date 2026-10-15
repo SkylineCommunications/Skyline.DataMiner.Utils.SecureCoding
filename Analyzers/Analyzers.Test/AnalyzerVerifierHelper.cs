@@ -11,6 +11,12 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.Tests
 {
     public static class AnalyzerVerifierHelper
     {
+        internal static string ReadScenario(string relativePath)
+        {
+            return File.ReadAllText(Path.Combine(AppContext.BaseDirectory, relativePath.Replace('/', Path.DirectorySeparatorChar)))
+                .Replace("\r\n", "\n").Replace("\n", Environment.NewLine);
+        }
+
         /// <summary>
         /// Builds an instance of CSharpAnalyzerTest with the specified diagnostic analyzer type and default verifier,
         /// configured with the provided test case sources and optional package references.
@@ -34,7 +40,10 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.Tests
                 TestState =
                 {
                     Sources = { testCaseSources },
-                    ReferenceAssemblies = ReferenceAssemblies.Net.Net50.AddPackages(
+                    ReferenceAssemblies = new ReferenceAssemblies(
+                        "net8.0",
+                        new PackageIdentity("Microsoft.NETCore.App.Ref", "8.0.0"),
+                        Path.Combine("ref", "net8.0")).AddPackages(
                         packages == default
                         ? ImmutableArray<PackageIdentity>.Empty
                         : packages),

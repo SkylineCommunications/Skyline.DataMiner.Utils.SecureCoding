@@ -1,7 +1,6 @@
 name: Linux Tests
 
-# Runs SecureAssembly validation, loading and Authenticode hardening on real Linux,
-# alongside the remaining suite (including Linux SecurePath tests).
+# Runs every net8.0 test project on real Linux using the same runner as local tests.
 # Windows coverage is provided by the main CICD workflow.
 on:
   push:
@@ -11,17 +10,9 @@ on:
 
 jobs:
   linux-tests:
-    name: Linux tests (${{ matrix.suite }})
+    name: All Linux tests
     runs-on: ubuntu-latest
     timeout-minutes: 20
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - suite: secure-assembly
-            filter: FullyQualifiedName~SecureCoding.Test.SecureReflection.
-          - suite: remaining
-            filter: FullyQualifiedName!~SecureCoding.Test.SecureReflection.
 
     steps:
       - name: Checkout
@@ -32,23 +23,14 @@ jobs:
         with:
           dotnet-version: 8.0.x
 
-      - name: Restore
-        run: dotnet restore SecureCoding.Test/SecureCoding.Test.csproj
-
-      - name: Test (net8.0)
-        env:
-          TEST_FILTER: ${{ matrix.filter }}
-        run: >-
-          dotnet test SecureCoding.Test/SecureCoding.Test.csproj
-          -f net8.0 --no-restore
-          --filter "$TEST_FILTER"
-          --logger "trx;LogFileName=linux-net8.0.trx"
-          --results-directory TestResults
-          -- RunConfiguration.TreatNoTestsAsError=true
+      - name: Run all tests and verify Linux coverage
+        shell: pwsh
+        run: ./scripts/Test-Linux.ps1
 
       - name: Upload test results
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: test-results-linux-net8.0-${{ matrix.suite }}
-          path: TestResults/*.trx
+          name: test-results-linux-net8.0
+          path: TestResults/linux/*.trx
+          if-no-files-found: error

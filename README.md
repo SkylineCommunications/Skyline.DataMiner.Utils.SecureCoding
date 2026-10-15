@@ -11,6 +11,8 @@ Secure Coding is a NuGet library designed to streamline secure development by mi
 - **Customizable Security Components:** While offering predefined secure methods, Secure Coding also allows for customization based on specific project requirements. Developers can tailor security components to fit the unique needs of their applications.
 
 ## Installation
+For local Windows/Linux test commands and CI coverage checks, see [Testing](docs/Testing.md).
+
 To proceed with the installation of the NuGet packages, follow the instructions provided below. 
 
 ### Package Availability
