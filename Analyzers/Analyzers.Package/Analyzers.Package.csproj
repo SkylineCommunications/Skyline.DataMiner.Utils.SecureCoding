@@ -38,6 +38,7 @@
             <Pack>True</Pack>
             <PackagePath>\</PackagePath>
         </None>
+    <None Include="..\nuget\Icon.png" Pack="true" PackagePath="" />
 	    <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
         <None Update="tools\*.ps1" CopyToOutputDirectory="PreserveNewest" Pack="true" PackagePath="" />
     </ItemGroup>
