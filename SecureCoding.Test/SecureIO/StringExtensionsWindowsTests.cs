@@ -16,6 +16,11 @@
         public void IsPathValidSuccess(string path)
         {
             Assert.IsTrue(StringExtensions.IsPathValid(path, OSPlatform.Windows));
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                Assert.IsTrue(path.IsPathValid());
+                Assert.AreEqual(path, SecurePath.CreateSecurePath(path).ToString());
+            }
         }
 
         [TestMethod]
@@ -37,6 +42,11 @@
         public void IsPathValidFailure(string path)
         {
             Assert.IsFalse(StringExtensions.IsPathValid(path, OSPlatform.Windows));
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                Assert.IsFalse(path.IsPathValid());
+                Assert.Throws<InvalidOperationException>(() => SecurePath.CreateSecurePath(path));
+            }
         }
 
         [TestMethod]
@@ -55,7 +65,7 @@
         [DataRow("\n")]
         public void IsPathValidException(string path)
         {
-            Assert.Throws<ArgumentException>(() => { StringExtensions.IsPathValid(path); });
+            Assert.Throws<ArgumentException>(() => { StringExtensions.IsPathValid(path, OSPlatform.Windows); });
         }
     }
 }

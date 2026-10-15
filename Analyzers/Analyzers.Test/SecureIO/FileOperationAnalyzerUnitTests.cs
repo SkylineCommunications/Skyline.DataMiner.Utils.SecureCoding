@@ -13,9 +13,9 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.Tests.SecureIO
     [TestClass]
     public class FileOperationAnalyzerUnitTests
     {
-        private readonly string fileOperationAnalyzerTestCaseWithDiagnostics = File.ReadAllText(@"..\..\..\SecureIO\TestScenarios\FileOperationAnalyzer.test");
-        private readonly string fileOperationAnalyzerTestCaseWoDiagnostics = File.ReadAllText(@"..\..\..\SecureIO\TestScenarios\FileOperationAnalyzerNoDiagnostics.test");
-        private readonly string fileOperationFlowsTestCaseWoDiagnostics = File.ReadAllText(@"..\..\..\SecureIO\TestScenarios\FileOperationFlows.test");
+        private readonly string fileOperationAnalyzerTestCaseWithDiagnostics = AnalyzerVerifierHelper.ReadScenario("SecureIO/TestScenarios/FileOperationAnalyzer.test");
+        private readonly string fileOperationAnalyzerTestCaseWoDiagnostics = AnalyzerVerifierHelper.ReadScenario("SecureIO/TestScenarios/FileOperationAnalyzerNoDiagnostics.test");
+        private readonly string fileOperationFlowsTestCaseWoDiagnostics = AnalyzerVerifierHelper.ReadScenario("SecureIO/TestScenarios/FileOperationFlows.test");
 
         [TestMethod]
         public async Task VerifyUsageDiagnostic_ReportedDiagnostics()

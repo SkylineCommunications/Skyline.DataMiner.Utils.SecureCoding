@@ -26,9 +26,16 @@ namespace SecureCoding.Test.SecureIO
         [DataRow("/opt/skyline dataminer/file\"name.txt")]
         [DataRow(@"/opt/skyline dataminer/file\name.txt")]
         [DataRow("/opt/skyline dataminer/program%files")]
+        [DataRow("/opt/skyline dataminer/te:st.txt")]
+        [DataRow("/opt/skyline dataminer/te\\st.txt")]
         public void IsPathValidSuccess(string path)
         {
             Assert.IsTrue(StringExtensions.IsPathValid(path, OSPlatform.Linux));
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+            {
+                Assert.IsTrue(path.IsPathValid());
+                Assert.AreEqual(path, SecurePath.CreateSecurePath(path).ToString());
+            }
         }
 
         [TestMethod]
@@ -43,6 +50,11 @@ namespace SecureCoding.Test.SecureIO
         public void IsPathValidFailure(string path)
         {
             Assert.IsFalse(StringExtensions.IsPathValid(path, OSPlatform.Linux));
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+            {
+                Assert.IsFalse(path.IsPathValid());
+                Assert.Throws<InvalidOperationException>(() => SecurePath.CreateSecurePath(path));
+            }
         }
 
         [TestMethod]
@@ -53,6 +65,19 @@ namespace SecureCoding.Test.SecureIO
         public void IsPathValidException(string path)
         {
             Assert.Throws<ArgumentException>(() => { StringExtensions.IsPathValid(path, OSPlatform.Linux); });
+        }
+
+        [TestMethod]
+        [OSCondition(OperatingSystems.Linux)]
+        [DataRow("/tmp/file:name.txt", true)]
+        [DataRow(@"/tmp/file\name.txt", true)]
+        [DataRow("/tmp/file?.txt", true)]
+        [DataRow("/tmp/../file.txt", false)]
+        [DataRow("/tmp/file\0.txt", false)]
+        public void IsPathValidUsesCurrentPlatformOnLinux(string path, bool expected)
+        {
+            Assert.AreEqual(expected, path.IsPathValid());
+            Assert.AreEqual(path.IsPathValid(OSPlatform.Linux), path.IsPathValid());
         }
 
         [TestMethod]

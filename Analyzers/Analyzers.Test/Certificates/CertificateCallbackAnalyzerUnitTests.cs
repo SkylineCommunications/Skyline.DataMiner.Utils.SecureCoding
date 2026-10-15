@@ -11,8 +11,8 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.Tests.SecureIO
     [TestClass]
     public class CertificateCallbackAnalyzerUnitTests
     {
-        private readonly string testCase = File.ReadAllText(@"..\..\..\Certificates\TestScenarios\CertificateCallbackAnalyzer.test");
-        private readonly string testCaseValid = File.ReadAllText(@"..\..\..\Certificates\TestScenarios\CertificateCallbackAnalyzerNoDiagnostic.test");
+        private readonly string testCase = AnalyzerVerifierHelper.ReadScenario("Certificates/TestScenarios/CertificateCallbackAnalyzer.test");
+        private readonly string testCaseValid = AnalyzerVerifierHelper.ReadScenario("Certificates/TestScenarios/CertificateCallbackAnalyzerNoDiagnostic.test");
 
         [TestMethod]
         public async Task VerifyUsageDiagnostic()

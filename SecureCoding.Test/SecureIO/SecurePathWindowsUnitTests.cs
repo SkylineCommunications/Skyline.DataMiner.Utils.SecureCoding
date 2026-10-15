@@ -7,7 +7,7 @@
 
     [TestClass]
     [OSCondition(OperatingSystems.Windows)]
-    public class SecurePathUnitTests
+    public class SecurePathWindowsUnitTests
     {
         [TestMethod]
         // straightforward cases
@@ -20,6 +20,7 @@
         {
             string result = SecurePath.ConstructSecurePath(basePath, filename);
             Assert.AreEqual(expectedResult, result);
+            Assert.IsTrue(result.IsPathValid());
         }
 
         [TestMethod]
@@ -33,6 +34,7 @@
         {
             string result = SecurePath.ConstructSecurePathWithSubDirectories(basePath, filename);
             Assert.AreEqual(expectedResult, result);
+            Assert.IsTrue(result.IsPathValid());
         }
 
         [TestMethod]
@@ -52,6 +54,7 @@
         {
             string result = SecurePath.ConstructSecurePath(paths);
             Assert.AreEqual(expectedResult, result);
+            Assert.IsTrue(result.IsPathValid());
         }
 
         [TestMethod]
@@ -140,7 +143,6 @@
         [DataRow(@"C:\skyline dataminer", @"%programfiles%\test.txt", typeof(InvalidOperationException))]
         [DataRow(@"%programfiles%", @"C:\skyline dataminer\test.txt", typeof(InvalidOperationException))]
         // case where wrong directory delimiter is used
-        [DataRow(@"C:/skyline dataminer/", @"test.txt", typeof(InvalidOperationException))]
         [DataRow(@"C:/skyline dataminer/", @"test.txt", typeof(InvalidOperationException))]
         [DataRow(@"C:\skyline dataminer\", @"subdir/test.txt", typeof(InvalidOperationException))]
         // network paths
@@ -244,6 +246,7 @@
         {
             string result = SecurePath.ConstructSecurePath(paths);
             Assert.AreEqual(expectedResult, result);
+            Assert.IsTrue(result.IsPathValid());
         }
 
         [TestMethod]

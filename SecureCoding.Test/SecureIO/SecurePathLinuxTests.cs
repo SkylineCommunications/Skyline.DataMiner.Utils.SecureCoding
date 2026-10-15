@@ -29,6 +29,7 @@ namespace SecureCoding.Test.SecureIO
         {
             string result = SecurePath.ConstructSecurePath(basePath, filename);
             Assert.AreEqual(expectedResult, result);
+            Assert.IsTrue(result.IsPathValid());
         }
 
         [TestMethod]
@@ -73,6 +74,7 @@ namespace SecureCoding.Test.SecureIO
         {
             string result = SecurePath.ConstructSecurePathWithSubDirectories(basePath, relativePath);
             Assert.AreEqual(expectedResult, result);
+            Assert.IsTrue(result.IsPathValid());
         }
 
         [TestMethod]
@@ -119,6 +121,7 @@ namespace SecureCoding.Test.SecureIO
         {
             string result = SecurePath.ConstructSecurePath(paths);
             Assert.AreEqual(expectedResult, result);
+            Assert.IsTrue(result.IsPathValid());
         }
 
         [TestMethod]
@@ -161,6 +164,7 @@ namespace SecureCoding.Test.SecureIO
         {
             string result = SecurePath.CreateSecurePath(path);
             Assert.AreEqual(path, result);
+            Assert.IsTrue(path.IsPathValid());
         }
 
         [TestMethod]

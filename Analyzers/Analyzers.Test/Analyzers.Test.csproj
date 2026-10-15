@@ -27,4 +27,8 @@
     <ProjectReference Include="..\Analyzers\Analyzers.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Update="**\TestScenarios\*.test;**\TestScenarios\*.fix" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
 </Project>
