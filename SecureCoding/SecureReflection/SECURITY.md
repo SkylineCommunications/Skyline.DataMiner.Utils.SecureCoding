@@ -22,11 +22,13 @@ Windows retains WinVerifyTrust and Assembly.LoadFrom/LoadFile semantics. The pat
 
 `verifyCertificateChain: true` additionally requires an OS-trusted chain, code-signing EKU, validity at the verification time, and online revocation (excluding the root) with no ignored chain errors. Revocation unknown/offline fails closed. Retrieval timeout is 15 seconds per chain policy; this is not a global cancellation/deadline guarantee. Chain building may make network requests to certificate-provided endpoints; use network controls when processing hostile inputs.
 
-On the net8.0 asset, a single Microsoft Authenticode RFC 3161 timestamp attribute is decoded with the .NET Rfc3161TimestampToken API. Full token consumption, strong digest/key, nonfuture time, signature binding, TSA signature and TSA chain trust are required before applying its time to the signer chain. The netstandard2.0 asset cannot use this API and rejects RFC3161 chain-validation requests. It does not implement a substitute timestamp parser. Legacy timestamp-only files are evaluated at the current time.
+On the net10.0 asset, a single Microsoft Authenticode RFC 3161 timestamp attribute is decoded with the .NET Rfc3161TimestampToken API. Full token consumption, strong digest/key, nonfuture time, signature binding, TSA signature and TSA chain trust are required before applying its time to the signer chain. The netstandard2.0 asset cannot use this API and rejects RFC3161 chain-validation requests. It does not implement a substitute timestamp parser. Legacy timestamp-only files are evaluated at the current time.
 
 Linux trust anchors, revocation availability, and historical chain policy differ from Windows. Publicly signed fixtures can fail on a clean/offline machine. Do not suppress failures to make those fixtures pass.
 
 ## Loading compatibility
+
+On the net10.0 asset, certificate path and byte-array overloads use `X509CertificateLoader` and accept single X.509 certificates (DER or PEM), not PKCS12/PFX or PKCS7 containers. Load a container explicitly and pass an `X509Certificate2` instance when needed. The netstandard2.0 asset retains its legacy certificate constructors for full Framework compatibility.
 
 On Linux both public loader families use Assembly.Load(byte[]). Location is empty; load-context identity and dependency resolution differ from Assembly.LoadFrom/LoadFile. Dependencies are not resolved from the untrusted input directory automatically by this helper. Consumers needing custom dependency loading must implement and secure that policy separately. Windows loader behavior is unchanged.
 
@@ -45,6 +47,8 @@ Reviewed during implementation; these sources are references, not endorsements o
 No claim is made that a maintained drop-in, cross-platform C# WinVerifyTrust equivalent was found. The custom PE acceptance profile still needs independent specialist review and broader conformance/fuzz corpora. Tests do not establish absolute security.
 
 ## Validation evidence
+
+The following is historical evidence from before the .NET 10 / .NET Framework 4.8.1 retargeting, not validation of the current targets.
 
 - Full solution CLI restore/build succeeded. Windows library suite: net8.0 307 passed / 34 skipped; net462 299 passed / 34 skipped; no failures.
 - Actual Linux .NET 8 container: full library suite 184 passed / 32 skipped; separate reflection suite 35 passed / 1 skipped; no failures. Test totals differ because OSCondition excludes data-driven cases differently on each platform.

@@ -47,7 +47,7 @@ namespace SecureCoding.Test.SecureReflection
                 case "tampered-section": image[1024] ^= 1; break;
             }
 
-            using (var certificate = new X509Certificate2(Path.Combine(Items, "Signed.cer")))
+            using (var certificate = CertificateLoader.LoadCertificateFromFile(Path.Combine(Items, "Signed.cer")))
             {
                 Assert.Throws<SecurityException>(() => AuthenticodeVerifier.ValidateImage(image, false, new[] { certificate }));
             }
@@ -74,7 +74,7 @@ namespace SecureCoding.Test.SecureReflection
                 File.Copy(Path.Combine(Items, "Signed.dll"), path, true);
                 var snapshot = AuthenticodeVerifier.ReadImage(path);
                 File.Copy(Path.Combine(Items, "Tampered.dll"), path, true);
-                using (var certificate = new X509Certificate2(Path.Combine(Items, "Signed.cer")))
+                using (var certificate = CertificateLoader.LoadCertificateFromFile(Path.Combine(Items, "Signed.cer")))
                 {
                     AuthenticodeVerifier.ValidateImage(snapshot, false, new[] { certificate });
                     Assert.Throws<SecurityException>(() => AuthenticodeVerifier.ValidateImage(AuthenticodeVerifier.ReadImage(path), false, new[] { certificate }));
@@ -87,7 +87,7 @@ namespace SecureCoding.Test.SecureReflection
         public void TruncatedAndRandomInputsFailClosed()
         {
             var random = new Random(12345);
-            using (var certificate = new X509Certificate2(Path.Combine(Items, "Signed.cer")))
+            using (var certificate = CertificateLoader.LoadCertificateFromFile(Path.Combine(Items, "Signed.cer")))
             {
                 for (var length = 0; length < 512; length++)
                 {
@@ -102,7 +102,7 @@ namespace SecureCoding.Test.SecureReflection
         [OSCondition(OperatingSystems.Linux)]
         public void LinuxLoadsVerifiedBytesWithoutPathLocation()
         {
-            using (var certificate = new X509Certificate2(Path.Combine(Items, "SelfSigned.cer")))
+            using (var certificate = CertificateLoader.LoadCertificateFromFile(Path.Combine(Items, "SelfSigned.cer")))
             {
                 var assembly = SecureAssembly.LoadFrom(Path.Combine(Items, "SelfSigned.dll"), certificate, false);
                 Assert.AreEqual(string.Empty, assembly.Location);

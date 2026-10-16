@@ -103,7 +103,7 @@ if ($env:OS -eq 'Windows_NT') {
     }
     # Copy uncommitted source without sharing Windows build outputs with Linux.
     $command = 'set -euo pipefail; mkdir /work; tar -C /src --exclude=.git --exclude=.vs --exclude=bin --exclude=obj --exclude=TestResults -cf - . | tar -C /work -xf -; pwsh -NoProfile -File /work/scripts/Test-Linux.ps1 -ResultsDirectory /results'
-    & docker run --rm --mount "type=bind,source=$root,target=/src,readonly" --mount "type=bind,source=$results,target=/results" mcr.microsoft.com/dotnet/sdk:8.0 bash -c $command
+    & docker run --rm --mount "type=bind,source=$root,target=/src,readonly" --mount "type=bind,source=$results,target=/results" mcr.microsoft.com/dotnet/sdk:10.0 bash -c $command
     if ($LASTEXITCODE -ne 0) { throw "Linux test run failed (exit $LASTEXITCODE). See $results." }
     return
 }
@@ -123,7 +123,7 @@ try {
     foreach ($suite in $projects.Keys) {
         $filterArguments = @()
         if ($suite -eq 'library') { $filterArguments = @('--filter', $testFilter) }
-        & dotnet test $projects[$suite] -f net8.0 -c Release @filterArguments --logger "trx;LogFileName=$suite.trx" --results-directory $results -- RunConfiguration.TreatNoTestsAsError=true
+        & dotnet test $projects[$suite] -f net10.0 -c Release @filterArguments --logger "trx;LogFileName=$suite.trx" --results-directory $results -- RunConfiguration.TreatNoTestsAsError=true
         if ($LASTEXITCODE -ne 0) { $failed = $true }
     }
     Assert-LinuxResults $results

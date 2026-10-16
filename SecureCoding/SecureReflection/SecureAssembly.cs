@@ -17,7 +17,7 @@
     /// <remarks>
     /// Linux validates and loads the same bounded byte snapshot. Both loader families use
     /// <see cref="Assembly.Load(byte[])"/> on Linux: Location is empty and path-based dependency resolution is not preserved.
-    /// Linux chain verification fails closed when revocation cannot be established; RFC 3161 trust requires the net8.0 asset.
+    /// Linux chain verification fails closed when revocation cannot be established; RFC 3161 trust requires the net10.0 asset.
     /// Disabling chain verification still checks the signature, PE digest, signer policy and pinned certificate, but not dates or revocation.
     /// Windows retains WinVerifyTrust and path-loading behavior; callers must protect the file and parent directories from modification.
     /// Dependencies and native libraries are not validated. See SecureReflection/SECURITY.md for the supported security profile.
@@ -128,7 +128,7 @@
                    "To securely load these certificates, please use an overload that accepts an X509Certificate2 instance instead.");
             }
 
-            using (var certificate = new X509Certificate2(allowedCertificatePath))
+            using (var certificate = CertificateLoader.LoadCertificateFromFile(allowedCertificatePath))
             {
                 return ValidateAndLoad(assemblyPath, nameof(Assembly.LoadFrom), verifyCertificateChain, certificate);
             }
@@ -175,7 +175,7 @@
             }
 
             var certificates = allowedCertificatePaths
-                .Select(certificatePath => new X509Certificate2(certificatePath))
+                .Select(certificatePath => CertificateLoader.LoadCertificateFromFile(certificatePath))
                 .ToArray();
 
             try
@@ -227,7 +227,7 @@
                 throw new ArgumentException($"{nameof(allowedCertificate)} cannot be empty.");
             }
 
-            using (var certificate = new X509Certificate2(allowedCertificate))
+            using (var certificate = CertificateLoader.LoadCertificate(allowedCertificate))
             {
                 return ValidateAndLoad(assemblyPath, nameof(Assembly.LoadFrom), verifyCertificateChain, certificate);
             }
@@ -270,7 +270,7 @@
             }
 
             var certificates = allowedCertificates
-                .Select(certificate => new X509Certificate2(certificate))
+                .Select(certificate => CertificateLoader.LoadCertificate(certificate))
                 .ToArray();
 
             try
@@ -390,7 +390,7 @@
                    "To securely load these certificates, please use an overload that accepts an X509Certificate2 instance instead.");
             }
 
-            using (var certificate = new X509Certificate2(allowedCertificatePath))
+            using (var certificate = CertificateLoader.LoadCertificateFromFile(allowedCertificatePath))
             {
                 return ValidateAndLoad(assemblyPath, nameof(Assembly.LoadFile), verifyCertificateChain, certificate);
             }
@@ -437,7 +437,7 @@
             }
 
             var certificates = allowedCertificatePaths
-                .Select(certificatePath => new X509Certificate2(certificatePath))
+                .Select(certificatePath => CertificateLoader.LoadCertificateFromFile(certificatePath))
                 .ToArray();
 
             try
@@ -489,7 +489,7 @@
                 throw new ArgumentException($"{nameof(allowedCertificate)} cannot be empty.");
             }
 
-            using (var certificate = new X509Certificate2(allowedCertificate))
+            using (var certificate = CertificateLoader.LoadCertificate(allowedCertificate))
             {
                 return ValidateAndLoad(assemblyPath, nameof(Assembly.LoadFile), verifyCertificateChain, certificate);
             }
@@ -532,7 +532,7 @@
             }
 
             var certificates = allowedCertificates
-                .Select(certificate => new X509Certificate2(certificate))
+                .Select(certificate => CertificateLoader.LoadCertificate(certificate))
                 .ToArray();
 
             try

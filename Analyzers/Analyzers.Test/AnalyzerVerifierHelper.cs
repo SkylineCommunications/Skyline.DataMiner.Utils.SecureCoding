@@ -41,9 +41,9 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.Tests
                 {
                     Sources = { testCaseSources },
                     ReferenceAssemblies = new ReferenceAssemblies(
-                        "net8.0",
-                        new PackageIdentity("Microsoft.NETCore.App.Ref", "8.0.0"),
-                        Path.Combine("ref", "net8.0")).AddPackages(
+                        "net10.0",
+                        new PackageIdentity("Microsoft.NETCore.App.Ref", "10.0.0"),
+                        Path.Combine("ref", "net10.0")).AddPackages(
                         packages == default
                         ? ImmutableArray<PackageIdentity>.Empty
                         : packages),
@@ -88,9 +88,9 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.Tests
                 {
                     Sources = { testCaseSources },
                     ReferenceAssemblies = new ReferenceAssemblies(
-                        "net8.0",
-                        new PackageIdentity("Microsoft.NETCore.App.Ref", "8.0.0"),
-                        Path.Combine("ref", "net8.0")
+                        "net10.0",
+                        new PackageIdentity("Microsoft.NETCore.App.Ref", "10.0.0"),
+                        Path.Combine("ref", "net10.0")
                         )
                     .AddPackages(packageToAdd)
                 },
@@ -99,9 +99,9 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.Tests
                 {
                     Sources = { fixedStateSources },
                     ReferenceAssemblies = new ReferenceAssemblies(
-                        "net8.0",
-                        new PackageIdentity("Microsoft.NETCore.App.Ref","8.0.0"),
-                        Path.Combine("ref", "net8.0")
+                        "net10.0",
+                        new PackageIdentity("Microsoft.NETCore.App.Ref","10.0.0"),
+                        Path.Combine("ref", "net10.0")
                         )
                     .AddPackages(packageToAdd)
                 }

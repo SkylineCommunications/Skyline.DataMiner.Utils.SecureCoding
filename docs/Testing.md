@@ -12,17 +12,28 @@ Start Docker Desktop with its Linux engine, then run from the repository root:
 .\scripts\Test-Linux.ps1
 ```
 
-This one command uses the .NET 8 SDK Linux image, which includes PowerShell. It requires Docker Desktop's Linux engine and network access to the image registry and NuGet. No Python or shell-script installation is needed. The source is mounted read-only and copied into a private build directory (including uncommitted changes, excluding build outputs). Results are written to `TestResults/linux`. Test failures or invalid reports fail the command.
+This one command uses the .NET 10 SDK Linux image, which includes PowerShell. It requires Docker Desktop's Linux engine and network access to the image registry and NuGet. No Python or shell-script installation is needed. The source is mounted read-only and copied into a private build directory (including uncommitted changes, excluding build outputs). Results are written to `TestResults/linux`. Test failures or invalid reports fail the command.
 
-The same script runs directly on Linux with PowerShell 7 and the .NET 8 SDK, without Docker. It resolves project paths relative to itself; `-ResultsDirectory` optionally changes the report destination.
+The same script runs directly on Linux with PowerShell 7 and the .NET 10 SDK, without Docker. It resolves project paths relative to itself; `-ResultsDirectory` optionally changes the report destination.
+
+For the full Windows solution, use the .NET 10 SDK and the .NET Framework 4.8.1 runtime. Building the Framework target also requires its reference assemblies, either from the 4.8.1 Developer Pack or the SDK's implicit `Microsoft.NETFramework.ReferenceAssemblies` NuGet restore. Restore therefore needs access to NuGet when the targeting pack is not installed:
+
+```powershell
+dotnet build SecureCoding.sln
+dotnet test SecureCoding.Test/SecureCoding.Test.csproj -f net10.0
+dotnet test SecureCoding.Test/SecureCoding.Test.csproj -f net481
+dotnet test Analyzers/Analyzers.Test/Analyzers.Test.csproj -f net10.0
+```
+
+The main CI workflow delegates to an externally maintained reusable workflow. Its hosted runners must provide the .NET 10 SDK and Framework 4.8.1 runtime/reference assemblies; the local Linux workflow installs the .NET 10 SDK explicitly.
 
 ## What the Linux runner covers
 
-Both entry points use `scripts/Test-Linux.ps1`. It runs only tests in `SecureCoding.Test.SecureIO` and `SecureCoding.Test.SecureReflection`, targeting net8.0. This includes path construction, explicit Linux and Windows string rules, and reflection/Authenticode. Serialization and analyzer tests are excluded from both entry points. New tests within these two namespaces are automatically included by the namespace filter.
+Both entry points use `scripts/Test-Linux.ps1`. It runs library tests in `SecureCoding.Test.SecureIO` and `SecureCoding.Test.SecureReflection`, targeting net10.0, plus the analyzer test suite. Library coverage includes path construction, explicit Linux and Windows string rules, and reflection/Authenticode. Serialization library tests are excluded by the filter. New library tests within these two namespaces are automatically included by the namespace filter.
 
 The script rejects zero-test runs and checks the fresh `library.trx` report. It fails on unexpected skips, failures, a missing report, or missing required coverage. A class prefix in `$required` checks that at least one test from that class passed; it does not select tests or prove that every method was discovered. All discovered tests matching `$testFilter` run regardless of this list. Only the Windows path class, Windows runtime-dispatch method and Windows/Linux signature-comparison method may skip. Update this explicit allowlist when adding a genuinely Windows-only test; do not broadly exclude test namespaces.
 
-.NET Standard is a library contract, not a runnable test target. The net462 Windows tests exercise the netstandard2.0 library asset; net8.0 tests exercise the net8.0 asset on each OS. Linux does not run net462 or emulate Windows integration behavior.
+.NET Standard is a library contract, not a runnable test target. The net481 Windows tests exercise the netstandard2.0 library asset; net10.0 tests exercise the net10.0 asset on each OS. Linux does not run net481 or emulate Windows integration behavior.
 
 ## Path contracts and review scope
 

@@ -26,7 +26,7 @@ namespace SecureCoding.Test.SecureReflection
         [TestMethod]
         public void GetSigningCertificate_Linux_SignedAssembly_ReturnsSigner()
         {
-            using (var expected = new X509Certificate2(SignedCertificatePath))
+            using (var expected = CertificateLoader.LoadCertificateFromFile(SignedCertificatePath))
             using (var actual = SecureAssembly.GetSigningCertificate(SignedTestDllPath, OSPlatform.Linux))
             {
                 Assert.IsNotNull(actual);
@@ -43,7 +43,7 @@ namespace SecureCoding.Test.SecureReflection
         [TestMethod]
         public void ValidateAssemblySignature_Linux_SignedWithTrustedCertificate_HashOnly_Success()
         {
-            using (var certificate = new X509Certificate2(SignedCertificatePath))
+            using (var certificate = CertificateLoader.LoadCertificateFromFile(SignedCertificatePath))
             {
                 SecureAssembly.ValidateAssemblySignature(SignedTestDllPath, false, OSPlatform.Linux, certificate);
             }
@@ -52,7 +52,7 @@ namespace SecureCoding.Test.SecureReflection
         [TestMethod]
         public void ValidateAssemblySignature_Linux_SelfSigned_HashOnly_Success()
         {
-            using (var certificate = new X509Certificate2(SelfSignedCertificatePath))
+            using (var certificate = CertificateLoader.LoadCertificateFromFile(SelfSignedCertificatePath))
             {
                 SecureAssembly.ValidateAssemblySignature(SelfSignedTestDllPath, false, OSPlatform.Linux, certificate);
             }
@@ -61,7 +61,7 @@ namespace SecureCoding.Test.SecureReflection
         [TestMethod]
         public void ValidateAssemblySignature_Linux_SelfSigned_WithChain_Throws()
         {
-            using (var certificate = new X509Certificate2(SelfSignedCertificatePath))
+            using (var certificate = CertificateLoader.LoadCertificateFromFile(SelfSignedCertificatePath))
             {
                 var exception = Assert.Throws<SecurityException>(() => SecureAssembly.ValidateAssemblySignature(SelfSignedTestDllPath, true, OSPlatform.Linux, certificate));
                 StringAssert.Contains(exception.Message, "invalid signature");
@@ -71,7 +71,7 @@ namespace SecureCoding.Test.SecureReflection
         [TestMethod]
         public void ValidateAssemblySignature_Linux_WrongCertificate_Throws()
         {
-            using (var certificate = new X509Certificate2(SelfSignedCertificatePath))
+            using (var certificate = CertificateLoader.LoadCertificateFromFile(SelfSignedCertificatePath))
             {
                 var exception = Assert.Throws<SecurityException>(() => SecureAssembly.ValidateAssemblySignature(SignedTestDllPath, false, OSPlatform.Linux, certificate));
                 StringAssert.Contains(exception.Message, "does not match");
@@ -81,7 +81,7 @@ namespace SecureCoding.Test.SecureReflection
         [TestMethod]
         public void ValidateAssemblySignature_Linux_Unsigned_Throws()
         {
-            using (var certificate = new X509Certificate2(SignedCertificatePath))
+            using (var certificate = CertificateLoader.LoadCertificateFromFile(SignedCertificatePath))
             {
                 var exception = Assert.Throws<SecurityException>(() => SecureAssembly.ValidateAssemblySignature(UnsignedTestDllPath, false, OSPlatform.Linux, certificate));
                 StringAssert.Contains(exception.Message, "FileNotSigned");
@@ -91,7 +91,7 @@ namespace SecureCoding.Test.SecureReflection
         [TestMethod]
         public void ValidateAssemblySignature_Linux_Tampered_Throws()
         {
-            using (var certificate = new X509Certificate2(SignedCertificatePath))
+            using (var certificate = CertificateLoader.LoadCertificateFromFile(SignedCertificatePath))
             {
                 var exception = Assert.Throws<SecurityException>(() => SecureAssembly.ValidateAssemblySignature(TamperedTestDllPath, false, OSPlatform.Linux, certificate));
                 StringAssert.Contains(exception.Message, "invalid signature");
@@ -101,7 +101,7 @@ namespace SecureCoding.Test.SecureReflection
         [TestMethod]
         public void ValidateAssemblySignature_Linux_MissingFile_Throws()
         {
-            using (var certificate = new X509Certificate2(SignedCertificatePath))
+            using (var certificate = CertificateLoader.LoadCertificateFromFile(SignedCertificatePath))
             {
                 Assert.Throws<FileNotFoundException>(() => SecureAssembly.ValidateAssemblySignature(Path.Combine(TestItemsPath, "DoesNotExist.dll"), false, OSPlatform.Linux, certificate));
             }
@@ -110,7 +110,7 @@ namespace SecureCoding.Test.SecureReflection
         [TestMethod]
         public void ValidateAssemblySignature_UnsupportedPlatform_Throws()
         {
-            using (var certificate = new X509Certificate2(SignedCertificatePath))
+            using (var certificate = CertificateLoader.LoadCertificateFromFile(SignedCertificatePath))
             {
                 Assert.Throws<NotSupportedException>(() => SecureAssembly.ValidateAssemblySignature(SignedTestDllPath, false, OSPlatform.OSX, certificate));
             }
@@ -120,8 +120,8 @@ namespace SecureCoding.Test.SecureReflection
         [OSCondition(OperatingSystems.Windows)]
         public void ValidateAssemblySignature_Linux_And_Windows_Agree()
         {
-            using (var signed = new X509Certificate2(SignedCertificatePath))
-            using (var selfSigned = new X509Certificate2(SelfSignedCertificatePath))
+            using (var signed = CertificateLoader.LoadCertificateFromFile(SignedCertificatePath))
+            using (var selfSigned = CertificateLoader.LoadCertificateFromFile(SelfSignedCertificatePath))
             {
                 foreach (var platform in new[] { OSPlatform.Windows, OSPlatform.Linux })
                 {
