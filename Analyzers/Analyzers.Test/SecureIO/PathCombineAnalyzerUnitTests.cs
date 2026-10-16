@@ -14,8 +14,8 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.Tests.SecureIO
     [TestClass]
     public class PathCombineAnalyzerUnitTests
     {
-        private readonly string testCase = File.ReadAllText(@"..\..\..\SecureIO\TestScenarios\PathCombine.test");
-        private readonly string expectedCodeFix = File.ReadAllText(@"..\..\..\SecureIO\TestScenarios\PathCombine.fix");
+        private readonly string testCase = AnalyzerVerifierHelper.ReadScenario("SecureIO/TestScenarios/PathCombine.test");
+        private readonly string expectedCodeFix = AnalyzerVerifierHelper.ReadScenario("SecureIO/TestScenarios/PathCombine.fix");
 
         [TestMethod]
         public async Task VerifyUsageDiagnosticAndCodeFix()

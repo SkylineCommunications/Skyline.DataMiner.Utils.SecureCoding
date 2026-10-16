@@ -16,9 +16,9 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.Tests.SecureSerializati
     [TestClass]
     public class NewtonsoftDeserializationAnalyzerUnitTests
     {
-        private readonly string testCase = File.ReadAllText(@"..\..\..\SecureSerialization\Json\TestScenarios\JsonConvert.test");
-        private readonly string expectedCodefix = File.ReadAllText(@"..\..\..\SecureSerialization\Json\TestScenarios\JsonConvert.fix");
-        private readonly string knownTypesExpectedCodeFix = File.ReadAllText(@"..\..\..\SecureSerialization\Json\TestScenarios\JsonConvertKnownTypes.fix");
+        private readonly string testCase = AnalyzerVerifierHelper.ReadScenario("SecureSerialization/Json/TestScenarios/JsonConvert.test");
+        private readonly string expectedCodefix = AnalyzerVerifierHelper.ReadScenario("SecureSerialization/Json/TestScenarios/JsonConvert.fix");
+        private readonly string knownTypesExpectedCodeFix = AnalyzerVerifierHelper.ReadScenario("SecureSerialization/Json/TestScenarios/JsonConvertKnownTypes.fix");
 
         [TestMethod]
         public async Task VerifyNewtonsoftDeserializationUsageDiagnosticAndCodeFix()

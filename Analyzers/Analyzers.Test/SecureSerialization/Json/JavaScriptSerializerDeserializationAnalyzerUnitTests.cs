@@ -11,7 +11,7 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.Tests.SecureSerializati
     [TestClass]
     public class JavaScriptSerializerDeserializationAnalyzerUnitTests
     {
-        private readonly string testCase = File.ReadAllText(@"..\..\..\SecureSerialization\Json\TestScenarios\JavaScriptSerializer.test");
+        private readonly string testCase = AnalyzerVerifierHelper.ReadScenario("SecureSerialization/Json/TestScenarios/JavaScriptSerializer.test");
 
         [TestMethod]
         public async Task VerifyJavaScriptSerializerUsageDiagnostic()
@@ -30,7 +30,8 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.Tests.SecureSerializati
             var analyzerVerifier = AnalyzerVerifierHelper.BuildAnalyzerVerifier<JavaScriptSerializerDeserializationAnalyzer>(testCase);
 
             analyzerVerifier.TestState.ExpectedDiagnostics.AddRange(expectedDiagnostics);
-            analyzerVerifier.TestState.AdditionalReferences.Add(@"C:\Program Files (x86)\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.8\System.Web.Extensions.dll");
+            analyzerVerifier.TestState.ReferenceAssemblies = ReferenceAssemblies.NetFramework.Net48.Default
+                .AddAssemblies(System.Collections.Immutable.ImmutableArray.Create("System.Web.Extensions"));
 
             await analyzerVerifier.RunAsync();
         }

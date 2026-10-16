@@ -38,6 +38,9 @@ namespace Skyline.DataMiner.Utils.SecureCoding.SecureSerialization.Json
         /// </summary>
         /// <param name="info">The <see cref="SerializationInfo"/> that holds the serialized object data about the exception being thrown.</param>
         /// <param name="context">The <see cref="StreamingContext"/> that contains contextual information about the source or destination.</param>
+#if NET8_0_OR_GREATER
+        [Obsolete("Formatter-based serialization is obsolete.", DiagnosticId = "SYSLIB0051")]
+#endif
         protected KnownExploitableTypeException(SerializationInfo info, StreamingContext context) : base(info, context)
         {
         }
@@ -78,6 +81,9 @@ namespace Skyline.DataMiner.Utils.SecureCoding.SecureSerialization.Json
         /// </summary>
         /// <param name="info">The <see cref="SerializationInfo"/> that holds the serialized object data about the exception being thrown.</param>
         /// <param name="context">The <see cref="StreamingContext"/> that contains contextual information about the source or destination.</param>
+#if NET8_0_OR_GREATER
+        [Obsolete("Formatter-based serialization is obsolete.", DiagnosticId = "SYSLIB0051")]
+#endif
         protected UnknownTypeException(SerializationInfo info, StreamingContext context) : base(info, context)
         {
         }
@@ -118,6 +124,9 @@ namespace Skyline.DataMiner.Utils.SecureCoding.SecureSerialization.Json
         /// </summary>
         /// <param name="info">The <see cref="SerializationInfo"/> that holds the serialized object data about the exception being thrown.</param>
         /// <param name="context">The <see cref="StreamingContext"/> that contains contextual information about the source or destination.</param>
+#if NET8_0_OR_GREATER
+        [Obsolete("Formatter-based serialization is obsolete.", DiagnosticId = "SYSLIB0051")]
+#endif
         protected InsecureSerializationSettingsException(SerializationInfo info, StreamingContext context) : base(info, context)
         {
         }

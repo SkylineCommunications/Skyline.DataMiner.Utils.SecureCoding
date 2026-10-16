@@ -1,0 +1,36 @@
+name: Linux Tests
+
+# Runs net10.0 SecureIO and SecureReflection tests using the same runner as local tests.
+# Windows coverage is provided by the main CICD workflow.
+on:
+  push:
+    branches: ['**']
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  linux-tests:
+    name: Linux SecureIO and SecureReflection tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Run SecureIO and SecureReflection tests and verify Linux coverage
+        shell: pwsh
+        run: ./scripts/Test-Linux.ps1
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-linux-net10.0
+          path: TestResults/linux/*.trx
+          if-no-files-found: error
