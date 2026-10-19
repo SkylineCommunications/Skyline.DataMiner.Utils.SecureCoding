@@ -9,7 +9,14 @@ function Assert-LinuxResults([string]$Directory) {
     $windowsOnly = @(
         'SecureCoding.Test.SecureIO.SecurePathWindowsUnitTests.',
         'SecureCoding.Test.SecureIO.StringExtensionsWindowsTests.IsPathValidUsesCurrentPlatformOnWindows',
-        'SecureCoding.Test.SecureReflection.SecureAssemblyLinuxTests.ValidateAssemblySignature_Linux_And_Windows_Agree'
+        'SecureCoding.Test.SecureReflection.SecureAssemblyLinuxTests.ValidateAssemblySignature_Linux_And_Windows_Agree',
+        'SecureCoding.Test.SecureReflection.SecureAssemblySnapshotTests.WindowsNativeVerificationUsesHandleNotReplacedPath',
+        'SecureCoding.Test.SecureReflection.SecureAssemblySnapshotTests.WindowsSnapshotDeniesMutationAndIsDeletedAfterVerification',
+        'SecureCoding.Test.SecureReflection.SecureAssemblySnapshotTests.WindowsSnapshotFailsClosedAndReleasesInvalidSignature',
+        'SecureCoding.Test.SecureReflection.SecureAssemblySnapshotTests.WindowsPinsTheVerifiedSigner',
+        'SecureCoding.Test.SecureReflection.SecureAssemblySnapshotTests.WindowsRejectsCorruptCmsSignatureEvenWhenPeDigestIsUnchanged',
+        'SecureCoding.Test.SecureReflection.SecureAssemblySnapshotTests.WindowsNativeLayoutsMatchCurrentProcessAbi',
+        'SecureCoding.Test.SecureReflection.SecureAssemblySnapshotTests.WindowsConcurrentSnapshotsRemainIndependent'
     )
     $required = [ordered]@{
         library = @(
@@ -20,6 +27,9 @@ function Assert-LinuxResults([string]$Directory) {
             'SecureCoding.Test.SecureIO.PathContractTests.LinuxLexicalValidityDoesNotImplySafeConstruction',
             'SecureCoding.Test.SecureReflection.SecureAssemblyLinuxTests.',
             'SecureCoding.Test.SecureReflection.SecureAssemblyLoaderTests.',
+            'SecureCoding.Test.SecureReflection.SecureAssemblySnapshotTests.ValidatedSnapshotSurvivesSourceReplacementOrDeletion',
+            'SecureCoding.Test.SecureReflection.SecureAssemblySnapshotTests.PublicLoadersUseSnapshotAndReleaseSource',
+            'SecureCoding.Test.SecureReflection.SecureAssemblySnapshotTests.PublicLoadersRejectOversizedImages',
             'SecureCoding.Test.SecureReflection.AuthenticodeHardeningTests.',
             'SecureCoding.Test.SecureReflection.AuthenticodeHardeningTests.LinuxLoadsVerifiedBytesWithoutPathLocation'
         )

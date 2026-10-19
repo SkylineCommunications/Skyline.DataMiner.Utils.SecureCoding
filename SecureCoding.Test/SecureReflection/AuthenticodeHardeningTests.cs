@@ -16,6 +16,38 @@ namespace SecureCoding.Test.SecureReflection
         private static readonly string Items = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "SecureReflection", "TestItems"));
 
         [TestMethod]
+        [DataRow(false, false)]
+        [DataRow(false, true)]
+        [DataRow(true, false)]
+        [DataRow(true, true)]
+        public void UnapprovedSignerIsRejectedBeforeFileHashVerification(bool tamperFile, bool verifyCertificateChain)
+        {
+            var peImageBytes = AuthenticodeVerifier.ReadPeImage(Path.Combine(Items, "Signed.dll"));
+            if (tamperFile) peImageBytes[1024] ^= 1;
+
+            using (var certificate = CertificateLoader.LoadCertificateFromFile(Path.Combine(Items, "SelfSigned.cer")))
+            {
+                var exception = Assert.Throws<SecurityException>(() => AuthenticodeVerifier.ValidatePeImage(peImageBytes, verifyCertificateChain, new[] { certificate }));
+                Assert.AreEqual("The certificate of the assembly does not match the provided certificate.", exception.Message);
+            }
+        }
+
+        [TestMethod]
+        [DataRow(false)]
+        [DataRow(true)]
+        public void ApprovedSignerDoesNotBypassFileHashVerification(bool verifyCertificateChain)
+        {
+            var peImageBytes = AuthenticodeVerifier.ReadPeImage(Path.Combine(Items, "Signed.dll"));
+            peImageBytes[1024] ^= 1;
+
+            using (var certificate = CertificateLoader.LoadCertificateFromFile(Path.Combine(Items, "Signed.cer")))
+            {
+                var exception = Assert.Throws<SecurityException>(() => AuthenticodeVerifier.ValidatePeImage(peImageBytes, verifyCertificateChain, new[] { certificate }));
+                Assert.AreEqual($"Attempt to load an assembly with an invalid signature: {SecureAssembly.WinVerifyTrustResult.SignatureOrFileCorrupt}", exception.Message);
+            }
+        }
+
+        [TestMethod]
         [DataRow("optional-header")]
         [DataRow("directory-count")]
         [DataRow("overlapping-section")]
@@ -49,7 +81,7 @@ namespace SecureCoding.Test.SecureReflection
 
             using (var certificate = CertificateLoader.LoadCertificateFromFile(Path.Combine(Items, "Signed.cer")))
             {
-                Assert.Throws<SecurityException>(() => AuthenticodeVerifier.ValidateImage(image, false, new[] { certificate }));
+                Assert.Throws<SecurityException>(() => AuthenticodeVerifier.ValidatePeImage(image, false, new[] { certificate }));
             }
         }
 
@@ -60,7 +92,7 @@ namespace SecureCoding.Test.SecureReflection
             try
             {
                 using (var stream = File.OpenWrite(path)) stream.SetLength(256L * 1024 * 1024 + 1);
-                Assert.Throws<SecurityException>(() => AuthenticodeVerifier.ReadImage(path));
+                Assert.Throws<SecurityException>(() => AuthenticodeVerifier.ReadPeImage(path));
             }
             finally { File.Delete(path); }
         }
@@ -72,12 +104,12 @@ namespace SecureCoding.Test.SecureReflection
             try
             {
                 File.Copy(Path.Combine(Items, "Signed.dll"), path, true);
-                var snapshot = AuthenticodeVerifier.ReadImage(path);
+                var snapshot = AuthenticodeVerifier.ReadPeImage(path);
                 File.Copy(Path.Combine(Items, "Tampered.dll"), path, true);
                 using (var certificate = CertificateLoader.LoadCertificateFromFile(Path.Combine(Items, "Signed.cer")))
                 {
-                    AuthenticodeVerifier.ValidateImage(snapshot, false, new[] { certificate });
-                    Assert.Throws<SecurityException>(() => AuthenticodeVerifier.ValidateImage(AuthenticodeVerifier.ReadImage(path), false, new[] { certificate }));
+                    AuthenticodeVerifier.ValidatePeImage(snapshot, false, new[] { certificate });
+                    Assert.Throws<SecurityException>(() => AuthenticodeVerifier.ValidatePeImage(AuthenticodeVerifier.ReadPeImage(path), false, new[] { certificate }));
                 }
             }
             finally { File.Delete(path); }
@@ -93,7 +125,7 @@ namespace SecureCoding.Test.SecureReflection
                 {
                     var image = new byte[length];
                     random.NextBytes(image);
-                    Assert.Throws<SecurityException>(() => AuthenticodeVerifier.ValidateImage(image, false, new[] { certificate }));
+                    Assert.Throws<SecurityException>(() => AuthenticodeVerifier.ValidatePeImage(image, false, new[] { certificate }));
                 }
             }
         }
@@ -164,12 +196,12 @@ namespace SecureCoding.Test.SecureReflection
                     var image = ResignFixture(certificate, digest);
                     if (accepted)
                     {
-                        AuthenticodeVerifier.ValidateImage(image, false, new[] { certificate });
-                        Assert.Throws<SecurityException>(() => AuthenticodeVerifier.ValidateImage(image, true, new[] { certificate }));
+                        AuthenticodeVerifier.ValidatePeImage(image, false, new[] { certificate });
+                        Assert.Throws<SecurityException>(() => AuthenticodeVerifier.ValidatePeImage(image, true, new[] { certificate }));
                     }
                     else
                     {
-                        Assert.Throws<SecurityException>(() => AuthenticodeVerifier.ValidateImage(image, false, new[] { certificate }));
+                        Assert.Throws<SecurityException>(() => AuthenticodeVerifier.ValidatePeImage(image, false, new[] { certificate }));
                     }
                 }
             }

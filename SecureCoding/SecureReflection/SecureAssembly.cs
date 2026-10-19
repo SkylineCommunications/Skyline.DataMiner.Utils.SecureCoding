@@ -15,11 +15,12 @@
     /// Provides methods to securely work with assemblies.
     /// </summary>
     /// <remarks>
-    /// Linux validates and loads the same bounded byte snapshot. Both loader families use
-    /// <see cref="Assembly.Load(byte[])"/> on Linux: Location is empty and path-based dependency resolution is not preserved.
+    /// Both platforms validate and load the same bounded byte snapshot. Both loader families use
+    /// <see cref="Assembly.Load(byte[])"/>: Location is empty and path-based dependency resolution is not preserved.
     /// Linux chain verification fails closed when revocation cannot be established; RFC 3161 trust requires the net10.0 asset.
-    /// Disabling chain verification still checks the signature, PE digest, signer policy and pinned certificate, but not dates or revocation.
-    /// Windows retains WinVerifyTrust and path-loading behavior; callers must protect the file and parent directories from modification.
+    /// On Linux, disabling chain verification still checks the signature, PE digest, signer policy and pinned certificate, but not dates or revocation.
+    /// Windows uses WinVerifyTrust on a handle-bound temporary copy of the snapshot, including its verified signer identity.
+    /// Windows also verifies the CMS signature independently of chain trust; a file hash and certificate alone do not authenticate the publisher.
     /// Dependencies and native libraries are not validated. See SecureReflection/SECURITY.md for the supported security profile.
     /// </remarks>
     public class SecureAssembly
@@ -31,7 +32,7 @@
         /// <param name="allowedCertificate"><see cref="X509Certificate2"/> representing the allowed certificates for the assembly.</param>
         /// <param name="verifyCertificateChain">
         /// If <see langword="true"/> (default), performs full certificate chain verification;  
-        /// if <see langword="false"/>, only the file hash is checked, bypassing certificate chain validation.
+        /// if <see langword="false"/>, verifies the signature, file digest and allowed signer without requiring certificate chain trust.
         /// </param>
         /// <returns>The loaded <see cref="Assembly"/>.</returns>
         /// <exception cref="ArgumentException">Thrown if <paramref name="assemblyPath"/> is null or whitespace.</exception>
@@ -62,7 +63,7 @@
         /// <param name="allowedCertificates">An array of <see cref="X509Certificate2"/> representing the allowed certificates for the assembly.</param>
         /// <param name="verifyCertificateChain">
         /// If <see langword="true"/> (default), performs full certificate chain verification;  
-        /// if <see langword="false"/>, only the file hash is checked, bypassing certificate chain validation.
+        /// if <see langword="false"/>, verifies the signature, file digest and allowed signer without requiring certificate chain trust.
         /// </param>
         /// <returns>The loaded <see cref="Assembly"/>.</returns>
         /// <exception cref="ArgumentException">Thrown if <paramref name="assemblyPath"/> is null or whitespace.</exception>
@@ -100,7 +101,7 @@
         /// <param name="allowedCertificatePath">Certificate path representing the allowed certificate for the assembly.</param>
         /// <param name="verifyCertificateChain">
         /// If <see langword="true"/> (default), performs full certificate chain verification;  
-        /// if <see langword="false"/>, only the file hash is checked, bypassing certificate chain validation.
+        /// if <see langword="false"/>, verifies the signature, file digest and allowed signer without requiring certificate chain trust.
         /// </param>
         /// <returns>The loaded <see cref="Assembly"/>.</returns>
         /// <exception cref="ArgumentException">Thrown if <paramref name="assemblyPath"/> is null or whitespace, or if <paramref name="allowedCertificatePath"/> is empty.</exception>
@@ -141,7 +142,7 @@
         /// <param name="allowedCertificatePaths">An array of certificate paths representing the allowed certificates for the assembly.</param>
         /// <param name="verifyCertificateChain">
         /// If <see langword="true"/> (default), performs full certificate chain verification;  
-        /// if <see langword="false"/>, only the file hash is checked, bypassing certificate chain validation.
+        /// if <see langword="false"/>, verifies the signature, file digest and allowed signer without requiring certificate chain trust.
         /// </param>
         /// <returns>The loaded <see cref="Assembly"/>.</returns>
         /// <exception cref="ArgumentException">Thrown if <paramref name="assemblyPath"/> is null or whitespace, or if <paramref name="allowedCertificatePaths"/> is empty.</exception>
@@ -174,13 +175,16 @@
                    "To securely load these certificates, please use an overload that accepts an X509Certificate2 instance instead.");
             }
 
-            var certificates = allowedCertificatePaths
-                .Select(certificatePath => CertificateLoader.LoadCertificateFromFile(certificatePath))
-                .ToArray();
+            var certificates = new List<X509Certificate2>();
 
             try
             {
-                return ValidateAndLoad(assemblyPath, nameof(Assembly.LoadFrom), verifyCertificateChain, certificates);
+                foreach (var certificatePath in allowedCertificatePaths)
+                {
+                    certificates.Add(CertificateLoader.LoadCertificateFromFile(certificatePath));
+                }
+
+                return ValidateAndLoad(assemblyPath, nameof(Assembly.LoadFrom), verifyCertificateChain, certificates.ToArray());
             }
             finally
             {
@@ -201,7 +205,7 @@
         /// <param name="allowedCertificate">Byte array representing the allowed certificate for the assembly.</param>
         /// <param name="verifyCertificateChain">
         /// If <see langword="true"/> (default), performs full certificate chain verification;  
-        /// if <see langword="false"/>, only the file hash is checked, bypassing certificate chain validation.
+        /// if <see langword="false"/>, verifies the signature, file digest and allowed signer without requiring certificate chain trust.
         /// </param>
         /// <returns>The loaded <see cref="Assembly"/>.</returns>
         /// <exception cref="ArgumentException">Thrown if <paramref name="assemblyPath"/> is null or whitespace, or if <paramref name="allowedCertificate"/> is empty.</exception>
@@ -243,7 +247,7 @@
         /// <param name="allowedCertificates">An enumerable of byte arrays representing the allowed certificates for the assembly.</param>
         /// <param name="verifyCertificateChain">
         /// If <see langword="true"/> (default), performs full certificate chain verification;  
-        /// if <see langword="false"/>, only the file hash is checked, bypassing certificate chain validation.
+        /// if <see langword="false"/>, verifies the signature, file digest and allowed signer without requiring certificate chain trust.
         /// </param>
         /// <returns>The loaded <see cref="Assembly"/>.</returns>
         /// <exception cref="ArgumentException">Thrown if <paramref name="assemblyPath"/> is null or whitespace, or if <paramref name="allowedCertificates"/> is empty.</exception>
@@ -293,7 +297,7 @@
         /// <param name="allowedCertificate"><see cref="X509Certificate2"/> representing the allowed certificates for the assembly.</param>
         /// <param name="verifyCertificateChain">
         /// If <see langword="true"/> (default), performs full certificate chain verification;  
-        /// if <see langword="false"/>, only the file hash is checked, bypassing certificate chain validation.
+        /// if <see langword="false"/>, verifies the signature, file digest and allowed signer without requiring certificate chain trust.
         /// </param>
         /// <returns>The loaded <see cref="Assembly"/>.</returns>
         /// <exception cref="ArgumentException">Thrown if <paramref name="assemblyPath"/> is null or whitespace.</exception>
@@ -324,7 +328,7 @@
         /// <param name="allowedCertificates">An array of <see cref="X509Certificate2"/> representing the allowed certificates for the assembly.</param>
         /// <param name="verifyCertificateChain">
         /// If <see langword="true"/> (default), performs full certificate chain verification;  
-        /// if <see langword="false"/>, only the file hash is checked, bypassing certificate chain validation.
+        /// if <see langword="false"/>, verifies the signature, file digest and allowed signer without requiring certificate chain trust.
         /// </param>
         /// <returns>The loaded <see cref="Assembly"/>.</returns>
         /// <exception cref="ArgumentException">Thrown if <paramref name="assemblyPath"/> is null or whitespace.</exception>
@@ -362,7 +366,7 @@
         /// <param name="allowedCertificatePath">Certificate path representing the allowed certificate for the assembly.</param>
         /// <param name="verifyCertificateChain">
         /// If <see langword="true"/> (default), performs full certificate chain verification;  
-        /// if <see langword="false"/>, only the file hash is checked, bypassing certificate chain validation.
+        /// if <see langword="false"/>, verifies the signature, file digest and allowed signer without requiring certificate chain trust.
         /// </param>
         /// <returns>The loaded <see cref="Assembly"/>.</returns>
         /// <exception cref="ArgumentException">Thrown if <paramref name="assemblyPath"/> is null or whitespace, or if <paramref name="allowedCertificatePath"/> is empty.</exception>
@@ -403,7 +407,7 @@
         /// <param name="allowedCertificatePaths">An array of certificate paths representing the allowed certificates for the assembly.</param>
         /// <param name="verifyCertificateChain">
         /// If <see langword="true"/> (default), performs full certificate chain verification;  
-        /// if <see langword="false"/>, only the file hash is checked, bypassing certificate chain validation.
+        /// if <see langword="false"/>, verifies the signature, file digest and allowed signer without requiring certificate chain trust.
         /// </param>
         /// <returns>The loaded <see cref="Assembly"/>.</returns>
         /// <exception cref="ArgumentException">Thrown if <paramref name="assemblyPath"/> is null or whitespace, or if <paramref name="allowedCertificatePaths"/> is empty.</exception>
@@ -436,13 +440,16 @@
                    "To securely load these certificates, please use an overload that accepts an X509Certificate2 instance instead.");
             }
 
-            var certificates = allowedCertificatePaths
-                .Select(certificatePath => CertificateLoader.LoadCertificateFromFile(certificatePath))
-                .ToArray();
+            var certificates = new List<X509Certificate2>();
 
             try
             {
-                return ValidateAndLoad(assemblyPath, nameof(Assembly.LoadFile), verifyCertificateChain, certificates);
+                foreach (var certificatePath in allowedCertificatePaths)
+                {
+                    certificates.Add(CertificateLoader.LoadCertificateFromFile(certificatePath));
+                }
+
+                return ValidateAndLoad(assemblyPath, nameof(Assembly.LoadFile), verifyCertificateChain, certificates.ToArray());
             }
             finally
             {
@@ -463,7 +470,7 @@
         /// <param name="allowedCertificate">Byte array representing the allowed certificate for the assembly.</param>
         /// <param name="verifyCertificateChain">
         /// If <see langword="true"/> (default), performs full certificate chain verification;  
-        /// if <see langword="false"/>, only the file hash is checked, bypassing certificate chain validation.
+        /// if <see langword="false"/>, verifies the signature, file digest and allowed signer without requiring certificate chain trust.
         /// </param>
         /// <returns>The loaded <see cref="Assembly"/>.</returns>
         /// <exception cref="ArgumentException">Thrown if <paramref name="assemblyPath"/> is null or whitespace, or if <paramref name="allowedCertificate"/> is empty.</exception>
@@ -505,7 +512,7 @@
         /// <param name="allowedCertificates">An enumerable of byte arrays representing the allowed certificates for the assembly.</param>
         /// <param name="verifyCertificateChain">
         /// If <see langword="true"/> (default), performs full certificate chain verification;  
-        /// if <see langword="false"/>, only the file hash is checked, bypassing certificate chain validation.
+        /// if <see langword="false"/>, verifies the signature, file digest and allowed signer without requiring certificate chain trust.
         /// </param>
         /// <returns>The loaded <see cref="Assembly"/>.</returns>
         /// <exception cref="ArgumentException">Thrown if <paramref name="assemblyPath"/> is null or whitespace, or if <paramref name="allowedCertificates"/> is empty.</exception>
@@ -575,6 +582,12 @@
         /// <exception cref="NotSupportedException">Thrown if the platform is not supported.</exception>
         internal static void ValidateAssemblySignature(string assemblyPath, bool verifyCertificateChain, OSPlatform platform, params X509Certificate2[] allowedCertificates)
         {
+            ReadValidatedAssembly(assemblyPath, verifyCertificateChain, platform, allowedCertificates);
+        }
+
+        // The returned bytes are the complete validation-to-load boundary. Never reopen the input path after this call.
+        internal static byte[] ReadValidatedAssembly(string assemblyPath, bool verifyCertificateChain, OSPlatform platform, params X509Certificate2[] allowedCertificates)
+        {
             PlatformHelper.EnsureSupported(platform);
 
             if (allowedCertificates == null)
@@ -587,40 +600,72 @@
                 throw new FileNotFoundException($"The file '{assemblyPath}' does not exist.", assemblyPath);
             }
 
-            if (platform == OSPlatform.Linux)
+            var snapshot = AuthenticodeVerifier.ReadPeImage(assemblyPath);
+            switch (platform)
             {
-                AuthenticodeVerifier.ValidateImage(AuthenticodeVerifier.ReadImage(assemblyPath), verifyCertificateChain, allowedCertificates);
-                return;
+                case var windows when windows == OSPlatform.Windows:
+                    ValidateWindowsAssemblySignature(snapshot, verifyCertificateChain, allowedCertificates);
+                    break;
+                case var linux when linux == OSPlatform.Linux:
+                    AuthenticodeVerifier.ValidatePeImage(snapshot, verifyCertificateChain, allowedCertificates);
+                    break;
+                default:
+                    throw new NotSupportedException($"The platform '{platform}' is not supported.");
             }
 
-            X509Certificate2 assemblyCertificate;
+            return snapshot;
+        }
+
+        private static void ValidateWindowsAssemblySignature(byte[] snapshot, bool verifyCertificateChain, X509Certificate2[] allowedCertificates)
+        {
+            // CreateNew prevents pre-created files/links from being followed. Keep this handle open with
+            // no write/delete sharing through verification. A new file also has no pre-existing writable mappings.
+            // WinVerifyTrust receives the handle, not just a name that could be redirected through a parent junction.
+            using (var file = CreateWindowsSnapshot(snapshot))
+            {
+                ValidateWindowsSnapshot(file, verifyCertificateChain, allowedCertificates);
+            }
+        }
+
+        // Internal for deterministic tests of sharing and cleanup. The caller must dispose the returned stream.
+        internal static FileStream CreateWindowsSnapshot(byte[] snapshot)
+        {
+            var temporaryPath = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N") + ".dll");
+            var file = new FileStream(temporaryPath, FileMode.CreateNew, FileAccess.ReadWrite, FileShare.Read, 4096, FileOptions.DeleteOnClose);
             try
             {
-                // Verify if the assembly is signed and retrieve the signing certificate
-                assemblyCertificate = GetSigningCertificate(assemblyPath, platform);
+                file.Write(snapshot, 0, snapshot.Length);
+                file.Flush();
+                file.Position = 0;
+                return file;
             }
-            catch (CryptographicException ex)
+            catch
             {
-                throw new SecurityException("The assembly's Authenticode signer certificate could not be decoded.", ex);
+                file.Dispose();
+                throw;
             }
+        }
 
-            if (assemblyCertificate is null)
+        // The production caller supplies a newly created, exclusively writable snapshot, kept open throughout
+        // verification. This seam also lets tests prove the native verifier uses the handle instead of FileStream.Name.
+        internal static void ValidateWindowsSnapshot(FileStream file, bool verifyCertificateChain, X509Certificate2[] allowedCertificates)
+        {
+            using (var fileInfo = new WINTRUST_FILE_INFO(file.Name, file.SafeFileHandle.DangerousGetHandle()))
+            using (var trustData = new WINTRUST_DATA(fileInfo, verifyCertificateChain))
             {
-                throw new SecurityException("Attempt to load an unsigned assembly.");
-            }
-
-            using (assemblyCertificate)
-            {
-                // Validate the signature before trusting any identity from the signed content.
-                if (!TryValidateSignature(assemblyPath, verifyCertificateChain, platform, out var result))
+                var result = (WinVerifyTrustResult)(uint)WinVerifyTrust(new IntPtr(-1), in WINTRUST_ACTION_GENERIC_VERIFY_V2, trustData);
+                if (result != WinVerifyTrustResult.Success)
                 {
                     throw new SecurityException($"Attempt to load an assembly with an invalid signature: {result}");
                 }
 
-                // Verify if it's one of the allowed certificates
-                if (!allowedCertificates.Any(certificate => certificate != null && string.Equals(certificate.Thumbprint, assemblyCertificate.Thumbprint, StringComparison.OrdinalIgnoreCase)))
+                // Pin the signer from THIS successful verification, never from a second path-based parse.
+                using (var assemblyCertificate = trustData.GetVerifiedSigner())
                 {
-                    throw new SecurityException("The certificate of the assembly does not match the provided certificate.");
+                    if (!allowedCertificates.Any(certificate => certificate != null && certificate.RawData.SequenceEqual(assemblyCertificate.RawData)))
+                    {
+                        throw new SecurityException("The certificate of the assembly does not match the provided certificate.");
+                    }
                 }
             }
         }
@@ -684,64 +729,25 @@
         private static Assembly ValidateAndLoad(string assemblyPath, string loadAssemblyMethod, bool verifyCertificateChain, params X509Certificate2[] certificates)
         {
             var platform = PlatformHelper.CurrentPlatform;
-            if (platform == OSPlatform.Linux)
-            {
-                if (!assemblyPath.IsPathValid(platform))
-                {
-                    throw new InvalidOperationException($"Assembly path '{assemblyPath}' contains invalid characters");
-                }
-
-                var image = AuthenticodeVerifier.ReadImage(assemblyPath);
-                AuthenticodeVerifier.ValidateImage(image, verifyCertificateChain, certificates);
-                // Never reopen a caller-controlled pathname after verification.
-                return Assembly.Load(image);
-            }
-
-            ValidateAssemblySignature(assemblyPath, verifyCertificateChain, platform, certificates);
-            return LoadAssembly(assemblyPath, loadAssemblyMethod);
-        }
-
-        private static Assembly LoadAssembly(string assemblyPath, string loadAssemblyMethod)
-        {
-            if (!File.Exists(assemblyPath))
-            {
-                throw new FileNotFoundException(assemblyPath);
-            }
-
-            if (!assemblyPath.IsPathValid())
+            PlatformHelper.EnsureSupported(platform);
+            if (!assemblyPath.IsPathValid(platform))
             {
                 throw new InvalidOperationException($"Assembly path '{assemblyPath}' contains invalid characters");
             }
 
-            if (loadAssemblyMethod == nameof(Assembly.LoadFrom))
-            {
-                return Assembly.LoadFrom(assemblyPath);
-            }
-            else if (loadAssemblyMethod == nameof(Assembly.LoadFile))
-            {
-                return Assembly.LoadFile(assemblyPath);
-            }
-            else
+            var snapshot = ReadValidatedAssembly(assemblyPath, verifyCertificateChain, platform, certificates);
+            return LoadAssembly(snapshot, loadAssemblyMethod);
+        }
+
+        private static Assembly LoadAssembly(byte[] snapshot, string loadAssemblyMethod)
+        {
+            if (loadAssemblyMethod != nameof(Assembly.LoadFrom) && loadAssemblyMethod != nameof(Assembly.LoadFile))
             {
                 throw new NotSupportedException($"{loadAssemblyMethod} is not supported");
             }
-        }
 
-        private static bool TryValidateSignature(string fileName, bool verifyCertificateChain, OSPlatform platform, out WinVerifyTrustResult result)
-        {
-            if (platform != OSPlatform.Windows)
-            {
-                return AuthenticodeVerifier.TryValidateSignature(fileName, verifyCertificateChain, out result);
-            }
-
-            using (var fileInfo = new WINTRUST_FILE_INFO(fileName))
-            using (var trustData = new WINTRUST_DATA(fileInfo, verifyCertificateChain))
-            {
-                var noInteractiveUser = new IntPtr(-1);
-                result = (WinVerifyTrustResult)(uint)WinVerifyTrust(noInteractiveUser, in WINTRUST_ACTION_GENERIC_VERIFY_V2, trustData);
-
-                return result == WinVerifyTrustResult.Success;
-            }
+            // Both API families load only the verified snapshot; neither resolves the source pathname again.
+            return Assembly.Load(snapshot);
         }
 
         #region WinTrust
@@ -872,8 +878,68 @@
 
         private static readonly Guid WINTRUST_ACTION_GENERIC_VERIFY_V2 = new Guid("00AAC56B-CD44-11D0-8CC2-00C04FC295EE");
 
+        [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
         [DllImport("wintrust.dll", ExactSpelling = true)]
-        private static extern int WinVerifyTrust(IntPtr hwnd, in Guid pgActionID, WINTRUST_DATA pWVTData);
+        private static extern int WinVerifyTrust(IntPtr hwnd, in Guid pgActionID, [In, Out] WINTRUST_DATA pWVTData);
+
+        [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+        [DllImport("wintrust.dll", ExactSpelling = true)]
+        private static extern IntPtr WTHelperProvDataFromStateData(IntPtr stateData);
+
+        [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+        [DllImport("wintrust.dll", ExactSpelling = true)]
+        private static extern IntPtr WTHelperGetProvSignerFromChain(IntPtr providerData, uint signerIndex, [MarshalAs(UnmanagedType.Bool)] bool counterSigner, uint counterSignerIndex);
+
+        [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+        [DllImport("wintrust.dll", ExactSpelling = true)]
+        private static extern IntPtr WTHelperGetProvCertFromChain(IntPtr signer, uint certificateIndex);
+
+        [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+        [DllImport("crypt32.dll", ExactSpelling = true, SetLastError = true)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        private static extern bool CryptMsgControl(IntPtr message, uint flags, uint controlType, ref MessageSignatureVerification parameters);
+
+        // Documented CRYPT_PROVIDER_DATA prefix through hMsg. Pointer-sized fields retain native x86/x64 alignment.
+        [StructLayout(LayoutKind.Sequential)]
+        private struct ProviderDataHeader
+        {
+            public uint StructSize;
+            public IntPtr WintrustData;
+            public int OpenedFile;
+            public IntPtr ParentWindow;
+            public IntPtr ActionId;
+            public IntPtr CryptoProvider;
+            public uint Error;
+            public uint SecuritySettings;
+            public uint PolicySettings;
+            public IntPtr Functions;
+            public uint TrustStepErrorCount;
+            public IntPtr TrustStepErrors;
+            public uint StoreCount;
+            public IntPtr Stores;
+            public uint Encoding;
+            public IntPtr Message;
+        }
+
+        // CMSG_CTRL_VERIFY_SIGNATURE_EX_PARA with CMSG_VERIFY_SIGNER_CERT (2).
+        [StructLayout(LayoutKind.Sequential)]
+        private struct MessageSignatureVerification
+        {
+            public uint StructSize;
+            public IntPtr CryptoProvider;
+            public uint SignerIndex;
+            public uint SignerType;
+            public IntPtr Signer;
+        }
+
+        // Only the documented leading fields of CRYPT_PROVIDER_CERT are needed. Default native alignment
+        // places the certificate pointer at offset 4 on x86 and offset 8 on x64.
+        [StructLayout(LayoutKind.Sequential)]
+        private struct ProviderCertificateHeader
+        {
+            public uint StructSize;
+            public IntPtr Certificate;
+        }
 
         [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
         private class WINTRUST_FILE_INFO : IDisposable
@@ -883,9 +949,10 @@
             IntPtr hFile = IntPtr.Zero;             // optional, open handle to FilePath
             IntPtr pgKnownSubject = IntPtr.Zero;    // optional, subject type if it is known
 
-            public WINTRUST_FILE_INFO(string filePath)
+            public WINTRUST_FILE_INFO(string filePath, IntPtr fileHandle)
             {
                 pszFilePath = Marshal.StringToCoTaskMemUni(filePath);
+                hFile = fileHandle; // Borrowed; the enclosing FileStream owns the handle through state closure.
             }
 
             public void Dispose()
@@ -913,7 +980,7 @@
             WinTrustDataChoice UnionChoice = WinTrustDataChoice.File;
             // individual file
             IntPtr FileInfoPtr;
-            WinTrustDataStateAction StateAction = WinTrustDataStateAction.Ignore;
+            WinTrustDataStateAction StateAction = WinTrustDataStateAction.Verify;
             IntPtr StateData = IntPtr.Zero;
             String URLReference = null;
             // Windows 7 and later 
@@ -933,8 +1000,57 @@
                 Marshal.StructureToPtr(wtfiData, FileInfoPtr, false);
             }
 
+            public X509Certificate2 GetVerifiedSigner()
+            {
+                var provider = WTHelperProvDataFromStateData(StateData);
+                var signer = provider == IntPtr.Zero ? IntPtr.Zero : WTHelperGetProvSignerFromChain(provider, 0, false, 0);
+                var certificate = signer == IntPtr.Zero ? IntPtr.Zero : WTHelperGetProvCertFromChain(signer, 0);
+                if (certificate == IntPtr.Zero)
+                {
+                    throw new SecurityException("WinVerifyTrust did not return a verified signer certificate.");
+                }
+
+                var header = Marshal.PtrToStructure<ProviderCertificateHeader>(certificate);
+                if (header.StructSize < Marshal.SizeOf<ProviderCertificateHeader>() || header.Certificate == IntPtr.Zero)
+                {
+                    throw new SecurityException("WinVerifyTrust returned an invalid signer certificate.");
+                }
+
+                // WTD_HASH_ONLY_FLAG checks the PE digest but does NOT authenticate the CMS signature.
+                // Authenticate the same provider message with its selected signer even when chain checking is off.
+                var data = Marshal.PtrToStructure<ProviderDataHeader>(provider);
+                if (data.StructSize < Marshal.SizeOf<ProviderDataHeader>() || data.Message == IntPtr.Zero)
+                {
+                    throw new SecurityException("WinVerifyTrust did not return a signed message.");
+                }
+
+                var verification = new MessageSignatureVerification
+                {
+                    StructSize = (uint)Marshal.SizeOf<MessageSignatureVerification>(),
+                    SignerIndex = 0,
+                    SignerType = 2, // CMSG_VERIFY_SIGNER_CERT
+                    Signer = header.Certificate,
+                };
+                if (!CryptMsgControl(data.Message, 0, 19, ref verification)) // CMSG_CTRL_VERIFY_SIGNATURE_EX
+                {
+                    throw new SecurityException($"Attempt to load an assembly with an invalid signature: CMS verification failed (0x{Marshal.GetLastWin32Error():X8}).");
+                }
+
+                // This constructor duplicates the native context; dispose it before closing provider state.
+                return new X509Certificate2(header.Certificate);
+            }
+
             public void Dispose()
             {
+                // VERIFY may allocate state even on failure. CLOSE must happen before freeing the file info
+                // or closing the borrowed file handle, including when signer pinning throws.
+                if (StateData != IntPtr.Zero)
+                {
+                    StateAction = WinTrustDataStateAction.Close;
+                    WinVerifyTrust(new IntPtr(-1), in WINTRUST_ACTION_GENERIC_VERIFY_V2, this);
+                    StateData = IntPtr.Zero;
+                }
+
                 if (FileInfoPtr != IntPtr.Zero)
                 {
                     Marshal.FreeCoTaskMem(FileInfoPtr);

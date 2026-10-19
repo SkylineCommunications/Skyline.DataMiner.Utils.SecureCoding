@@ -1,6 +1,8 @@
 ﻿namespace SecureCoding.Test.SecureIO
 {
     using System;
+    using System.Reflection;
+    using System.Runtime.InteropServices;
     using FluentAssertions;
     using Microsoft.VisualStudio.TestTools.UnitTesting;
     using Skyline.DataMiner.Utils.SecureCoding.SecureIO;
@@ -9,6 +11,21 @@
     [OSCondition(OperatingSystems.Windows)]
     public class SecurePathWindowsUnitTests
     {
+        [TestMethod]
+        [DataRow(@"C:\skyline dataminer\web")]
+        [DataRow(@"C:\skyline dataminer\web\")]
+        public void DirectoryTraversalValidationRejectsSiblingDirectoryWithMatchingPrefix(string basePath)
+        {
+            var validation = typeof(SecurePath).GetMethod("DirectoryTraversalValidation", BindingFlags.NonPublic | BindingFlags.Static);
+            const string FullPath = @"C:\skyline dataminer\web-evil\malicious.exe";
+
+            Action action = () => validation.Invoke(null, new object[] { true, basePath, FullPath, OSPlatform.Windows });
+
+            action.Should().Throw<TargetInvocationException>()
+                .Which.InnerException.Should().BeOfType<InvalidOperationException>()
+                .Which.Message.Should().Be($"Invalid path '{FullPath}'");
+        }
+
         [TestMethod]
         // straightforward cases
         [DataRow(@"C:\skyline dataminer\", @"test.txt", @"C:\skyline dataminer\test.txt")]

@@ -14,6 +14,7 @@ namespace Skyline.DataMiner.Utils.SecureCoding.SecureReflection
     /// Managed Authenticode verifier used on platforms where <c>WinVerifyTrust</c> is not available.
     /// </summary>
     /// <remarks>
+    /// A Portable Executable (PE) image is the binary contents of an executable or DLL, not a graphical image.
     /// Implements the Authenticode PE image hashing rules (the checksum, the security data directory entry and the
     /// certificate table itself are excluded from the hash) and validates the embedded PKCS#7 <c>SignedData</c>
     /// structure using <see cref="SignedCms"/>.
@@ -25,7 +26,7 @@ namespace Skyline.DataMiner.Utils.SecureCoding.SecureReflection
         private const string TimestampEkuOid = "1.3.6.1.5.5.7.3.8";
         private const string Rfc3161Oid = "1.3.6.1.4.1.311.3.3.1";
         private const string PeImageDataOid = "1.3.6.1.4.1.311.2.1.15";
-        private const int MaximumImageSize = 256 * 1024 * 1024;
+        private const int MaximumPeImageSize = 256 * 1024 * 1024;
 
         private const ushort Pe32Magic = 0x10B;
         private const ushort Pe32PlusMagic = 0x20B;
@@ -41,7 +42,7 @@ namespace Skyline.DataMiner.Utils.SecureCoding.SecureReflection
         /// <exception cref="CryptographicException">Thrown when Authenticode content is detected but cannot be decoded.</exception>
         internal static X509Certificate2 GetSigningCertificate(string filePath)
         {
-            var fileBytes = ReadImage(filePath);
+            var fileBytes = ReadPeImage(filePath);
 
             if (!PeImage.TryParse(fileBytes, out var image) || !image.TryGetSignedData(out var signedData))
             {
@@ -65,11 +66,16 @@ namespace Skyline.DataMiner.Utils.SecureCoding.SecureReflection
             return new X509Certificate2(signer);
         }
 
-        internal static byte[] ReadImage(string filePath)
+        /// <summary>
+        /// Reads the binary contents of a Portable Executable (PE) file within the supported size limit.
+        /// </summary>
+        /// <param name="filePath">The full path to the executable or DLL.</param>
+        /// <returns>The PE file bytes, which have not yet been parsed or signature-validated.</returns>
+        internal static byte[] ReadPeImage(string filePath)
         {
             using (var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read))
             {
-                if (stream.Length == 0 || stream.Length > MaximumImageSize)
+                if (stream.Length == 0 || stream.Length > MaximumPeImageSize)
                 {
                     throw new SecurityException("Assembly size is outside the supported range (1 byte to 256 MiB).");
                 }
@@ -96,11 +102,17 @@ namespace Skyline.DataMiner.Utils.SecureCoding.SecureReflection
             }
         }
 
-        internal static void ValidateImage(byte[] image, bool verifyCertificateChain, X509Certificate2[] allowedCertificates)
+        /// <summary>
+        /// Validates the Authenticode signature and allowed signer of the supplied Portable Executable (PE) file bytes.
+        /// </summary>
+        /// <param name="peImageBytes">The binary contents of the executable or DLL to validate.</param>
+        /// <param name="verifyCertificateChain">Whether to verify the signer's certificate chain against the machine's trusted roots.</param>
+        /// <param name="allowedCertificates">The certificates permitted to sign the PE file.</param>
+        internal static void ValidatePeImage(byte[] peImageBytes, bool verifyCertificateChain, X509Certificate2[] allowedCertificates)
         {
-            if (image == null)
+            if (peImageBytes == null)
             {
-                throw new ArgumentNullException(nameof(image));
+                throw new ArgumentNullException(nameof(peImageBytes));
             }
 
             if (allowedCertificates == null || !allowedCertificates.Any(certificate => certificate != null))
@@ -108,23 +120,16 @@ namespace Skyline.DataMiner.Utils.SecureCoding.SecureReflection
                 throw new ArgumentException("At least one allowed certificate is required.", nameof(allowedCertificates));
             }
 
-            if (image.Length == 0 || image.Length > MaximumImageSize)
+            if (peImageBytes.Length == 0 || peImageBytes.Length > MaximumPeImageSize)
             {
                 throw new SecurityException("Assembly size is outside the supported range.");
             }
 
-            X509Certificate2 signer = null;
             try
             {
-                if (!TryValidateSignature(image, verifyCertificateChain, out var result, out signer))
+                if (!TryValidateSignature(peImageBytes, verifyCertificateChain, allowedCertificates, out var result))
                 {
                     throw new SecurityException($"Attempt to load an assembly with an invalid signature: {result}");
-                }
-
-                // Compare the certificate itself, not its legacy SHA-1 thumbprint.
-                if (!allowedCertificates.Any(certificate => certificate != null && certificate.RawData.SequenceEqual(signer.RawData)))
-                {
-                    throw new SecurityException("The certificate of the assembly does not match the provided certificate.");
                 }
             }
             catch (CryptographicException ex)
@@ -134,10 +139,6 @@ namespace Skyline.DataMiner.Utils.SecureCoding.SecureReflection
             catch (AsnContentException ex)
             {
                 throw new SecurityException("The assembly's Authenticode data is malformed.", ex);
-            }
-            finally
-            {
-                signer?.Dispose();
             }
         }
 
@@ -153,15 +154,11 @@ namespace Skyline.DataMiner.Utils.SecureCoding.SecureReflection
         /// <returns><see langword="true"/> when the signature is valid; otherwise <see langword="false"/>.</returns>
         internal static bool TryValidateSignature(string filePath, bool verifyCertificateChain, out SecureAssembly.WinVerifyTrustResult result)
         {
-            var valid = TryValidateSignature(ReadImage(filePath), verifyCertificateChain, out result, out var signer);
-            signer?.Dispose();
-            return valid;
+            return TryValidateSignature(ReadPeImage(filePath), verifyCertificateChain, null, out result);
         }
 
-        private static bool TryValidateSignature(byte[] fileBytes, bool verifyCertificateChain, out SecureAssembly.WinVerifyTrustResult result, out X509Certificate2 signerCertificate)
+        private static bool TryValidateSignature(byte[] fileBytes, bool verifyCertificateChain, X509Certificate2[] allowedCertificates, out SecureAssembly.WinVerifyTrustResult result)
         {
-            signerCertificate = null;
-
             if (!PeImage.TryParse(fileBytes, out var image))
             {
                 result = SecureAssembly.WinVerifyTrustResult.SubjectFormUnknown;
@@ -188,14 +185,27 @@ namespace Skyline.DataMiner.Utils.SecureCoding.SecureReflection
                     return false;
                 }
 
-                // Verifies the signer's signature over the signed attributes and the message digest over the content.
                 var signer = cms.SignerInfos[0];
+                var signerCertificate = signer.Certificate;
+                if (signerCertificate == null)
+                {
+                    result = SecureAssembly.WinVerifyTrustResult.SubjectNotTrusted;
+                    return false;
+                }
+
+                // Reject unapproved signers before cryptographic verification; a match does not establish trust.
+                if (allowedCertificates != null && !allowedCertificates.Any(certificate => certificate != null && certificate.RawData.SequenceEqual(signerCertificate.RawData)))
+                {
+                    throw new SecurityException("The certificate of the assembly does not match the provided certificate.");
+                }
+
                 if (!HasStrongSignature(signer) || !HasEku(signer.Certificate, CodeSigningEkuOid))
                 {
                     result = SecureAssembly.WinVerifyTrustResult.SubjectNotTrusted;
                     return false;
                 }
 
+                // Verifies the signer's signature over the signed attributes and the message digest over the content.
                 signer.CheckSignature(verifySignatureOnly: true);
             }
             catch (CryptographicException)
@@ -225,7 +235,6 @@ namespace Skyline.DataMiner.Utils.SecureCoding.SecureReflection
 
             if (!verifyCertificateChain)
             {
-                signerCertificate = new X509Certificate2(cms.SignerInfos[0].Certificate);
                 result = SecureAssembly.WinVerifyTrustResult.Success;
                 return true;
             }
@@ -243,11 +252,6 @@ namespace Skyline.DataMiner.Utils.SecureCoding.SecureReflection
             }
 
             result = VerifyCertificateChain(cms.SignerInfos[0].Certificate, cms.Certificates, CodeSigningEkuOid, verificationTime);
-            if (result == SecureAssembly.WinVerifyTrustResult.Success)
-            {
-                signerCertificate = new X509Certificate2(cms.SignerInfos[0].Certificate);
-            }
-
             return result == SecureAssembly.WinVerifyTrustResult.Success;
         }
 

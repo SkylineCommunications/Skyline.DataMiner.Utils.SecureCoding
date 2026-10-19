@@ -173,6 +173,8 @@
         private static void DirectoryTraversalValidation(bool allowSubDirectories, string basePath, string fullPath, OSPlatform platform)
         {
             var comparison = StringExtensions.GetPathComparison(platform);
+            var separator = StringExtensions.GetDirectorySeparator(platform);
+            basePath = basePath.TrimEnd(separator) + separator;
 
             if (!fullPath.StartsWith(basePath, comparison))
             {
