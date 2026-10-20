@@ -104,7 +104,6 @@ namespace Skyline.DataMiner.Utils.SecureCoding.SecureSerialization.Json.Newtonso
                 {
                     separatorCount = 0;
                     arrayRank = character == '[';
-                    result.Append(character);
                 }
                 else if (character == ',')
                 {
@@ -112,19 +111,15 @@ namespace Skyline.DataMiner.Utils.SecureCoding.SecureSerialization.Json.Newtonso
                     {
                         separatorCount++;
                     }
-
-                    if (separatorCount < 2)
-                    {
-                        result.Append(character);
-                    }
                 }
                 else
                 {
                     arrayRank = false;
-                    if (separatorCount < 2)
-                    {
-                        result.Append(character);
-                    }
+                }
+
+                if (separatorCount < 2)
+                {
+                    result.Append(character);
                 }
             }
 

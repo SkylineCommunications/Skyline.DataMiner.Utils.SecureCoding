@@ -128,6 +128,14 @@ namespace SecureCoding.Test.SecureReflection
                 {
                     SecureAssembly.ValidateWindowsSnapshot(snapshot, false, new[] { certificate });
                 }
+
+                Assert.IsFalse(snapshot.SafeFileHandle.IsClosed);
+                snapshot.Position = 0;
+                Assert.AreEqual(0x4D, snapshot.ReadByte());
+                using (var expectedSigner = CertificateLoader.LoadCertificateFromFile(Path.Combine(Items, "SelfSigned.cer")))
+                {
+                    SecureAssembly.ValidateWindowsSnapshot(snapshot, false, new[] { expectedSigner });
+                }
             }
             Assert.IsFalse(File.Exists(path));
         }

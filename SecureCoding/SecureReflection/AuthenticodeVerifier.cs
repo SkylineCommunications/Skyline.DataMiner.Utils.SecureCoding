@@ -227,6 +227,11 @@ namespace Skyline.DataMiner.Utils.SecureCoding.SecureReflection
                 return false;
             }
 
+            return TryValidateSignerTrust(cms, verifyCertificateChain, out result);
+        }
+
+        private static bool TryValidateSignerTrust(SignedCms cms, bool verifyCertificateChain, out SecureAssembly.WinVerifyTrustResult result)
+        {
             if (cms.SignerInfos.Count < 1 || cms.SignerInfos[0].Certificate is null)
             {
                 result = SecureAssembly.WinVerifyTrustResult.SignatureOrFileCorrupt;
