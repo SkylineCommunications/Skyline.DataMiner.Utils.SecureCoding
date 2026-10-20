@@ -2,6 +2,7 @@
 {
     using System;
     using System.Collections.Generic;
+    using System.ComponentModel;
     using System.IO;
     using System.Linq;
     using System.Reflection;
@@ -9,6 +10,7 @@
     using System.Security;
     using System.Security.Cryptography;
     using System.Security.Cryptography.X509Certificates;
+    using Microsoft.Win32.SafeHandles;
     using Skyline.DataMiner.Utils.SecureCoding.SecureIO;
 
     /// <summary>
@@ -650,7 +652,17 @@
         // verification. This seam also lets tests prove the native verifier uses the handle instead of FileStream.Name.
         internal static void ValidateWindowsSnapshot(FileStream file, bool verifyCertificateChain, X509Certificate2[] allowedCertificates)
         {
-            using (var fileInfo = new WINTRUST_FILE_INFO(file.Name, file.SafeFileHandle.DangerousGetHandle()))
+            // The marshaller protects the source SafeHandle during duplication. The independently owned
+            // duplicate refers to the same file and stays open until WinTrust has closed its provider state.
+            var currentProcess = new IntPtr(-1);
+            const uint DuplicateSameAccess = 2;
+            if (!DuplicateHandle(currentProcess, file.SafeFileHandle, currentProcess, out var nativeHandle, 0, false, DuplicateSameAccess))
+            {
+                throw new Win32Exception(Marshal.GetLastWin32Error());
+            }
+
+            using (var verificationHandle = new SafeFileHandle(nativeHandle, true))
+            using (var fileInfo = new WINTRUST_FILE_INFO(file.Name, nativeHandle))
             using (var trustData = new WINTRUST_DATA(fileInfo, verifyCertificateChain))
             {
                 var result = (WinVerifyTrustResult)(uint)WinVerifyTrust(new IntPtr(-1), in WINTRUST_ACTION_GENERIC_VERIFY_V2, trustData);
@@ -879,6 +891,11 @@
         private static readonly Guid WINTRUST_ACTION_GENERIC_VERIFY_V2 = new Guid("00AAC56B-CD44-11D0-8CC2-00C04FC295EE");
 
         [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+        [DllImport("kernel32.dll", ExactSpelling = true, SetLastError = true)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        private static extern bool DuplicateHandle(IntPtr sourceProcess, SafeFileHandle sourceHandle, IntPtr targetProcess, out IntPtr targetHandle, uint desiredAccess, [MarshalAs(UnmanagedType.Bool)] bool inheritHandle, uint options);
+
+        [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
         [DllImport("wintrust.dll", ExactSpelling = true)]
         private static extern int WinVerifyTrust(IntPtr hwnd, in Guid pgActionID, [In, Out] WINTRUST_DATA pWVTData);
 
@@ -952,7 +969,7 @@
             public WINTRUST_FILE_INFO(string filePath, IntPtr fileHandle)
             {
                 pszFilePath = Marshal.StringToCoTaskMemUni(filePath);
-                hFile = fileHandle; // Borrowed; the enclosing FileStream owns the handle through state closure.
+                hFile = fileHandle; // Borrowed; the enclosing SafeFileHandle owns the duplicate through state closure.
             }
 
             public void Dispose()
