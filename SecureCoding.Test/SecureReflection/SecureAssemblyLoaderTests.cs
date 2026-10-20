@@ -11,27 +11,27 @@
     [TestClass]
     public class SecureAssemblyLoaderTests
     {
-        private static string testItemsPath = FileSystem.Instance.Path.GetFullPath($@"{Environment.CurrentDirectory}..\..\..\..\SecureReflection\TestItems");
-        private static string signedTestDllPath = $"{testItemsPath}\\Signed.dll";
-        private static string selfSignedTestDllPath = $"{testItemsPath}\\SelfSigned.dll";
-        private static string unsignedTestDllPath = $"{testItemsPath}\\Unsigned.dll";
-        private static string tamperedTestDllPath = $"{testItemsPath}\\Tampered.dll";
+        private static string testItemsPath = FileSystem.Instance.Path.GetFullPath(System.IO.Path.Combine(Environment.CurrentDirectory, "..", "..", "..", "SecureReflection", "TestItems"));
+        private static string signedTestDllPath = System.IO.Path.Combine(testItemsPath, "Signed.dll");
+        private static string selfSignedTestDllPath = System.IO.Path.Combine(testItemsPath, "SelfSigned.dll");
+        private static string unsignedTestDllPath = System.IO.Path.Combine(testItemsPath, "Unsigned.dll");
+        private static string tamperedTestDllPath = System.IO.Path.Combine(testItemsPath, "Tampered.dll");
 
-        private static string signedCertificatePath = $"{testItemsPath}\\Signed.cer";
-        private static string selfSignedCertificateCerPath = $"{testItemsPath}\\SelfSigned.cer";
-        private static string selfSignedCertificatePfxPath = $"{testItemsPath}\\SelfSigned.pfx";
+        private static string signedCertificatePath = System.IO.Path.Combine(testItemsPath, "Signed.cer");
+        private static string selfSignedCertificateCerPath = System.IO.Path.Combine(testItemsPath, "SelfSigned.cer");
+        private static string selfSignedCertificatePfxPath = System.IO.Path.Combine(testItemsPath, "SelfSigned.pfx");
         private static string selfSignedCertificatePassword = "SecureCodingNugetTest";
 
         [TestMethod]
         public void SecureAssemblyLoadFile_X509Certificate2Argument_Success()
         {
-            var signedCertificate = new X509Certificate2(signedCertificatePath);
+            var signedCertificate = CertificateLoader.LoadCertificateFromFile(signedCertificatePath);
             Assert.IsTrue(SecureAssembly.LoadFrom(signedTestDllPath, signedCertificate) != default);
             Assert.IsTrue(SecureAssembly.LoadFrom(signedTestDllPath, new X509Certificate2[] { signedCertificate }) != default);
             Assert.IsTrue(SecureAssembly.LoadFile(signedTestDllPath, signedCertificate) != default);
             Assert.IsTrue(SecureAssembly.LoadFile(signedTestDllPath, new X509Certificate2[] { signedCertificate }) != default);
 
-            var selfSignedCertificate = new X509Certificate2(selfSignedCertificateCerPath);
+            var selfSignedCertificate = CertificateLoader.LoadCertificateFromFile(selfSignedCertificateCerPath);
             Assert.IsTrue(SecureAssembly.LoadFrom(selfSignedTestDllPath, selfSignedCertificate, verifyCertificateChain: false) != default);
             Assert.IsTrue(SecureAssembly.LoadFrom(selfSignedTestDllPath, new X509Certificate2[] { selfSignedCertificate }, verifyCertificateChain: false) != default);
             Assert.IsTrue(SecureAssembly.LoadFile(selfSignedTestDllPath, selfSignedCertificate, verifyCertificateChain: false) != default);
@@ -77,7 +77,11 @@
             Assert.Throws<ArgumentException>(() => SecureAssembly.LoadFile(string.Empty, default(X509Certificate2)));
             Assert.Throws<ArgumentException>(() => SecureAssembly.LoadFile("ValidString", new X509Certificate2[0]));
 
+#if NET9_0_OR_GREATER
+            var selfSignedCertificate = X509CertificateLoader.LoadPkcs12FromFile(selfSignedCertificatePfxPath, selfSignedCertificatePassword);
+#else
             var selfSignedCertificate = new X509Certificate2(selfSignedCertificatePfxPath, selfSignedCertificatePassword);
+#endif
 
             // Signed with different Certificate test
             Assert.Throws<SecurityException>(() => SecureAssembly.LoadFrom(signedTestDllPath, selfSignedCertificate));
@@ -87,15 +91,22 @@
             Assert.Throws<SecurityException>(() => SecureAssembly.LoadFrom(selfSignedTestDllPath, selfSignedCertificate));
             Assert.Throws<SecurityException>(() => SecureAssembly.LoadFile(selfSignedTestDllPath, selfSignedCertificate));
 
-            var emptyByteArr = Array.Empty<byte>();
+#if NET9_0_OR_GREATER
+            // Modern certificates are immutable; validate rejection with a real allowlisted certificate.
+            using (var certificate = CertificateLoader.LoadCertificateFromFile(signedCertificatePath))
+#else
+            // Preserve empty-certificate coverage for full Framework consumers.
+            using (var certificate = new X509Certificate2())
+#endif
+            {
+                // Unsigned Test
+                Assert.Throws<SecurityException>(() => SecureAssembly.LoadFrom(unsignedTestDllPath, certificate));
+                Assert.Throws<SecurityException>(() => SecureAssembly.LoadFile(unsignedTestDllPath, certificate));
 
-            // Unsigned Test
-            Assert.Throws<SecurityException>(() => SecureAssembly.LoadFrom(unsignedTestDllPath, new X509Certificate2(emptyByteArr)));
-            Assert.Throws<SecurityException>(() => SecureAssembly.LoadFile(unsignedTestDllPath, new X509Certificate2(emptyByteArr)));
-
-            // Tampered Test
-            Assert.Throws<SecurityException>(() => SecureAssembly.LoadFrom(tamperedTestDllPath, new X509Certificate2(emptyByteArr)));
-            Assert.Throws<SecurityException>(() => SecureAssembly.LoadFile(tamperedTestDllPath, new X509Certificate2(emptyByteArr)));
+                // Tampered Test
+                Assert.Throws<SecurityException>(() => SecureAssembly.LoadFrom(tamperedTestDllPath, certificate));
+                Assert.Throws<SecurityException>(() => SecureAssembly.LoadFile(tamperedTestDllPath, certificate));
+            }
         }
 
         [TestMethod]

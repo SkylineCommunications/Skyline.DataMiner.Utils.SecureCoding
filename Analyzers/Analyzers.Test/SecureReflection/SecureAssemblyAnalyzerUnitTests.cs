@@ -11,17 +11,17 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.Tests.SecureReflection
     [TestClass]
     public class SecureAssemblyAnalyzerUnitTests
     {
-        private readonly string insecureAssemblyTestCase = File.ReadAllText(
-            @"..\..\..\SecureReflection\TestScenarios\InsecureAssembly.test");
+        private readonly string insecureAssemblyTestCase = AnalyzerVerifierHelper.ReadScenario(
+            "SecureReflection/TestScenarios/InsecureAssembly.test");
 
-        private readonly string insecureAssemblyCodeFix = File.ReadAllText(
-            @"..\..\..\SecureReflection\TestScenarios\InsecureAssembly.fix");
+        private readonly string insecureAssemblyCodeFix = AnalyzerVerifierHelper.ReadScenario(
+            "SecureReflection/TestScenarios/InsecureAssembly.fix");
 
-        private readonly string defaultArgumentTestCase = File.ReadAllText(
-            @"..\..\..\SecureReflection\TestScenarios\DefaultArgument.test");
+        private readonly string defaultArgumentTestCase = AnalyzerVerifierHelper.ReadScenario(
+            "SecureReflection/TestScenarios/DefaultArgument.test");
 
-        private readonly string bypassCertificateChainTestCase = File.ReadAllText(
-            @"..\..\..\SecureReflection\TestScenarios\BypassCertificateChain.test");
+        private readonly string bypassCertificateChainTestCase = AnalyzerVerifierHelper.ReadScenario(
+            "SecureReflection/TestScenarios/BypassCertificateChain.test");
 
         [TestMethod]
         public async Task VerifyDefaultArgumentDiagnostic()
@@ -64,7 +64,7 @@ namespace Skyline.DataMiner.Utils.SecureCoding.Analyzers.Tests.SecureReflection
                     + "\r\nusing System.Security.Cryptography.X509Certificates;"
                     + "\r\nusing Skyline.DataMiner.Utils.SecureCoding.SecureReflection;");
 
-            Assert.AreEqual(expectedCodeFix, insecureAssemblyCodeFix);
+            Assert.AreEqual(expectedCodeFix.Replace("\r\n", "\n"), insecureAssemblyCodeFix.Replace("\r\n", "\n"));
         }
 
         [TestMethod]

@@ -1,6 +1,7 @@
 ﻿namespace Skyline.DataMiner.Utils.SecureCoding.SecureIO
 {
     using System;
+    using System.Runtime.InteropServices;
     using Skyline.DataMiner.CICD.FileSystem;
 
     /// <summary>
@@ -44,6 +45,7 @@
         /// <returns></returns>
         /// <exception cref="System.ArgumentNullException">path</exception>
         /// <exception cref="System.InvalidOperationException">FileSystem.Instance.Path '{path}' is insecure!</exception>
+        /// <exception cref="System.NotSupportedException">Thrown if the current operating system is not supported.</exception>
         public static SecurePath CreateSecurePath(string path)
         {
             if (path is null)
@@ -72,6 +74,7 @@
         /// <exception cref="InvalidOperationException">
         /// Thrown if the constructed full path is not a valid path or if it does not start with the specified base path.
         /// </exception>
+        /// <exception cref="NotSupportedException">Thrown if the current operating system is not supported.</exception>
         public static SecurePath ConstructSecurePath(string basePath, string filename)
         {
             if (String.IsNullOrWhiteSpace(basePath))
@@ -84,23 +87,7 @@
                 throw new ArgumentException($"'{nameof(filename)}' cannot be null or whitespace.", nameof(filename));
             }
 
-            if (basePath.ContainsInvalidPathCharacters())
-            {
-                throw new InvalidOperationException($"Base path '{basePath}' contains invalid characters");
-            }
-
-            if (filename.ContainsInvalidFilenameCharacters())
-            {
-                throw new InvalidOperationException($"Filename '{filename}' contains invalid characters");
-            }
-
-            var combinedPath = FileSystem.Instance.Path.Combine(basePath, filename);
-
-            var fullPath = FileSystem.Instance.Path.GetFullPath(combinedPath);
-
-            DirectoryTraversalValidation(false, basePath, fullPath);
-
-            return new SecurePath(fullPath);
+            return new SecurePath(GetValidatedFullPath(basePath, filename, PlatformHelper.CurrentPlatform));
         }
 
         /// <summary>
@@ -113,6 +100,7 @@
         /// <exception cref="InvalidOperationException">Thrown if the constructed full path is not a valid path, if it does not start with the specified base path,
         /// when any path segment contains invalid characters or when the base path is a rooted path.
         /// </exception>
+        /// <exception cref="NotSupportedException">Thrown if the current operating system is not supported.</exception>
         public static SecurePath ConstructSecurePath(params string[] paths)
         {
             if (paths is null)
@@ -132,36 +120,15 @@
                 return CreateSecurePath(basePath);
             }
 
-            if (basePath.ContainsInvalidPathCharacters())
+            foreach (var segment in paths)
             {
-                throw new InvalidOperationException($"Base path '{basePath}' contains invalid characters");
-            }
-
-            for (int i = 1; i < paths.Length - 1; i++)
-            {
-                PathSegmentValidation(paths[i]);
-            }
-
-            var lastPathSegment = paths[paths.Length - 1];
-            if (lastPathSegment.IsFile())
-            {
-                if (lastPathSegment.ContainsInvalidFilenameCharacters())
+                if (String.IsNullOrWhiteSpace(segment))
                 {
-                    throw new InvalidOperationException($"Filename '{lastPathSegment}' contains invalid characters");
+                    throw new ArgumentException("Path segments cannot be null or whitespace.", nameof(paths));
                 }
             }
-            else
-            {
-                PathSegmentValidation(lastPathSegment);
-            }
 
-            var combinedPath = FileSystem.Instance.Path.Combine(paths);
-
-            var fullPath = FileSystem.Instance.Path.GetFullPath(combinedPath);
-
-            DirectoryTraversalValidation(allowSubDirectories: true, basePath, fullPath);
-
-            return new SecurePath(fullPath);
+            return new SecurePath(GetValidatedFullPath(paths, PlatformHelper.CurrentPlatform));
         }
 
         /// <summary>
@@ -176,6 +143,7 @@
         /// <exception cref="InvalidOperationException">Thrown if the constructed full path is not a valid path or if it does not start with the specified base path, 
         /// when the base path contains invalid characters, when the relative path is rooted or invalid, or when the relative path contains invalid characters.
         /// </exception>
+        /// <exception cref="NotSupportedException">Thrown if the current operating system is not supported.</exception>
         public static SecurePath ConstructSecurePathWithSubDirectories(string basePath, string relativePath)
         {
             if (String.IsNullOrWhiteSpace(basePath))
@@ -188,28 +156,7 @@
                 throw new ArgumentException($"'{nameof(relativePath)}' cannot be null or whitespace.", nameof(relativePath));
             }
 
-            if (basePath.ContainsInvalidPathCharacters())
-            {
-                throw new InvalidOperationException($"Base path '{basePath}' contains invalid characters");
-            }
-
-            if (!relativePath.IsPathValid())
-            {
-                throw new InvalidOperationException($"Relative path '{relativePath}' contains invalid characters");
-            }
-
-            if (FileSystem.Instance.Path.IsPathRooted(relativePath))
-            {
-                throw new InvalidOperationException($"Relative path '{relativePath}' cannot be a rooted path");
-            }
-
-            var combinedPath = FileSystem.Instance.Path.Combine(basePath, relativePath);
-
-            var fullPath = FileSystem.Instance.Path.GetFullPath(combinedPath);
-
-            DirectoryTraversalValidation(true, basePath, fullPath);
-
-            return new SecurePath(fullPath);
+            return new SecurePath(GetValidatedFullPathWithSubDirectories(basePath, relativePath, PlatformHelper.CurrentPlatform));
         }
 
         /// <summary>
@@ -223,27 +170,31 @@
             return path;
         }
 
-        private static void DirectoryTraversalValidation(bool allowSubDirectories, string basePath, string fullPath)
+        private static void DirectoryTraversalValidation(bool allowSubDirectories, string basePath, string fullPath, OSPlatform platform)
         {
-            if (!fullPath.StartsWith(basePath, StringComparison.OrdinalIgnoreCase))
+            var comparison = StringExtensions.GetPathComparison(platform);
+            var separator = StringExtensions.GetDirectorySeparator(platform);
+            basePath = basePath.TrimEnd(separator) + separator;
+
+            if (!fullPath.StartsWith(basePath, comparison))
             {
                 throw new InvalidOperationException($"Invalid path '{fullPath}'");
             }
 
-            if (!basePath.Equals(FileSystem.Instance.Path.GetPathRoot(basePath), StringComparison.OrdinalIgnoreCase))
+            if (!basePath.Equals(FileSystem.Instance.Path.GetPathRoot(basePath), comparison))
             {
-                basePath = basePath.TrimEnd('\\');
+                basePath = basePath.TrimEnd(StringExtensions.GetDirectorySeparator(platform));
             }
 
-            if (!allowSubDirectories && !FileSystem.Instance.Path.GetDirectoryName(fullPath).Equals(basePath, StringComparison.OrdinalIgnoreCase))
+            if (!allowSubDirectories && !FileSystem.Instance.Path.GetDirectoryName(fullPath).Equals(basePath, comparison))
             {
                 throw new InvalidOperationException("Sub-directories flag should be set to true in order to construct a path with sub-directories in filename");
             }
         }
 
-        private static void PathSegmentValidation(string pathSegment)
+        private static void PathSegmentValidation(string pathSegment, OSPlatform platform)
         {
-            if (pathSegment.ContainsInvalidPathCharacters())
+            if (pathSegment.ContainsInvalidPathCharacters(platform))
             {
                 throw new InvalidOperationException($"FileSystem.Instance.Path segment '{pathSegment}' contains invalid characters");
             }
@@ -252,6 +203,89 @@
             {
                 throw new InvalidOperationException($"FileSystem.Instance.Path segment '{pathSegment}' cannot be a rooted path");
             }
+        }
+
+        private static string GetValidatedFullPath(string basePath, string filename, OSPlatform platform)
+        {
+            if (basePath.ContainsInvalidPathCharacters(platform))
+            {
+                throw new InvalidOperationException($"Base path '{basePath}' contains invalid characters");
+            }
+
+            if (filename.ContainsInvalidFilenameCharacters(platform) || filename.ContainsInvalidPathCharacters(platform))
+            {
+                throw new InvalidOperationException($"Filename '{filename}' contains invalid characters");
+            }
+
+            var combinedPath = FileSystem.Instance.Path.Combine(basePath, filename);
+
+            var fullPath = FileSystem.Instance.Path.GetFullPath(combinedPath);
+
+            DirectoryTraversalValidation(false, basePath, fullPath, platform);
+
+            return fullPath;
+        }
+
+        private static string GetValidatedFullPath(string[] paths, OSPlatform platform)
+        {
+            var basePath = paths[0];
+
+            if (basePath.ContainsInvalidPathCharacters(platform))
+            {
+                throw new InvalidOperationException($"Base path '{basePath}' contains invalid characters");
+            }
+
+            for (int i = 1; i < paths.Length - 1; i++)
+            {
+                PathSegmentValidation(paths[i], platform);
+            }
+
+            var lastPathSegment = paths[paths.Length - 1];
+            if (lastPathSegment.IsFile())
+            {
+                if (lastPathSegment.ContainsInvalidFilenameCharacters(platform) || lastPathSegment.ContainsInvalidPathCharacters(platform))
+                {
+                    throw new InvalidOperationException($"Filename '{lastPathSegment}' contains invalid characters");
+                }
+            }
+            else
+            {
+                PathSegmentValidation(lastPathSegment, platform);
+            }
+
+            var combinedPath = FileSystem.Instance.Path.Combine(paths);
+
+            var fullPath = FileSystem.Instance.Path.GetFullPath(combinedPath);
+
+            DirectoryTraversalValidation(allowSubDirectories: true, basePath, fullPath, platform);
+
+            return fullPath;
+        }
+
+        private static string GetValidatedFullPathWithSubDirectories(string basePath, string relativePath, OSPlatform platform)
+        {
+            if (basePath.ContainsInvalidPathCharacters(platform))
+            {
+                throw new InvalidOperationException($"Base path '{basePath}' contains invalid characters");
+            }
+
+            if (!relativePath.IsPathValid(platform))
+            {
+                throw new InvalidOperationException($"Relative path '{relativePath}' contains invalid characters");
+            }
+
+            if (FileSystem.Instance.Path.IsPathRooted(relativePath))
+            {
+                throw new InvalidOperationException($"Relative path '{relativePath}' cannot be a rooted path");
+            }
+
+            var combinedPath = FileSystem.Instance.Path.Combine(basePath, relativePath);
+
+            var fullPath = FileSystem.Instance.Path.GetFullPath(combinedPath);
+
+            DirectoryTraversalValidation(true, basePath, fullPath, platform);
+
+            return fullPath;
         }
     }
 }

@@ -1,13 +1,31 @@
 ﻿namespace SecureCoding.Test.SecureIO
 {
     using System;
+    using System.Reflection;
+    using System.Runtime.InteropServices;
     using FluentAssertions;
     using Microsoft.VisualStudio.TestTools.UnitTesting;
     using Skyline.DataMiner.Utils.SecureCoding.SecureIO;
 
     [TestClass]
-    public class SecurePathUnitTests
+    [OSCondition(OperatingSystems.Windows)]
+    public class SecurePathWindowsUnitTests
     {
+        [TestMethod]
+        [DataRow(@"C:\skyline dataminer\web")]
+        [DataRow(@"C:\skyline dataminer\web\")]
+        public void DirectoryTraversalValidationRejectsSiblingDirectoryWithMatchingPrefix(string basePath)
+        {
+            var validation = typeof(SecurePath).GetMethod("DirectoryTraversalValidation", BindingFlags.NonPublic | BindingFlags.Static);
+            const string FullPath = @"C:\skyline dataminer\web-evil\malicious.exe";
+
+            Action action = () => validation.Invoke(null, new object[] { true, basePath, FullPath, OSPlatform.Windows });
+
+            action.Should().Throw<TargetInvocationException>()
+                .Which.InnerException.Should().BeOfType<InvalidOperationException>()
+                .Which.Message.Should().Be($"Invalid path '{FullPath}'");
+        }
+
         [TestMethod]
         // straightforward cases
         [DataRow(@"C:\skyline dataminer\", @"test.txt", @"C:\skyline dataminer\test.txt")]
@@ -19,6 +37,7 @@
         {
             string result = SecurePath.ConstructSecurePath(basePath, filename);
             Assert.AreEqual(expectedResult, result);
+            Assert.IsTrue(result.IsPathValid());
         }
 
         [TestMethod]
@@ -32,6 +51,7 @@
         {
             string result = SecurePath.ConstructSecurePathWithSubDirectories(basePath, filename);
             Assert.AreEqual(expectedResult, result);
+            Assert.IsTrue(result.IsPathValid());
         }
 
         [TestMethod]
@@ -51,6 +71,7 @@
         {
             string result = SecurePath.ConstructSecurePath(paths);
             Assert.AreEqual(expectedResult, result);
+            Assert.IsTrue(result.IsPathValid());
         }
 
         [TestMethod]
@@ -139,7 +160,6 @@
         [DataRow(@"C:\skyline dataminer", @"%programfiles%\test.txt", typeof(InvalidOperationException))]
         [DataRow(@"%programfiles%", @"C:\skyline dataminer\test.txt", typeof(InvalidOperationException))]
         // case where wrong directory delimiter is used
-        [DataRow(@"C:/skyline dataminer/", @"test.txt", typeof(InvalidOperationException))]
         [DataRow(@"C:/skyline dataminer/", @"test.txt", typeof(InvalidOperationException))]
         [DataRow(@"C:\skyline dataminer\", @"subdir/test.txt", typeof(InvalidOperationException))]
         // network paths
@@ -243,6 +263,7 @@
         {
             string result = SecurePath.ConstructSecurePath(paths);
             Assert.AreEqual(expectedResult, result);
+            Assert.IsTrue(result.IsPathValid());
         }
 
         [TestMethod]

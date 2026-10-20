@@ -5,4 +5,4 @@
 
 Rule ID | Category | Severity | Notes
 --------|----------|----------|-------
-FileOperationUsage | Usage | Warning | FileOperationAnalyzer
+SLC_SC0001 | Usage | Warning | FileOperationAnalyzer

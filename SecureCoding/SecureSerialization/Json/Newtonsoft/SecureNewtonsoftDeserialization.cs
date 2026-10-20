@@ -11,7 +11,7 @@ namespace Skyline.DataMiner.Utils.SecureCoding.SecureSerialization.Json.Newtonso
     public static class SecureNewtonsoftDeserialization
     {
         /// <summary>
-        /// Deserializes the <paramref name="json"/> string to an object of the specified type <paramref name="T"/>.
+        /// Deserializes the <paramref name="json"/> string to an object of the specified type <typeparamref name="T"/>.
         /// This method will ignore the types specified in the json string to make the deserialization secure.
         /// Because of this, this method is limited to deserializing simple objects and will fail for complex objects that make use of polymorphism or inheritance.
         /// </summary>

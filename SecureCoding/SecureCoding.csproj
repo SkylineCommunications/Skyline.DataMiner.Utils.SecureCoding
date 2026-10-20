@@ -4,7 +4,7 @@
     <AssemblyName>Skyline.DataMiner.Utils.SecureCoding</AssemblyName>
     <RootNamespace>Skyline.DataMiner.Utils.SecureCoding</RootNamespace>
     <PackageVersion>1.0.0.0</PackageVersion>
-    <TargetFramework>netstandard2.0</TargetFramework>
+    <TargetFrameworks>netstandard2.0;net10.0</TargetFrameworks>
     <PackageId>Skyline.DataMiner.Utils.SecureCoding</PackageId>
     <Title>Secure Coding Helper</Title>
     <Authors>SkylineCommunications</Authors>
@@ -31,6 +31,11 @@
   <ItemGroup>
     <None Include="..\License.txt" Pack="true" PackagePath="" />
     <None Include="..\nuget\Icon.png" Pack="true" PackagePath="" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Skyline.DataMiner.Utils.SecureCoding.Analyzers.Tests" Key="0024000004800000940000000602000000240000525341310004000001000100b136be87838ef9e79b27553fd088418758e9cb7fcc4ed540081da5db163875906cc1c01be4b963b4ed0efa951eb3d3a221ce83d150a04b24d7492e5edda282e972bff42f81b758d0801bd4c2582a45f3c6a5609394ed1446bb0ea1df5e3e975ee8b87e03f0914bbad0176ce67e1646f18713301067d95cec0a695e1160e3afb0" />
+    <InternalsVisibleTo Include="SecureCoding.Test" Key="0024000004800000940000000602000000240000525341310004000001000100b136be87838ef9e79b27553fd088418758e9cb7fcc4ed540081da5db163875906cc1c01be4b963b4ed0efa951eb3d3a221ce83d150a04b24d7492e5edda282e972bff42f81b758d0801bd4c2582a45f3c6a5609394ed1446bb0ea1df5e3e975ee8b87e03f0914bbad0176ce67e1646f18713301067d95cec0a695e1160e3afb0" />
   </ItemGroup>
 
   <ItemGroup>

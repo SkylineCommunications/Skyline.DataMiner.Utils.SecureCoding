@@ -14,6 +14,15 @@
     /// <summary>
     /// Provides methods to securely work with assemblies.
     /// </summary>
+    /// <remarks>
+    /// Both platforms validate and load the same bounded byte snapshot. Both loader families use
+    /// <see cref="Assembly.Load(byte[])"/>: Location is empty and path-based dependency resolution is not preserved.
+    /// Linux chain verification fails closed when revocation cannot be established; RFC 3161 trust requires the net10.0 asset.
+    /// On Linux, disabling chain verification still checks the signature, PE digest, signer policy and pinned certificate, but not dates or revocation.
+    /// Windows uses WinVerifyTrust on a handle-bound temporary copy of the snapshot, including its verified signer identity.
+    /// Windows also verifies the CMS signature independently of chain trust; a file hash and certificate alone do not authenticate the publisher.
+    /// Dependencies and native libraries are not validated. See SecureReflection/SECURITY.md for the supported security profile.
+    /// </remarks>
     public class SecureAssembly
     {
         /// <summary>
@@ -23,7 +32,7 @@
         /// <param name="allowedCertificate"><see cref="X509Certificate2"/> representing the allowed certificates for the assembly.</param>
         /// <param name="verifyCertificateChain">
         /// If <see langword="true"/> (default), performs full certificate chain verification;  
-        /// if <see langword="false"/>, only the file hash is checked, bypassing certificate chain validation.
+        /// if <see langword="false"/>, verifies the signature, file digest and allowed signer without requiring certificate chain trust.
         /// </param>
         /// <returns>The loaded <see cref="Assembly"/>.</returns>
         /// <exception cref="ArgumentException">Thrown if <paramref name="assemblyPath"/> is null or whitespace.</exception>
@@ -31,13 +40,9 @@
         /// <exception cref="SecurityException">Thrown if the assembly's certificate does not match any of the allowed certificates, or if the assembly is unsigned or has an invalid signature.</exception>
         /// <exception cref="FileNotFoundException">Thrown if the assembly file cannot be found at the specified path.</exception>
         /// <exception cref="InvalidOperationException">Thrown if the assembly path contains invalid characters.</exception>
+        /// <exception cref="NotSupportedException">Thrown if the current operating system is not supported.</exception>
         public static Assembly LoadFrom(string assemblyPath, X509Certificate2 allowedCertificate, bool verifyCertificateChain = true)
         {
-            if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            {
-                throw new InvalidOperationException($"{nameof(LoadFrom)} is only supported for Windows operating systems.");
-            }
-
             if (string.IsNullOrWhiteSpace(assemblyPath))
             {
                 throw new ArgumentException($"'{nameof(assemblyPath)}' cannot be null or whitespace.", nameof(assemblyPath));
@@ -48,9 +53,7 @@
                 throw new ArgumentNullException(nameof(allowedCertificate));
             }
 
-            ValidateAssemblySignature(assemblyPath, verifyCertificateChain, allowedCertificate);
-
-            return LoadAssembly(assemblyPath, nameof(Assembly.LoadFrom));
+            return ValidateAndLoad(assemblyPath, nameof(Assembly.LoadFrom), verifyCertificateChain, allowedCertificate);
         }
 
         /// <summary>
@@ -60,7 +63,7 @@
         /// <param name="allowedCertificates">An array of <see cref="X509Certificate2"/> representing the allowed certificates for the assembly.</param>
         /// <param name="verifyCertificateChain">
         /// If <see langword="true"/> (default), performs full certificate chain verification;  
-        /// if <see langword="false"/>, only the file hash is checked, bypassing certificate chain validation.
+        /// if <see langword="false"/>, verifies the signature, file digest and allowed signer without requiring certificate chain trust.
         /// </param>
         /// <returns>The loaded <see cref="Assembly"/>.</returns>
         /// <exception cref="ArgumentException">Thrown if <paramref name="assemblyPath"/> is null or whitespace.</exception>
@@ -68,13 +71,9 @@
         /// <exception cref="SecurityException">Thrown if the assembly's certificate does not match any of the allowed certificates, or if the assembly is unsigned or has an invalid signature.</exception>
         /// <exception cref="FileNotFoundException">Thrown if the assembly file cannot be found at the specified path.</exception>
         /// <exception cref="InvalidOperationException">Thrown if the assembly path contains invalid characters.</exception>
+        /// <exception cref="NotSupportedException">Thrown if the current operating system is not supported.</exception>
         public static Assembly LoadFrom(string assemblyPath, IEnumerable<X509Certificate2> allowedCertificates, bool verifyCertificateChain = true)
         {
-            if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            {
-                throw new InvalidOperationException($"{nameof(LoadFrom)} is only supported for Windows operating systems.");
-            }
-
             if (string.IsNullOrWhiteSpace(assemblyPath))
             {
                 throw new ArgumentException($"'{nameof(assemblyPath)}' cannot be null or whitespace.", nameof(assemblyPath));
@@ -92,9 +91,7 @@
                 throw new ArgumentException($"{nameof(allowedCertificates)} must contain at least one certificate.");
             }
 
-            ValidateAssemblySignature(assemblyPath, verifyCertificateChain, allowedCerticatesArr);
-
-            return LoadAssembly(assemblyPath, nameof(Assembly.LoadFrom));
+            return ValidateAndLoad(assemblyPath, nameof(Assembly.LoadFrom), verifyCertificateChain, allowedCerticatesArr);
         }
 
         /// <summary>
@@ -104,7 +101,7 @@
         /// <param name="allowedCertificatePath">Certificate path representing the allowed certificate for the assembly.</param>
         /// <param name="verifyCertificateChain">
         /// If <see langword="true"/> (default), performs full certificate chain verification;  
-        /// if <see langword="false"/>, only the file hash is checked, bypassing certificate chain validation.
+        /// if <see langword="false"/>, verifies the signature, file digest and allowed signer without requiring certificate chain trust.
         /// </param>
         /// <returns>The loaded <see cref="Assembly"/>.</returns>
         /// <exception cref="ArgumentException">Thrown if <paramref name="assemblyPath"/> is null or whitespace, or if <paramref name="allowedCertificatePath"/> is empty.</exception>
@@ -112,13 +109,9 @@
         /// <exception cref="SecurityException">Thrown if the assembly's certificate does not match any of the allowed certificates, or if the assembly is unsigned or has an invalid signature.</exception>
         /// <exception cref="FileNotFoundException">Thrown if the assembly file cannot be found at the specified path.</exception>
         /// <exception cref="InvalidOperationException">Thrown if the assembly path contains invalid characters.</exception>
+        /// <exception cref="NotSupportedException">Thrown if the current operating system is not supported.</exception>
         public static Assembly LoadFrom(string assemblyPath, string allowedCertificatePath, bool verifyCertificateChain = true)
         {
-            if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            {
-                throw new InvalidOperationException($"{nameof(LoadFrom)} is only supported for Windows operating systems.");
-            }
-
             if (string.IsNullOrWhiteSpace(assemblyPath))
             {
                 throw new ArgumentException($"'{nameof(assemblyPath)}' cannot be null or whitespace.", nameof(assemblyPath));
@@ -136,9 +129,10 @@
                    "To securely load these certificates, please use an overload that accepts an X509Certificate2 instance instead.");
             }
 
-            ValidateAssemblySignature(assemblyPath, verifyCertificateChain, new X509Certificate2(allowedCertificatePath));
-
-            return LoadAssembly(assemblyPath, nameof(Assembly.LoadFrom));
+            using (var certificate = CertificateLoader.LoadCertificateFromFile(allowedCertificatePath))
+            {
+                return ValidateAndLoad(assemblyPath, nameof(Assembly.LoadFrom), verifyCertificateChain, certificate);
+            }
         }
 
         /// <summary>
@@ -148,7 +142,7 @@
         /// <param name="allowedCertificatePaths">An array of certificate paths representing the allowed certificates for the assembly.</param>
         /// <param name="verifyCertificateChain">
         /// If <see langword="true"/> (default), performs full certificate chain verification;  
-        /// if <see langword="false"/>, only the file hash is checked, bypassing certificate chain validation.
+        /// if <see langword="false"/>, verifies the signature, file digest and allowed signer without requiring certificate chain trust.
         /// </param>
         /// <returns>The loaded <see cref="Assembly"/>.</returns>
         /// <exception cref="ArgumentException">Thrown if <paramref name="assemblyPath"/> is null or whitespace, or if <paramref name="allowedCertificatePaths"/> is empty.</exception>
@@ -156,13 +150,9 @@
         /// <exception cref="SecurityException">Thrown if the assembly's certificate does not match any of the allowed certificates, or if the assembly is unsigned or has an invalid signature.</exception>
         /// <exception cref="FileNotFoundException">Thrown if the assembly file cannot be found at the specified path.</exception>
         /// <exception cref="InvalidOperationException">Thrown if the assembly path contains invalid characters.</exception>
+        /// <exception cref="NotSupportedException">Thrown if the current operating system is not supported.</exception>
         public static Assembly LoadFrom(string assemblyPath, IEnumerable<string> allowedCertificatePaths, bool verifyCertificateChain = true)
         {
-            if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            {
-                throw new InvalidOperationException($"{nameof(LoadFrom)} is only supported for Windows operating systems.");
-            }
-
             if (string.IsNullOrWhiteSpace(assemblyPath))
             {
                 throw new ArgumentException($"'{nameof(assemblyPath)}' cannot be null or whitespace.", nameof(assemblyPath));
@@ -185,13 +175,24 @@
                    "To securely load these certificates, please use an overload that accepts an X509Certificate2 instance instead.");
             }
 
-            var certificates = allowedCertificatePaths
-                .Select(certificatePath => new X509Certificate2(certificatePath))
-                .ToArray();
+            var certificates = new List<X509Certificate2>();
 
-            ValidateAssemblySignature(assemblyPath, verifyCertificateChain, certificates);
+            try
+            {
+                foreach (var certificatePath in allowedCertificatePaths)
+                {
+                    certificates.Add(CertificateLoader.LoadCertificateFromFile(certificatePath));
+                }
 
-            return LoadAssembly(assemblyPath, nameof(Assembly.LoadFrom));
+                return ValidateAndLoad(assemblyPath, nameof(Assembly.LoadFrom), verifyCertificateChain, certificates.ToArray());
+            }
+            finally
+            {
+                foreach (var certificate in certificates)
+                {
+                    certificate.Dispose();
+                }
+            }
         }
 
         /// <summary>
@@ -204,7 +205,7 @@
         /// <param name="allowedCertificate">Byte array representing the allowed certificate for the assembly.</param>
         /// <param name="verifyCertificateChain">
         /// If <see langword="true"/> (default), performs full certificate chain verification;  
-        /// if <see langword="false"/>, only the file hash is checked, bypassing certificate chain validation.
+        /// if <see langword="false"/>, verifies the signature, file digest and allowed signer without requiring certificate chain trust.
         /// </param>
         /// <returns>The loaded <see cref="Assembly"/>.</returns>
         /// <exception cref="ArgumentException">Thrown if <paramref name="assemblyPath"/> is null or whitespace, or if <paramref name="allowedCertificate"/> is empty.</exception>
@@ -212,13 +213,9 @@
         /// <exception cref="SecurityException">Thrown if the assembly's certificate does not match any of the allowed certificates, or if the assembly is unsigned or has an invalid signature.</exception>
         /// <exception cref="FileNotFoundException">Thrown if the assembly file cannot be found at the specified path.</exception>
         /// <exception cref="InvalidOperationException">Thrown if the assembly path contains invalid characters.</exception>
+        /// <exception cref="NotSupportedException">Thrown if the current operating system is not supported.</exception>
         public static Assembly LoadFrom(string assemblyPath, byte[] allowedCertificate, bool verifyCertificateChain = true)
         {
-            if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            {
-                throw new InvalidOperationException($"{nameof(LoadFrom)} is only supported for Windows operating systems.");
-            }
-
             if (string.IsNullOrWhiteSpace(assemblyPath))
             {
                 throw new ArgumentException($"'{nameof(assemblyPath)}' cannot be null or whitespace.", nameof(assemblyPath));
@@ -234,9 +231,10 @@
                 throw new ArgumentException($"{nameof(allowedCertificate)} cannot be empty.");
             }
 
-            ValidateAssemblySignature(assemblyPath, verifyCertificateChain, new X509Certificate2(allowedCertificate));
-
-            return LoadAssembly(assemblyPath, nameof(Assembly.LoadFrom));
+            using (var certificate = CertificateLoader.LoadCertificate(allowedCertificate))
+            {
+                return ValidateAndLoad(assemblyPath, nameof(Assembly.LoadFrom), verifyCertificateChain, certificate);
+            }
         }
 
         /// <summary>
@@ -249,7 +247,7 @@
         /// <param name="allowedCertificates">An enumerable of byte arrays representing the allowed certificates for the assembly.</param>
         /// <param name="verifyCertificateChain">
         /// If <see langword="true"/> (default), performs full certificate chain verification;  
-        /// if <see langword="false"/>, only the file hash is checked, bypassing certificate chain validation.
+        /// if <see langword="false"/>, verifies the signature, file digest and allowed signer without requiring certificate chain trust.
         /// </param>
         /// <returns>The loaded <see cref="Assembly"/>.</returns>
         /// <exception cref="ArgumentException">Thrown if <paramref name="assemblyPath"/> is null or whitespace, or if <paramref name="allowedCertificates"/> is empty.</exception>
@@ -257,13 +255,9 @@
         /// <exception cref="SecurityException">Thrown if the assembly's certificate does not match any of the allowed certificates, or if the assembly is unsigned or has an invalid signature.</exception>
         /// <exception cref="FileNotFoundException">Thrown if the assembly file cannot be found at the specified path.</exception>
         /// <exception cref="InvalidOperationException">Thrown if the assembly path contains invalid characters.</exception>
+        /// <exception cref="NotSupportedException">Thrown if the current operating system is not supported.</exception>
         public static Assembly LoadFrom(string assemblyPath, IEnumerable<byte[]> allowedCertificates, bool verifyCertificateChain = true)
         {
-            if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            {
-                throw new InvalidOperationException($"{nameof(LoadFrom)} is only supported for Windows operating systems.");
-            }
-
             if (String.IsNullOrWhiteSpace(assemblyPath))
             {
                 throw new ArgumentException($"'{nameof(assemblyPath)}' cannot be null or whitespace.", nameof(assemblyPath));
@@ -280,12 +274,20 @@
             }
 
             var certificates = allowedCertificates
-                .Select(certificate => new X509Certificate2(certificate))
+                .Select(certificate => CertificateLoader.LoadCertificate(certificate))
                 .ToArray();
 
-            ValidateAssemblySignature(assemblyPath, verifyCertificateChain, certificates);
-
-            return LoadAssembly(assemblyPath, nameof(Assembly.LoadFrom));
+            try
+            {
+                return ValidateAndLoad(assemblyPath, nameof(Assembly.LoadFrom), verifyCertificateChain, certificates);
+            }
+            finally
+            {
+                foreach (var certificate in certificates)
+                {
+                    certificate.Dispose();
+                }
+            }
         }
 
         /// <summary>
@@ -295,7 +297,7 @@
         /// <param name="allowedCertificate"><see cref="X509Certificate2"/> representing the allowed certificates for the assembly.</param>
         /// <param name="verifyCertificateChain">
         /// If <see langword="true"/> (default), performs full certificate chain verification;  
-        /// if <see langword="false"/>, only the file hash is checked, bypassing certificate chain validation.
+        /// if <see langword="false"/>, verifies the signature, file digest and allowed signer without requiring certificate chain trust.
         /// </param>
         /// <returns>The loaded <see cref="Assembly"/>.</returns>
         /// <exception cref="ArgumentException">Thrown if <paramref name="assemblyPath"/> is null or whitespace.</exception>
@@ -303,13 +305,9 @@
         /// <exception cref="SecurityException">Thrown if the assembly's certificate does not match any of the allowed certificates, or if the assembly is unsigned or has an invalid signature.</exception>
         /// <exception cref="FileNotFoundException">Thrown if the assembly file cannot be found at the specified path.</exception>
         /// <exception cref="InvalidOperationException">Thrown if the assembly path contains invalid characters.</exception>
+        /// <exception cref="NotSupportedException">Thrown if the current operating system is not supported.</exception>
         public static Assembly LoadFile(string assemblyPath, X509Certificate2 allowedCertificate, bool verifyCertificateChain = true)
         {
-            if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            {
-                throw new InvalidOperationException($"{nameof(LoadFile)} is only supported for Windows operating systems.");
-            }
-
             if (string.IsNullOrWhiteSpace(assemblyPath))
             {
                 throw new ArgumentException($"'{nameof(assemblyPath)}' cannot be null or whitespace.", nameof(assemblyPath));
@@ -320,9 +318,7 @@
                 throw new ArgumentNullException(nameof(allowedCertificate));
             }
 
-            ValidateAssemblySignature(assemblyPath, verifyCertificateChain, allowedCertificate);
-
-            return LoadAssembly(assemblyPath, nameof(Assembly.LoadFile));
+            return ValidateAndLoad(assemblyPath, nameof(Assembly.LoadFile), verifyCertificateChain, allowedCertificate);
         }
 
         /// <summary>
@@ -332,7 +328,7 @@
         /// <param name="allowedCertificates">An array of <see cref="X509Certificate2"/> representing the allowed certificates for the assembly.</param>
         /// <param name="verifyCertificateChain">
         /// If <see langword="true"/> (default), performs full certificate chain verification;  
-        /// if <see langword="false"/>, only the file hash is checked, bypassing certificate chain validation.
+        /// if <see langword="false"/>, verifies the signature, file digest and allowed signer without requiring certificate chain trust.
         /// </param>
         /// <returns>The loaded <see cref="Assembly"/>.</returns>
         /// <exception cref="ArgumentException">Thrown if <paramref name="assemblyPath"/> is null or whitespace.</exception>
@@ -340,13 +336,9 @@
         /// <exception cref="SecurityException">Thrown if the assembly's certificate does not match any of the allowed certificates, or if the assembly is unsigned or has an invalid signature.</exception>
         /// <exception cref="FileNotFoundException">Thrown if the assembly file cannot be found at the specified path.</exception>
         /// <exception cref="InvalidOperationException">Thrown if the assembly path contains invalid characters.</exception>
+        /// <exception cref="NotSupportedException">Thrown if the current operating system is not supported.</exception>
         public static Assembly LoadFile(string assemblyPath, IEnumerable<X509Certificate2> allowedCertificates, bool verifyCertificateChain = true)
         {
-            if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            {
-                throw new InvalidOperationException($"{nameof(LoadFile)} is only supported for Windows operating systems.");
-            }
-
             if (string.IsNullOrWhiteSpace(assemblyPath))
             {
                 throw new ArgumentException($"'{nameof(assemblyPath)}' cannot be null or whitespace.", nameof(assemblyPath));
@@ -364,9 +356,7 @@
                 throw new ArgumentException($"{nameof(allowedCertificates)} must contain at least one certificate.");
             }
 
-            ValidateAssemblySignature(assemblyPath, verifyCertificateChain, allowedCerticatesArr);
-
-            return LoadAssembly(assemblyPath, nameof(Assembly.LoadFile));
+            return ValidateAndLoad(assemblyPath, nameof(Assembly.LoadFile), verifyCertificateChain, allowedCerticatesArr);
         }
 
         /// <summary>
@@ -376,7 +366,7 @@
         /// <param name="allowedCertificatePath">Certificate path representing the allowed certificate for the assembly.</param>
         /// <param name="verifyCertificateChain">
         /// If <see langword="true"/> (default), performs full certificate chain verification;  
-        /// if <see langword="false"/>, only the file hash is checked, bypassing certificate chain validation.
+        /// if <see langword="false"/>, verifies the signature, file digest and allowed signer without requiring certificate chain trust.
         /// </param>
         /// <returns>The loaded <see cref="Assembly"/>.</returns>
         /// <exception cref="ArgumentException">Thrown if <paramref name="assemblyPath"/> is null or whitespace, or if <paramref name="allowedCertificatePath"/> is empty.</exception>
@@ -384,13 +374,9 @@
         /// <exception cref="SecurityException">Thrown if the assembly's certificate does not match any of the allowed certificates, or if the assembly is unsigned or has an invalid signature.</exception>
         /// <exception cref="FileNotFoundException">Thrown if the assembly file cannot be found at the specified path.</exception>
         /// <exception cref="InvalidOperationException">Thrown if the assembly path contains invalid characters.</exception>
+        /// <exception cref="NotSupportedException">Thrown if the current operating system is not supported.</exception>
         public static Assembly LoadFile(string assemblyPath, string allowedCertificatePath, bool verifyCertificateChain = true)
         {
-            if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            {
-                throw new InvalidOperationException($"{nameof(LoadFile)} is only supported for Windows operating systems.");
-            }
-
             if (string.IsNullOrWhiteSpace(assemblyPath))
             {
                 throw new ArgumentException($"'{nameof(assemblyPath)}' cannot be null or whitespace.", nameof(assemblyPath));
@@ -408,9 +394,10 @@
                    "To securely load these certificates, please use an overload that accepts an X509Certificate2 instance instead.");
             }
 
-            ValidateAssemblySignature(assemblyPath, verifyCertificateChain, new X509Certificate2(allowedCertificatePath));
-
-            return LoadAssembly(assemblyPath, nameof(Assembly.LoadFile));
+            using (var certificate = CertificateLoader.LoadCertificateFromFile(allowedCertificatePath))
+            {
+                return ValidateAndLoad(assemblyPath, nameof(Assembly.LoadFile), verifyCertificateChain, certificate);
+            }
         }
 
         /// <summary>
@@ -420,7 +407,7 @@
         /// <param name="allowedCertificatePaths">An array of certificate paths representing the allowed certificates for the assembly.</param>
         /// <param name="verifyCertificateChain">
         /// If <see langword="true"/> (default), performs full certificate chain verification;  
-        /// if <see langword="false"/>, only the file hash is checked, bypassing certificate chain validation.
+        /// if <see langword="false"/>, verifies the signature, file digest and allowed signer without requiring certificate chain trust.
         /// </param>
         /// <returns>The loaded <see cref="Assembly"/>.</returns>
         /// <exception cref="ArgumentException">Thrown if <paramref name="assemblyPath"/> is null or whitespace, or if <paramref name="allowedCertificatePaths"/> is empty.</exception>
@@ -428,13 +415,9 @@
         /// <exception cref="SecurityException">Thrown if the assembly's certificate does not match any of the allowed certificates, or if the assembly is unsigned or has an invalid signature.</exception>
         /// <exception cref="FileNotFoundException">Thrown if the assembly file cannot be found at the specified path.</exception>
         /// <exception cref="InvalidOperationException">Thrown if the assembly path contains invalid characters.</exception>
+        /// <exception cref="NotSupportedException">Thrown if the current operating system is not supported.</exception>
         public static Assembly LoadFile(string assemblyPath, IEnumerable<string> allowedCertificatePaths, bool verifyCertificateChain = true)
         {
-            if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            {
-                throw new InvalidOperationException($"{nameof(LoadFile)} is only supported for Windows operating systems.");
-            }
-
             if (string.IsNullOrWhiteSpace(assemblyPath))
             {
                 throw new ArgumentException($"'{nameof(assemblyPath)}' cannot be null or whitespace.", nameof(assemblyPath));
@@ -457,13 +440,24 @@
                    "To securely load these certificates, please use an overload that accepts an X509Certificate2 instance instead.");
             }
 
-            var certificates = allowedCertificatePaths
-                .Select(certificatePath => new X509Certificate2(certificatePath))
-                .ToArray();
+            var certificates = new List<X509Certificate2>();
 
-            ValidateAssemblySignature(assemblyPath, verifyCertificateChain, certificates);
+            try
+            {
+                foreach (var certificatePath in allowedCertificatePaths)
+                {
+                    certificates.Add(CertificateLoader.LoadCertificateFromFile(certificatePath));
+                }
 
-            return LoadAssembly(assemblyPath, nameof(Assembly.LoadFile));
+                return ValidateAndLoad(assemblyPath, nameof(Assembly.LoadFile), verifyCertificateChain, certificates.ToArray());
+            }
+            finally
+            {
+                foreach (var certificate in certificates)
+                {
+                    certificate.Dispose();
+                }
+            }
         }
 
         /// <summary>
@@ -476,7 +470,7 @@
         /// <param name="allowedCertificate">Byte array representing the allowed certificate for the assembly.</param>
         /// <param name="verifyCertificateChain">
         /// If <see langword="true"/> (default), performs full certificate chain verification;  
-        /// if <see langword="false"/>, only the file hash is checked, bypassing certificate chain validation.
+        /// if <see langword="false"/>, verifies the signature, file digest and allowed signer without requiring certificate chain trust.
         /// </param>
         /// <returns>The loaded <see cref="Assembly"/>.</returns>
         /// <exception cref="ArgumentException">Thrown if <paramref name="assemblyPath"/> is null or whitespace, or if <paramref name="allowedCertificate"/> is empty.</exception>
@@ -484,13 +478,9 @@
         /// <exception cref="SecurityException">Thrown if the assembly's certificate does not match any of the allowed certificates, or if the assembly is unsigned or has an invalid signature.</exception>
         /// <exception cref="FileNotFoundException">Thrown if the assembly file cannot be found at the specified path.</exception>
         /// <exception cref="InvalidOperationException">Thrown if the assembly path contains invalid characters.</exception>
+        /// <exception cref="NotSupportedException">Thrown if the current operating system is not supported.</exception>
         public static Assembly LoadFile(string assemblyPath, byte[] allowedCertificate, bool verifyCertificateChain = true)
         {
-            if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            {
-                throw new InvalidOperationException($"{nameof(LoadFile)} is only supported for Windows operating systems.");
-            }
-
             if (string.IsNullOrWhiteSpace(assemblyPath))
             {
                 throw new ArgumentException($"'{nameof(assemblyPath)}' cannot be null or whitespace.", nameof(assemblyPath));
@@ -506,9 +496,10 @@
                 throw new ArgumentException($"{nameof(allowedCertificate)} cannot be empty.");
             }
 
-            ValidateAssemblySignature(assemblyPath, verifyCertificateChain, new X509Certificate2(allowedCertificate));
-
-            return LoadAssembly(assemblyPath, nameof(Assembly.LoadFile));
+            using (var certificate = CertificateLoader.LoadCertificate(allowedCertificate))
+            {
+                return ValidateAndLoad(assemblyPath, nameof(Assembly.LoadFile), verifyCertificateChain, certificate);
+            }
         }
 
         /// <summary>
@@ -521,7 +512,7 @@
         /// <param name="allowedCertificates">An enumerable of byte arrays representing the allowed certificates for the assembly.</param>
         /// <param name="verifyCertificateChain">
         /// If <see langword="true"/> (default), performs full certificate chain verification;  
-        /// if <see langword="false"/>, only the file hash is checked, bypassing certificate chain validation.
+        /// if <see langword="false"/>, verifies the signature, file digest and allowed signer without requiring certificate chain trust.
         /// </param>
         /// <returns>The loaded <see cref="Assembly"/>.</returns>
         /// <exception cref="ArgumentException">Thrown if <paramref name="assemblyPath"/> is null or whitespace, or if <paramref name="allowedCertificates"/> is empty.</exception>
@@ -529,13 +520,9 @@
         /// <exception cref="SecurityException">Thrown if the assembly's certificate does not match any of the allowed certificates, or if the assembly is unsigned or has an invalid signature.</exception>
         /// <exception cref="FileNotFoundException">Thrown if the assembly file cannot be found at the specified path.</exception>
         /// <exception cref="InvalidOperationException">Thrown if the assembly path contains invalid characters.</exception>
+        /// <exception cref="NotSupportedException">Thrown if the current operating system is not supported.</exception>
         public static Assembly LoadFile(string assemblyPath, IEnumerable<byte[]> allowedCertificates, bool verifyCertificateChain = true)
         {
-            if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            {
-                throw new InvalidOperationException($"{nameof(LoadFile)} is only supported for Windows operating systems.");
-            }
-
             if (String.IsNullOrWhiteSpace(assemblyPath))
             {
                 throw new ArgumentException($"'{nameof(assemblyPath)}' cannot be null or whitespace.", nameof(assemblyPath));
@@ -552,88 +539,215 @@
             }
 
             var certificates = allowedCertificates
-                .Select(certificate => new X509Certificate2(certificate))
+                .Select(certificate => CertificateLoader.LoadCertificate(certificate))
                 .ToArray();
 
-            ValidateAssemblySignature(assemblyPath, verifyCertificateChain, certificates);
-
-            return LoadAssembly(assemblyPath, nameof(Assembly.LoadFile));
+            try
+            {
+                return ValidateAndLoad(assemblyPath, nameof(Assembly.LoadFile), verifyCertificateChain, certificates);
+            }
+            finally
+            {
+                foreach (var certificate in certificates)
+                {
+                    certificate.Dispose();
+                }
+            }
         }
 
         /// <summary>
         /// Validates the digital signature of an assembly and ensures it is signed by an allowed certificate.
         /// </summary>
+        /// <remarks>This is a point-in-time check and does not protect a subsequent caller-managed load from file replacement.</remarks>
         /// <param name="assemblyPath">The full path to the assembly file to validate.</param>
         /// <param name="verifyCertificateChain">Indicates whether to verify the certificate chain as part of the signature validation.</param>
         /// <param name="allowedCertificates">A list of certificates that are considered trusted for signing the assembly.</param>
+        /// <exception cref="FileNotFoundException">Thrown when <paramref name="assemblyPath"/> is null or the file does not exist.</exception>
         /// <exception cref="SecurityException">
         /// Thrown when the assembly is unsigned, has a tampered or invalid signature, or is not signed with a trusted certificate.
         /// </exception>
+        /// <exception cref="NotSupportedException">Thrown if the current operating system is not supported.</exception>
         public static void ValidateAssemblySignature(string assemblyPath, bool verifyCertificateChain, params X509Certificate2[] allowedCertificates)
         {
-            X509Certificate assemblyCertificate;
+            ValidateAssemblySignature(assemblyPath, verifyCertificateChain, PlatformHelper.CurrentPlatform, allowedCertificates);
+        }
 
-            try
+        /// <summary>
+        /// Validates the digital signature of an assembly using the signature verification rules of the specified platform.
+        /// </summary>
+        /// <param name="assemblyPath">The full path to the assembly file to validate.</param>
+        /// <param name="verifyCertificateChain">Indicates whether to verify the certificate chain as part of the signature validation.</param>
+        /// <param name="platform">The platform whose signature verification implementation should be used.</param>
+        /// <param name="allowedCertificates">A list of certificates that are considered trusted for signing the assembly.</param>
+        /// <exception cref="NotSupportedException">Thrown if the platform is not supported.</exception>
+        internal static void ValidateAssemblySignature(string assemblyPath, bool verifyCertificateChain, OSPlatform platform, params X509Certificate2[] allowedCertificates)
+        {
+            ReadValidatedAssembly(assemblyPath, verifyCertificateChain, platform, allowedCertificates);
+        }
+
+        // The returned bytes are the complete validation-to-load boundary. Never reopen the input path after this call.
+        internal static byte[] ReadValidatedAssembly(string assemblyPath, bool verifyCertificateChain, OSPlatform platform, params X509Certificate2[] allowedCertificates)
+        {
+            PlatformHelper.EnsureSupported(platform);
+
+            if (allowedCertificates == null)
             {
-                assemblyCertificate = X509Certificate.CreateFromSignedFile(assemblyPath);
-            }
-            catch (CryptographicException)
-            {
-                throw new SecurityException("Attempt to load an unsigned assembly.");
+                throw new ArgumentNullException(nameof(allowedCertificates));
             }
 
-            if (assemblyCertificate is null)
+            if (!File.Exists(assemblyPath))
             {
-                throw new SecurityException("Attempt to load an unsigned assembly.");
+                throw new FileNotFoundException($"The file '{assemblyPath}' does not exist.", assemblyPath);
             }
 
-            // Needs to run first to cover tampered dll scenarios
-            if (!TryValidateSignature(assemblyPath, verifyCertificateChain, out var result))
+            var snapshot = AuthenticodeVerifier.ReadPeImage(assemblyPath);
+            switch (platform)
             {
-                throw new SecurityException($"Attempt to load an assembly with an invalid signature: {result}");
+                case var windows when windows == OSPlatform.Windows:
+                    ValidateWindowsAssemblySignature(snapshot, verifyCertificateChain, allowedCertificates);
+                    break;
+                case var linux when linux == OSPlatform.Linux:
+                    AuthenticodeVerifier.ValidatePeImage(snapshot, verifyCertificateChain, allowedCertificates);
+                    break;
+                default:
+                    throw new NotSupportedException($"The platform '{platform}' is not supported.");
             }
 
-            if (!allowedCertificates.Any(certificate => certificate.GetCertHashString() == assemblyCertificate.GetCertHashString()))
+            return snapshot;
+        }
+
+        private static void ValidateWindowsAssemblySignature(byte[] snapshot, bool verifyCertificateChain, X509Certificate2[] allowedCertificates)
+        {
+            // CreateNew prevents pre-created files/links from being followed. Keep this handle open with
+            // no write/delete sharing through verification. A new file also has no pre-existing writable mappings.
+            // WinVerifyTrust receives the handle, not just a name that could be redirected through a parent junction.
+            using (var file = CreateWindowsSnapshot(snapshot))
             {
-                throw new SecurityException("The certificate of the assembly does not match the provided certificate.");
+                ValidateWindowsSnapshot(file, verifyCertificateChain, allowedCertificates);
             }
         }
 
-        private static Assembly LoadAssembly(string assemblyPath, string loadAssemblyMethod)
+        // Internal for deterministic tests of sharing and cleanup. The caller must dispose the returned stream.
+        internal static FileStream CreateWindowsSnapshot(byte[] snapshot)
         {
-            if (!File.Exists(assemblyPath))
+            var temporaryPath = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N") + ".dll");
+            var file = new FileStream(temporaryPath, FileMode.CreateNew, FileAccess.ReadWrite, FileShare.Read, 4096, FileOptions.DeleteOnClose);
+            try
             {
-                throw new FileNotFoundException(assemblyPath);
+                file.Write(snapshot, 0, snapshot.Length);
+                file.Flush();
+                file.Position = 0;
+                return file;
+            }
+            catch
+            {
+                file.Dispose();
+                throw;
+            }
+        }
+
+        // The production caller supplies a newly created, exclusively writable snapshot, kept open throughout
+        // verification. This seam also lets tests prove the native verifier uses the handle instead of FileStream.Name.
+        internal static void ValidateWindowsSnapshot(FileStream file, bool verifyCertificateChain, X509Certificate2[] allowedCertificates)
+        {
+            using (var fileInfo = new WINTRUST_FILE_INFO(file.Name, file.SafeFileHandle.DangerousGetHandle()))
+            using (var trustData = new WINTRUST_DATA(fileInfo, verifyCertificateChain))
+            {
+                var result = (WinVerifyTrustResult)(uint)WinVerifyTrust(new IntPtr(-1), in WINTRUST_ACTION_GENERIC_VERIFY_V2, trustData);
+                if (result != WinVerifyTrustResult.Success)
+                {
+                    throw new SecurityException($"Attempt to load an assembly with an invalid signature: {result}");
+                }
+
+                // Pin the signer from THIS successful verification, never from a second path-based parse.
+                using (var assemblyCertificate = trustData.GetVerifiedSigner())
+                {
+                    if (!allowedCertificates.Any(certificate => certificate != null && certificate.RawData.SequenceEqual(assemblyCertificate.RawData)))
+                    {
+                        throw new SecurityException("The certificate of the assembly does not match the provided certificate.");
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Retrieves the certificate that was used to Authenticode sign the specified file.
+        /// </summary>
+        /// <param name="filePath">The full path to the signed file.</param>
+        /// <param name="platform">The platform whose signature parsing implementation should be used.</param>
+        /// <returns>The signing certificate, or <see langword="null"/> when the file is not signed.</returns>
+        /// <exception cref="ArgumentNullException">Thrown when <paramref name="filePath"/> is <see langword="null"/>.</exception>
+        /// <exception cref="ArgumentException">Thrown when <paramref name="filePath"/> is empty or consists only of white-space characters.</exception>
+        /// <exception cref="CryptographicException">Thrown when Authenticode content is detected but its signer certificate cannot be decoded.</exception>
+        internal static X509Certificate2 GetSigningCertificate(string filePath, OSPlatform platform)
+        {
+            PlatformHelper.EnsureSupported(platform);
+            if (filePath is null)
+            {
+                throw new ArgumentNullException(nameof(filePath));
             }
 
-            if (!assemblyPath.IsPathValid())
+            if (string.IsNullOrWhiteSpace(filePath))
+            {
+                throw new ArgumentException($"'{nameof(filePath)}' cannot be empty or whitespace.", nameof(filePath));
+            }
+
+            if (platform != OSPlatform.Windows)
+            {
+                // X509Certificate2.GetCertContentType and the Authenticode path constructor rely on CryptoAPI,
+                // which is only available on Windows.
+                return AuthenticodeVerifier.GetSigningCertificate(filePath);
+            }
+
+            X509ContentType contentType;
+            try
+            {
+                contentType = X509Certificate2.GetCertContentType(filePath);
+            }
+            catch (CryptographicException)
+            {
+                return null;
+            }
+
+            if (contentType != X509ContentType.Authenticode)
+            {
+                return null;
+            }
+
+            // X509CertificateLoader intentionally does not support Authenticode containers. The .NET runtime team
+            // recommends checking for Authenticode content and narrowly suppressing SYSLIB0057 around the path
+            // constructor. This returns the first signer of the first signature; a different approach is required
+            // if support for enumerating multiple Authenticode signatures is introduced.
+            // https://github.com/dotnet/runtime/discussions/108740
+            // https://github.com/dotnet/runtime/issues/111158
+            // https://learn.microsoft.com/dotnet/fundamentals/syslib-diagnostics/syslib0057
+#pragma warning disable SYSLIB0057
+            return new X509Certificate2(filePath);
+#pragma warning restore SYSLIB0057
+        }
+
+        private static Assembly ValidateAndLoad(string assemblyPath, string loadAssemblyMethod, bool verifyCertificateChain, params X509Certificate2[] certificates)
+        {
+            var platform = PlatformHelper.CurrentPlatform;
+            PlatformHelper.EnsureSupported(platform);
+            if (!assemblyPath.IsPathValid(platform))
             {
                 throw new InvalidOperationException($"Assembly path '{assemblyPath}' contains invalid characters");
             }
 
-            if (loadAssemblyMethod == nameof(Assembly.LoadFrom))
-            {
-                return Assembly.LoadFrom(assemblyPath);
-            }
-            else if (loadAssemblyMethod == nameof(Assembly.LoadFile))
-            {
-                return Assembly.LoadFile(assemblyPath);
-            }
-            else
+            var snapshot = ReadValidatedAssembly(assemblyPath, verifyCertificateChain, platform, certificates);
+            return LoadAssembly(snapshot, loadAssemblyMethod);
+        }
+
+        private static Assembly LoadAssembly(byte[] snapshot, string loadAssemblyMethod)
+        {
+            if (loadAssemblyMethod != nameof(Assembly.LoadFrom) && loadAssemblyMethod != nameof(Assembly.LoadFile))
             {
                 throw new NotSupportedException($"{loadAssemblyMethod} is not supported");
             }
-        }
 
-        private static bool TryValidateSignature(string fileName, bool verifyCertificateChain, out WinVerifyTrustResult result)
-        {
-            var fileInfo = new WINTRUST_FILE_INFO(fileName);
-            var trustData = new WINTRUST_DATA(fileInfo, verifyCertificateChain);
-
-            var hWnd = IntPtr.Zero; // No UI
-            result = (WinVerifyTrustResult)WinVerifyTrust(hWnd, WINTRUST_ACTION_GENERIC_VERIFY_V2, trustData);
-
-            return result == 0; // 0 means signature is valid
+            // Both API families load only the verified snapshot; neither resolves the source pathname again.
+            return Assembly.Load(snapshot);
         }
 
         #region WinTrust
@@ -762,10 +876,70 @@
             Install = 1
         }
 
-        private static Guid WINTRUST_ACTION_GENERIC_VERIFY_V2 = new Guid("00AAC56B-CD44-11D0-8CC2-00C04FC295EE");
+        private static readonly Guid WINTRUST_ACTION_GENERIC_VERIFY_V2 = new Guid("00AAC56B-CD44-11D0-8CC2-00C04FC295EE");
 
-        [DllImport("wintrust.dll", SetLastError = true, CharSet = CharSet.Unicode)]
-        private static extern uint WinVerifyTrust(IntPtr hwnd, [MarshalAs(UnmanagedType.LPStruct)] Guid pgActionID, WINTRUST_DATA pWVTData);
+        [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+        [DllImport("wintrust.dll", ExactSpelling = true)]
+        private static extern int WinVerifyTrust(IntPtr hwnd, in Guid pgActionID, [In, Out] WINTRUST_DATA pWVTData);
+
+        [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+        [DllImport("wintrust.dll", ExactSpelling = true)]
+        private static extern IntPtr WTHelperProvDataFromStateData(IntPtr stateData);
+
+        [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+        [DllImport("wintrust.dll", ExactSpelling = true)]
+        private static extern IntPtr WTHelperGetProvSignerFromChain(IntPtr providerData, uint signerIndex, [MarshalAs(UnmanagedType.Bool)] bool counterSigner, uint counterSignerIndex);
+
+        [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+        [DllImport("wintrust.dll", ExactSpelling = true)]
+        private static extern IntPtr WTHelperGetProvCertFromChain(IntPtr signer, uint certificateIndex);
+
+        [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+        [DllImport("crypt32.dll", ExactSpelling = true, SetLastError = true)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        private static extern bool CryptMsgControl(IntPtr message, uint flags, uint controlType, ref MessageSignatureVerification parameters);
+
+        // Documented CRYPT_PROVIDER_DATA prefix through hMsg. Pointer-sized fields retain native x86/x64 alignment.
+        [StructLayout(LayoutKind.Sequential)]
+        private struct ProviderDataHeader
+        {
+            public uint StructSize;
+            public IntPtr WintrustData;
+            public int OpenedFile;
+            public IntPtr ParentWindow;
+            public IntPtr ActionId;
+            public IntPtr CryptoProvider;
+            public uint Error;
+            public uint SecuritySettings;
+            public uint PolicySettings;
+            public IntPtr Functions;
+            public uint TrustStepErrorCount;
+            public IntPtr TrustStepErrors;
+            public uint StoreCount;
+            public IntPtr Stores;
+            public uint Encoding;
+            public IntPtr Message;
+        }
+
+        // CMSG_CTRL_VERIFY_SIGNATURE_EX_PARA with CMSG_VERIFY_SIGNER_CERT (2).
+        [StructLayout(LayoutKind.Sequential)]
+        private struct MessageSignatureVerification
+        {
+            public uint StructSize;
+            public IntPtr CryptoProvider;
+            public uint SignerIndex;
+            public uint SignerType;
+            public IntPtr Signer;
+        }
+
+        // Only the documented leading fields of CRYPT_PROVIDER_CERT are needed. Default native alignment
+        // places the certificate pointer at offset 4 on x86 and offset 8 on x64.
+        [StructLayout(LayoutKind.Sequential)]
+        private struct ProviderCertificateHeader
+        {
+            public uint StructSize;
+            public IntPtr Certificate;
+        }
 
         [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
         private class WINTRUST_FILE_INFO : IDisposable
@@ -775,9 +949,10 @@
             IntPtr hFile = IntPtr.Zero;             // optional, open handle to FilePath
             IntPtr pgKnownSubject = IntPtr.Zero;    // optional, subject type if it is known
 
-            public WINTRUST_FILE_INFO(string filePath)
+            public WINTRUST_FILE_INFO(string filePath, IntPtr fileHandle)
             {
-                pszFilePath = Marshal.StringToCoTaskMemAuto(filePath);
+                pszFilePath = Marshal.StringToCoTaskMemUni(filePath);
+                hFile = fileHandle; // Borrowed; the enclosing FileStream owns the handle through state closure.
             }
 
             public void Dispose()
@@ -805,7 +980,7 @@
             WinTrustDataChoice UnionChoice = WinTrustDataChoice.File;
             // individual file
             IntPtr FileInfoPtr;
-            WinTrustDataStateAction StateAction = WinTrustDataStateAction.Ignore;
+            WinTrustDataStateAction StateAction = WinTrustDataStateAction.Verify;
             IntPtr StateData = IntPtr.Zero;
             String URLReference = null;
             // Windows 7 and later 
@@ -825,8 +1000,57 @@
                 Marshal.StructureToPtr(wtfiData, FileInfoPtr, false);
             }
 
+            public X509Certificate2 GetVerifiedSigner()
+            {
+                var provider = WTHelperProvDataFromStateData(StateData);
+                var signer = provider == IntPtr.Zero ? IntPtr.Zero : WTHelperGetProvSignerFromChain(provider, 0, false, 0);
+                var certificate = signer == IntPtr.Zero ? IntPtr.Zero : WTHelperGetProvCertFromChain(signer, 0);
+                if (certificate == IntPtr.Zero)
+                {
+                    throw new SecurityException("WinVerifyTrust did not return a verified signer certificate.");
+                }
+
+                var header = Marshal.PtrToStructure<ProviderCertificateHeader>(certificate);
+                if (header.StructSize < Marshal.SizeOf<ProviderCertificateHeader>() || header.Certificate == IntPtr.Zero)
+                {
+                    throw new SecurityException("WinVerifyTrust returned an invalid signer certificate.");
+                }
+
+                // WTD_HASH_ONLY_FLAG checks the PE digest but does NOT authenticate the CMS signature.
+                // Authenticate the same provider message with its selected signer even when chain checking is off.
+                var data = Marshal.PtrToStructure<ProviderDataHeader>(provider);
+                if (data.StructSize < Marshal.SizeOf<ProviderDataHeader>() || data.Message == IntPtr.Zero)
+                {
+                    throw new SecurityException("WinVerifyTrust did not return a signed message.");
+                }
+
+                var verification = new MessageSignatureVerification
+                {
+                    StructSize = (uint)Marshal.SizeOf<MessageSignatureVerification>(),
+                    SignerIndex = 0,
+                    SignerType = 2, // CMSG_VERIFY_SIGNER_CERT
+                    Signer = header.Certificate,
+                };
+                if (!CryptMsgControl(data.Message, 0, 19, ref verification)) // CMSG_CTRL_VERIFY_SIGNATURE_EX
+                {
+                    throw new SecurityException($"Attempt to load an assembly with an invalid signature: CMS verification failed (0x{Marshal.GetLastWin32Error():X8}).");
+                }
+
+                // This constructor duplicates the native context; dispose it before closing provider state.
+                return new X509Certificate2(header.Certificate);
+            }
+
             public void Dispose()
             {
+                // VERIFY may allocate state even on failure. CLOSE must happen before freeing the file info
+                // or closing the borrowed file handle, including when signer pinning throws.
+                if (StateData != IntPtr.Zero)
+                {
+                    StateAction = WinTrustDataStateAction.Close;
+                    WinVerifyTrust(new IntPtr(-1), in WINTRUST_ACTION_GENERIC_VERIFY_V2, this);
+                    StateData = IntPtr.Zero;
+                }
+
                 if (FileInfoPtr != IntPtr.Zero)
                 {
                     Marshal.FreeCoTaskMem(FileInfoPtr);
@@ -836,7 +1060,6 @@
 
 #pragma warning restore S2933 // Add readonly modifier
             #endregion
-
         }
     }
 }
